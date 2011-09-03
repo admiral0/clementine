@@ -50,6 +50,9 @@
 #  include "ilister.h"
 #endif
 #ifdef HAVE_LIBMTP
+# ifdef Q_OS_LINUX
+#  include "mtplister.h"
+# endif
 #  include "mtpdevice.h"
 #endif
 
@@ -221,6 +224,9 @@ DeviceManager::DeviceManager(BackgroundThread<Database>* database,
 #endif
 
 #ifdef HAVE_LIBMTP
+# ifdef Q_OS_LINUX
+  AddLister(new MtpLister);
+# endif
   AddDeviceClass<MtpDevice>();
 #endif
 }
@@ -525,30 +531,26 @@ boost::shared_ptr<ConnectedDevice> DeviceManager::Connect(int row) {
   DeviceInfo& info = devices_[row];
   if (info.device_) // Already connected
     return info.device_;
-
   boost::shared_ptr<ConnectedDevice> ret;
-
   if (!info.BestBackend()->lister_) // Not physically connected
     return ret;
-
   if (info.BestBackend()->lister_->DeviceNeedsMount(info.BestBackend()->unique_id_)) {
     // Mount the device
     info.BestBackend()->lister_->MountDevice(info.BestBackend()->unique_id_);
     return ret;
   }
-
   bool first_time = (info.database_id_ == -1);
   if (first_time) {
     // We haven't stored this device in the database before
     info.database_id_ = backend_->AddDevice(info.SaveToDb());
   }
 
-  // Get the device URLs
+  // et the device URLs
   QList<QUrl> urls = info.BestBackend()->lister_->MakeDeviceUrls(
       info.BestBackend()->unique_id_);
   if (urls.isEmpty())
     return ret;
-
+  
   // Take the first URL that we have a handler for
   QUrl device_url;
   foreach (const QUrl& url, urls) {
@@ -567,7 +569,7 @@ boost::shared_ptr<ConnectedDevice> DeviceManager::Connect(int row) {
       if (QMessageBox::critical(NULL, tr("This device will not work properly"),
           tr("This is an MTP device, but you compiled Clementine without libmtp support.") + "  " +
           tr("If you continue, this device will work slowly and songs copied to it may not work."),
-          QMessageBox::Abort, QMessageBox::Ignore) == QMessageBox::Abort)
+         QMessageBox::Abort, QMessageBox::Ignore) == QMessageBox::Abort)
         return ret;
     }
 
@@ -579,7 +581,6 @@ boost::shared_ptr<ConnectedDevice> DeviceManager::Connect(int row) {
         return ret;
     }
   }
-
   if (device_url.isEmpty()) {
     // Munge the URL list into a string list
     QStringList url_strings;
@@ -588,7 +589,7 @@ boost::shared_ptr<ConnectedDevice> DeviceManager::Connect(int row) {
     emit Error(tr("This type of device is not supported: %1").arg(url_strings.join(", ")));
     return ret;
   }
-
+  
   QMetaObject meta_object = device_classes_.value(device_url.scheme());
   QObject* instance = meta_object.newInstance(
       Q_ARG(QUrl, device_url), Q_ARG(DeviceLister*, info.BestBackend()->lister_),
@@ -609,7 +610,6 @@ boost::shared_ptr<ConnectedDevice> DeviceManager::Connect(int row) {
   }
 
   emit DeviceConnected(row);
-
   return ret;
 }
 

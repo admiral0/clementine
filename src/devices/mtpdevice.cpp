@@ -36,10 +36,10 @@ MtpDevice::MtpDevice(const QUrl& url, DeviceLister* lister,
     loader_thread_(new QThread(this)),
     loader_(NULL)
 {
-  if (!sInitialisedLibMTP) {
-    LIBMTP_Init();
-    sInitialisedLibMTP = true;
-  }
+//   if (!sInitialisedLibMTP) {
+//     LIBMTP_Init();
+//     sInitialisedLibMTP = true;
+//   }
 }
 
 MtpDevice::~MtpDevice() {
