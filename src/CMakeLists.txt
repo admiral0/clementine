@@ -842,6 +842,11 @@ endif(HAVE_IMOBILEDEVICE)
 if(HAVE_LIBMTP)
   include_directories(${LIBMTP_INCLUDE_DIRS})
 
+  if(LINUX)
+    list(APPEND SOURCES devices/mtplister.cpp)
+    list(APPEND HEADERS devices/mtplister.h)
+  endif(LINUX)
+
   list(APPEND SOURCES devices/mtpconnection.cpp)
   list(APPEND SOURCES devices/mtpdevice.cpp)
   list(APPEND SOURCES devices/mtploader.cpp)
@@ -849,6 +854,7 @@ if(HAVE_LIBMTP)
   list(APPEND SOURCES devices/mtpconnection.h)
   list(APPEND HEADERS devices/mtpdevice.h)
   list(APPEND HEADERS devices/mtploader.h)
+  
 endif(HAVE_LIBMTP)
 
 # Windows media lister

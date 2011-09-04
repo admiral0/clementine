@@ -5,12 +5,12 @@
 
 #include <libmtp.h>
 
-//TODO fix
 #include <QtCore/QFileSystemWatcher>
 #include <QtCore/QDir>
 
 #define USB_DEV_PATH "/dev/bus/usb"
 
+class QMutex;
 class MtpLister : public DeviceLister
 {
  Q_OBJECT
@@ -18,7 +18,7 @@ protected:
   virtual void Init();
 
 public:
-  MtpLister() {};
+  MtpLister();
   virtual ~MtpLister();
   ///Mtp doesn't need Unmounting
   virtual void UnmountDevice(const QString& id) {};
@@ -75,12 +75,14 @@ private:
     QString vendor;
     uint32_t bus;
     uint8_t dev;
+    LIBMTP_raw_device_t rawdev;
   } DeviceInfo;
   
   QFileSystemWatcher watcher;
   QStringList ids;
   QHash<QString,DeviceInfo> devices;
   QDir dest;
+  QMutex *mutex;
   LIBMTP_raw_device_t * rawdevices;
   int numdevices;
 };

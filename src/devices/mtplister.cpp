@@ -2,6 +2,12 @@
 #include "mtpdevice.h"
 #include "core/logging.h"
 #include <QDebug>
+#include <QMutex>
+
+MtpLister::MtpLister()
+{
+  mutex=new QMutex();
+}
 
 void MtpLister::Init()
 {
@@ -35,7 +41,6 @@ quint64 MtpLister::DeviceCapacity(const QString& id)
 {
   return devices.value(id).size;
 }
-
 QString MtpLister::DeviceModel(const QString& id)
 {
   return devices.value(id).model;
@@ -66,7 +71,6 @@ void MtpLister::clearWatchers()
 
 void MtpLister::scanBusDev()
 {
-  qLog(Debug)<<"scanBusDev";
   dest=QDir(USB_DEV_PATH);
   QStringList dirs = dest.entryList(QDir::Dirs|QDir::NoDotAndDotDot);
   foreach(QString dir,dirs){
@@ -77,11 +81,12 @@ void MtpLister::scanBusDev()
 
 MtpLister::~MtpLister()
 {
-
+  delete mutex;
 }
 
 void MtpLister::scanMtp()
 {
+  mutex->lock();
   if(!MtpDevice::sInitialisedLibMTP){
     MtpDevice::sInitialisedLibMTP=true;
     LIBMTP_Init();
@@ -92,6 +97,7 @@ void MtpLister::scanMtp()
     case LIBMTP_ERROR_NO_DEVICE_ATTACHED:
       refreshInternalList();
       qLog(Debug)<< "MtpLister: No devices found.";
+      mutex->unlock();
       return;
     case LIBMTP_ERROR_NONE:
       qLog(Debug) << "MtpLister: Found" << numdevices << "devices";
@@ -100,6 +106,7 @@ void MtpLister::scanMtp()
     default:
       qLog(Debug)<< "MtpLister: Cannot connect to device";
   }
+  mutex->unlock();
   //Reinit listening. USB hubs...
   clearWatchers();
   scanBusDev();
@@ -128,7 +135,7 @@ void MtpLister::refreshInternalList()
     dev.info.insert(QT_TR_NOOP("Serial Number"),serialnbr);
     if(ret==0)
       dev.info.insert(QT_TR_NOOP("Battery Level"),QString("%1/%2").arg(currbattlevel).arg(maxbattlevel));
-    dev.url=QUrl(QString("mtp://usb-%1-%2").arg(rawdevices[i].bus_location).arg(rawdevices[i].devnum));
+    dev.url=QUrl(QString("mtp://usb-%1-%2/").arg(rawdevices[i].bus_location).arg(rawdevices[i].devnum));
     dev.vendor=QString("%1").arg(rawdevices[i].device_entry.vendor);
     dev.model=QString("%1").arg(rawdevices[i].device_entry.product);
     dev.name=dev.vendor+" "+dev.model;
@@ -136,6 +143,7 @@ void MtpLister::refreshInternalList()
     dev.free=d->storage->FreeSpaceInBytes;
     dev.bus=rawdevices[i].bus_location;
     dev.dev=rawdevices[i].devnum;
+    dev.rawdev=rawdevices[i];
     LIBMTP_Release_Device(d);
     newList.append(dev.id);
     if(!devices.keys().contains(dev.id))
@@ -161,6 +169,7 @@ void MtpLister::refreshInternalList()
 
 LIBMTP_raw_device_t* MtpLister::urlToDevice(QUrl id)
 {
+  
   QRegExp host_re("^usb-(\\d+)-(\\d+)$");
 
   if (host_re.indexIn(id.host()) == -1) {
@@ -169,7 +178,6 @@ LIBMTP_raw_device_t* MtpLister::urlToDevice(QUrl id)
 
   const unsigned int bus_location = host_re.cap(1).toInt();
   const unsigned int device_num = host_re.cap(2).toInt();
-  
   for (int i = 0; i < numdevices; i++) {
     if(rawdevices[i].bus_location==bus_location && rawdevices[i].devnum==device_num){
       return &rawdevices[i];
@@ -180,7 +188,6 @@ LIBMTP_raw_device_t* MtpLister::urlToDevice(QUrl id)
 
 LIBMTP_mtpdevice_t* MtpLister::openRaw(LIBMTP_raw_device_t* dev)
 {
-  qLog(Debug)<<"openRaw";
   LIBMTP_mtpdevice_t *device=NULL;
   device = LIBMTP_Open_Raw_Device(dev);
   if (device == NULL) {
@@ -195,5 +202,18 @@ int MtpLister::priority() const
 }
 void MtpLister::refreshData(QString id)
 {
-  return;
+    
+    DeviceInfo dev=devices.value(id);
+    int ret=1;
+    if(dev.id!=id){
+      return;
+    }
+    mutex->lock();
+    LIBMTP_mtpdevice_t *d = openRaw(&(dev.rawdev));
+    uint8_t maxbattlevel,currbattlevel;
+    ret = LIBMTP_Get_Batterylevel(d, &maxbattlevel, &currbattlevel);
+    if(ret==0)
+      dev.info.insert(QT_TR_NOOP("Battery Level"),QString("%1/%2").arg(currbattlevel).arg(maxbattlevel));
+    LIBMTP_Release_Device(d);
+    mutex->unlock();
 }

@@ -32,7 +32,7 @@ MtpConnection::MtpConnection(const QUrl& url)
     qLog(Warning) << "Invalid MTP device:" << hostname;
     return;
   }
-
+  
   const unsigned int bus_location = host_re.cap(1).toInt();
   const unsigned int device_num = host_re.cap(2).toInt();
 
@@ -50,7 +50,7 @@ MtpConnection::MtpConnection(const QUrl& url)
     device_ = LIBMTP_Open_Raw_Device(raw_device);
     return;
   }
-
+  
   // Get a list of devices from libmtp and figure out which one is ours
   int count = 0;
   LIBMTP_raw_device_t* raw_devices = NULL;
@@ -59,7 +59,7 @@ MtpConnection::MtpConnection(const QUrl& url)
     qLog(Warning) << "MTP error:" << err;
     return;
   }
-
+  
   LIBMTP_raw_device_t* raw_device = NULL;
   for (int i=0 ; i<count ; ++i) {
     if (raw_devices[i].bus_location == bus_location &&
@@ -74,10 +74,10 @@ MtpConnection::MtpConnection(const QUrl& url)
     free(raw_devices);
     return;
   }
-
+  
   // Connect to the device
   device_ = LIBMTP_Open_Raw_Device(raw_device);
-
+  
   free(raw_devices);
 }
 
