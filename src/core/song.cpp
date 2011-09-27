@@ -20,7 +20,6 @@
 #include "core/logging.h"
 
 #include <algorithm>
-
 #include <sys/stat.h>
 
 #include <aifffile.h>
@@ -679,15 +678,13 @@ void Song::InitFromLastFM(const lastfm::Track& track) {
 #ifdef HAVE_LIBMTP
   void Song::InitFromMTP(const LIBMTP_track_t* track, const QString& host) {
     d->valid_ = true;
-
     d->title_ = QString::fromUtf8(track->title);
     d->artist_ = QString::fromUtf8(track->artist);
     d->album_ = QString::fromUtf8(track->album);
     d->composer_ = QString::fromUtf8(track->composer);
     d->genre_ = QString::fromUtf8(track->genre);
-    d->url_ = QUrl(QString("mtp://%1/%2").arg(host, track->item_id));
+    d->url_ = QUrl(QString("mtp://%1/%2").arg(host).arg(track->item_id));
     d->basefilename_ = QString::number(track->item_id);
-
     d->track_ = track->tracknumber;
     set_length_nanosec(track->duration * kNsecPerMsec);
     d->samplerate_ = track->samplerate;
@@ -695,7 +692,6 @@ void Song::InitFromLastFM(const lastfm::Track& track) {
     d->filesize_ = track->filesize;
     d->mtime_ = track->modificationdate;
     d->ctime_ = track->modificationdate;
-
     d->rating_ = float(track->rating) / 100;
     d->playcount_ = track->usecount;
 

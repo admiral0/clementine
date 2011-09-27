@@ -52,7 +52,7 @@ public:
   void StartDelete();
   bool DeleteFromStorage(const DeleteJob& job);
   void FinishDelete(bool success);
-
+  static bool sInitialisedLibMTP;
 private slots:
   void LoadFinished();
 
@@ -62,7 +62,7 @@ private:
   int GetCapacity(LIBMTP_mtpdevice_t* device);
 
 private:
-  static bool sInitialisedLibMTP;
+  
 
   QThread* loader_thread_;
   MtpLoader* loader_;
