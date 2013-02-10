@@ -23,6 +23,7 @@
 #include <QNetworkDiskCache>
 #include <QNetworkReply>
 
+#include "core/closure.h"
 #include "utilities.h"
 
 QMutex ThreadSafeNetworkDiskCache::sMutex;
@@ -91,6 +92,12 @@ QNetworkReply* NetworkAccessManager::createRequest(
       QCoreApplication::applicationName(),
       QCoreApplication::applicationVersion()).toUtf8());
 
+  if (op == QNetworkAccessManager::PostOperation &&
+      !new_request.header(QNetworkRequest::ContentTypeHeader).isValid()) {
+    new_request.setHeader(QNetworkRequest::ContentTypeHeader,
+                          "application/x-www-form-urlencoded");
+  }
+
   // Prefer the cache unless the caller has changed the setting already
   if (request.attribute(QNetworkRequest::CacheLoadControlAttribute).toInt()
       == QNetworkRequest::PreferNetwork) {
@@ -115,10 +122,28 @@ void NetworkTimeouts::AddReply(QNetworkReply* reply) {
   timers_[reply] = startTimer(timeout_msec_);
 }
 
+void NetworkTimeouts::AddReply(RedirectFollower* reply) {
+  if (redirect_timers_.contains(reply)) {
+    return;
+  }
+
+  NewClosure(reply, SIGNAL(destroyed()), this,
+             SLOT(RedirectFinished(RedirectFollower*)), reply);
+  NewClosure(reply, SIGNAL(finished()), this,
+             SLOT(RedirectFinished(RedirectFollower*)), reply);
+  redirect_timers_[reply] = startTimer(timeout_msec_);
+}
+
 void NetworkTimeouts::ReplyFinished() {
   QNetworkReply* reply = reinterpret_cast<QNetworkReply*>(sender());
   if (timers_.contains(reply)) {
     killTimer(timers_.take(reply));
+  }
+}
+
+void NetworkTimeouts::RedirectFinished(RedirectFollower* reply) {
+  if (redirect_timers_.contains(reply)) {
+    killTimer(redirect_timers_.take(reply));
   }
 }
 
@@ -127,4 +152,57 @@ void NetworkTimeouts::timerEvent(QTimerEvent* e) {
   if (reply) {
     reply->abort();
   }
+
+  RedirectFollower* redirect = redirect_timers_.key(e->timerId());
+  if (redirect) {
+    redirect->abort();
+  }
+}
+
+
+RedirectFollower::RedirectFollower(QNetworkReply* first_reply, int max_redirects)
+  : QObject(NULL),
+    current_reply_(first_reply),
+    redirects_remaining_(max_redirects) {
+  ConnectReply(first_reply);
+}
+
+void RedirectFollower::ConnectReply(QNetworkReply* reply) {
+  connect(reply, SIGNAL(readyRead()), SLOT(ReadyRead()));
+  connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), SIGNAL(error(QNetworkReply::NetworkError)));
+  connect(reply, SIGNAL(downloadProgress(qint64,qint64)), SIGNAL(downloadProgress(qint64,qint64)));
+  connect(reply, SIGNAL(uploadProgress(qint64,qint64)), SIGNAL(uploadProgress(qint64,qint64)));
+  connect(reply, SIGNAL(finished()), SLOT(ReplyFinished()));
+}
+
+void RedirectFollower::ReadyRead() {
+  // Don't re-emit this signal for redirect replies.
+  if (current_reply_->attribute(QNetworkRequest::RedirectionTargetAttribute).isValid()) {
+    return;
+  }
+
+  emit readyRead();
+}
+
+void RedirectFollower::ReplyFinished() {
+  current_reply_->deleteLater();
+
+  if (current_reply_->attribute(QNetworkRequest::RedirectionTargetAttribute).isValid()) {
+    if (redirects_remaining_-- == 0) {
+      emit finished();
+      return;
+    }
+
+    const QUrl next_url = current_reply_->url().resolved(
+          current_reply_->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl());
+
+    QNetworkRequest req(current_reply_->request());
+    req.setUrl(next_url);
+
+    current_reply_ = current_reply_->manager()->get(req);
+    ConnectReply(current_reply_);
+    return;
+  }
+
+  emit finished();
 }

@@ -40,7 +40,7 @@ LibraryBackend::LibraryBackend(QObject *parent)
 {
 }
 
-void LibraryBackend::Init(boost::shared_ptr<Database> db, const QString& songs_table,
+void LibraryBackend::Init(Database* db, const QString& songs_table,
                           const QString& dirs_table, const QString& subdirs_table,
                           const QString& fts_table) {
   db_ = db;
@@ -493,20 +493,31 @@ LibraryBackend::AlbumList LibraryBackend::GetAlbumsByArtist(const QString& artis
   return GetAlbums(artist, false, opt);
 }
 
+
+SongList LibraryBackend::GetSongsByAlbum(const QString& album, const QueryOptions& opt) {
+  LibraryQuery query(opt);
+  query.AddCompilationRequirement(false);
+  query.AddWhere("album", album);
+  return ExecLibraryQuery(&query);
+}
+
 SongList LibraryBackend::GetSongs(const QString& artist, const QString& album, const QueryOptions& opt) {
   LibraryQuery query(opt);
-  query.SetColumnSpec("%songs_table.ROWID, " + Song::kColumnSpec);
   query.AddCompilationRequirement(false);
   query.AddWhere("artist", artist);
   query.AddWhere("album", album);
+  return ExecLibraryQuery(&query);
+}
 
+SongList LibraryBackend::ExecLibraryQuery(LibraryQuery* query) {
+  query->SetColumnSpec("%songs_table.ROWID, " + Song::kColumnSpec);
   QMutexLocker l(db_->Mutex());
-  if (!ExecQuery(&query)) return SongList();
+  if (!ExecQuery(query)) return SongList();
 
   SongList ret;
-  while (query.Next()) {
+  while (query->Next()) {
     Song song;
-    song.InitFromQuery(query, true);
+    song.InitFromQuery(*query, true);
     ret << song;
   }
   return ret;
@@ -617,18 +628,6 @@ SongList LibraryBackend::GetSongsByUrl(const QUrl& url) {
   return songlist;
 }
 
-bool LibraryBackend::HasCompilations(const QueryOptions& opt) {
-  LibraryQuery query(opt);
-  query.SetColumnSpec("%songs_table.ROWID");
-  query.AddCompilationRequirement(true);
-  query.SetLimit(1);
-
-  QMutexLocker l(db_->Mutex());
-  if (!ExecQuery(&query)) return false;
-
-  return query.Next();
-}
-
 LibraryBackend::AlbumList LibraryBackend::GetCompilationAlbums(const QueryOptions& opt) {
   return GetAlbums(QString(), true, opt);
 }
@@ -655,10 +654,10 @@ void LibraryBackend::UpdateCompilations() {
   QMutexLocker l(db_->Mutex());
   QSqlDatabase db(db_->Connect());
 
-  // Look for albums that have songs by more than one artist in the same
+  // Look for albums that have songs by more than one 'effective album artist' in the same
   // directory
 
-  QSqlQuery q(QString("SELECT artist, album, filename, sampler "
+  QSqlQuery q(QString("SELECT effective_albumartist, album, filename, sampler "
     "FROM %1 WHERE unavailable = 0 ORDER BY album").arg(songs_table_), db);
   q.exec();
   if (db_->CheckErrors(q)) return;
@@ -705,7 +704,7 @@ void LibraryBackend::UpdateCompilations() {
     const CompilationInfo& info = it.value();
     QString album(it.key());
 
-    // If there were more artists than there were directories for this album,
+    // If there were more 'effective album artists' than there were directories for this album,
     // then it's a compilation
 
     if (info.artists.count() > info.directories.count()) {
@@ -878,52 +877,53 @@ void LibraryBackend::UpdateManualAlbumArt(const QString &artist,
   }
 }
 
-void LibraryBackend::ForceCompilation(const QString& artist, const QString& album, bool on) {
+void LibraryBackend::ForceCompilation(const QString& album, const QList<QString>& artists, bool on) {
   QMutexLocker l(db_->Mutex());
   QSqlDatabase db(db_->Connect());
+  SongList deleted_songs, added_songs;
 
-  // Get the songs before they're updated
-  LibraryQuery query;
-  query.SetColumnSpec("ROWID, " + Song::kColumnSpec);
-  query.AddWhere("album", album);
-  if (!artist.isNull())
-    query.AddWhere("artist", artist);
+  foreach(const QString &artist, artists) {
+    // Get the songs before they're updated
+    LibraryQuery query;
+    query.SetColumnSpec("ROWID, " + Song::kColumnSpec);
+    query.AddWhere("album", album);
+    if (!artist.isNull())
+      query.AddWhere("artist", artist);
 
-  if (!ExecQuery(&query)) return;
+    if (!ExecQuery(&query)) return;
 
-  SongList deleted_songs;
-  while (query.Next()) {
-    Song song;
-    song.InitFromQuery(query, true);
-    deleted_songs << song;
-  }
+    while (query.Next()) {
+      Song song;
+      song.InitFromQuery(query, true);
+      deleted_songs << song;
+    }
 
-  // Update the songs
-  QString sql(QString("UPDATE %1 SET forced_compilation_on = :forced_compilation_on,"
-                      "              forced_compilation_off = :forced_compilation_off,"
-                      "              effective_compilation = ((compilation OR sampler OR :forced_compilation_on) AND NOT :forced_compilation_off) + 0"
-                      " WHERE album = :album AND unavailable = 0").arg(songs_table_));
-  if (!artist.isEmpty())
-    sql += " AND artist = :artist";
+    // Update the songs
+    QString sql(QString("UPDATE %1 SET forced_compilation_on = :forced_compilation_on,"
+                        "              forced_compilation_off = :forced_compilation_off,"
+                        "              effective_compilation = ((compilation OR sampler OR :forced_compilation_on) AND NOT :forced_compilation_off) + 0"
+                        " WHERE album = :album AND unavailable = 0").arg(songs_table_));
+    if (!artist.isEmpty())
+      sql += " AND artist = :artist";
 
-  QSqlQuery q(sql, db);
-  q.bindValue(":forced_compilation_on", on ? 1 : 0);
-  q.bindValue(":forced_compilation_off", on ? 0 : 1);
-  q.bindValue(":album", album);
-  if (!artist.isEmpty())
-    q.bindValue(":artist", artist);
+    QSqlQuery q(sql, db);
+    q.bindValue(":forced_compilation_on", on ? 1 : 0);
+    q.bindValue(":forced_compilation_off", on ? 0 : 1);
+    q.bindValue(":album", album);
+    if (!artist.isEmpty())
+      q.bindValue(":artist", artist);
 
-  q.exec();
-  db_->CheckErrors(q);
+    q.exec();
+    db_->CheckErrors(q);
 
-  // Now get the updated songs
-  if (!ExecQuery(&query)) return;
+    // Now get the updated songs
+    if (!ExecQuery(&query)) return;
 
-  SongList added_songs;
-  while (query.Next()) {
-    Song song;
-    song.InitFromQuery(query, true);
-    added_songs << song;
+    while (query.Next()) {
+      Song song;
+      song.InitFromQuery(query, true);
+      added_songs << song;
+    }
   }
 
   if (!added_songs.isEmpty() || !deleted_songs.isEmpty()) {

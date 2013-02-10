@@ -1,9 +1,11 @@
 #include "kittenloader.h"
-#include "core/network.h"
 
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QXmlStreamReader>
+
+#include "core/closure.h"
+#include "core/network.h"
 
 const char* KittenLoader::kFlickrKittenUrl =
     "http://api.flickr.com/services/rest/"
@@ -21,14 +23,11 @@ KittenLoader::KittenLoader(QObject* parent)
     : AlbumCoverLoader(parent) {
 }
 
-quint64 KittenLoader::LoadImageAsync(
-    const QString& art_automatic,
-    const QString& art_manual,
-    const QString& song_filename,
-    const QImage& embedded_image) {
+quint64 KittenLoader::LoadKitten(const AlbumCoverLoaderOptions& options) {
   if (!kitten_urls_.isEmpty()) {
     QUrl url = kitten_urls_.dequeue();
     return AlbumCoverLoader::LoadImageAsync(
+        options,
         QString::null,
         url.toString(),
         QString::null,
@@ -36,6 +35,7 @@ quint64 KittenLoader::LoadImageAsync(
   }
 
   Task task;
+  task.options = options;
   {
     QMutexLocker l(&mutex_);
     task.id = next_id_++;
@@ -51,11 +51,11 @@ void KittenLoader::FetchMoreKittens() {
   QNetworkRequest req = QNetworkRequest(QUrl(kFlickrKittenUrl));
   QNetworkReply* reply = network_->get(req);
   connect(reply, SIGNAL(finished()), SLOT(KittensRetrieved()));
+  NewClosure(reply, SIGNAL(finished()), this,
+             SLOT(KittensRetrieved(QNetworkReply*)), reply);
 }
 
-void KittenLoader::KittensRetrieved() {
-  QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
-  Q_ASSERT(reply);
+void KittenLoader::KittensRetrieved(QNetworkReply* reply) {
   reply->deleteLater();
 
   QXmlStreamReader reader(reply);

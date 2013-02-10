@@ -18,10 +18,10 @@
 #ifndef ICECASTSERVICE_H
 #define ICECASTSERVICE_H
 
+#include <QXmlStreamReader>
+
 #include "icecastbackend.h"
 #include "internetservice.h"
-
-#include <QXmlStreamReader>
 
 class IcecastFilterWidget;
 class IcecastModel;
@@ -29,11 +29,12 @@ class NetworkAccessManager;
 
 class QAction;
 class QMenu;
+class QNetworkReply;
 
 class IcecastService : public InternetService {
   Q_OBJECT
 public:
-  IcecastService(InternetModel* parent);
+  IcecastService(Application* app, InternetModel* parent);
   ~IcecastService();
 
   static const char* kServiceName;
@@ -48,16 +49,16 @@ public:
   QStandardItem* CreateRootItem();
   void LazyPopulate(QStandardItem* item);
 
-  void ShowContextMenu(const QModelIndex& index, const QPoint& global_pos);
+  void ShowContextMenu(const QPoint& global_pos);
 
   QWidget* HeaderWidget() const;
-
-protected:
-  QModelIndex GetCurrentIndex();
 
 private slots:
   void LoadDirectory();
   void Homepage();
+  void DownloadDirectoryFinished(QNetworkReply* reply);
+  void ParseDirectoryFinished(
+      QFuture<IcecastBackend::StationList> future);
 
 private:
   void RequestDirectory(const QUrl& url);
@@ -68,17 +69,12 @@ private:
   QStandardItem* root_;
   NetworkAccessManager* network_;
   QMenu* context_menu_;
-  QModelIndex context_item_;
 
   IcecastBackend* backend_;
   IcecastModel* model_;
   IcecastFilterWidget* filter_;
 
   int load_directory_task_id_;
-
- private slots:
-  void DownloadDirectoryFinished();
-  void ParseDirectoryFinished();
 };
 
 #endif

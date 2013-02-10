@@ -25,6 +25,8 @@
 
 #include <boost/scoped_ptr.hpp>
 
+struct LIBMTP_mtpdevice_struct;
+
 class MtpConnection;
 class MtpLoader;
 
@@ -34,6 +36,7 @@ class MtpDevice : public ConnectedDevice {
 public:
   Q_INVOKABLE MtpDevice(const QUrl& url, DeviceLister* lister,
                         const QString& unique_id, DeviceManager* manager,
+                        Application* app,
                         int database_id, bool first_time);
   ~MtpDevice();
 
@@ -57,9 +60,9 @@ private slots:
   void LoadFinished();
 
 private:
-  bool GetSupportedFiletypes(QList<Song::FileType>* ret, LIBMTP_mtpdevice_t* device);
-  int GetFreeSpace(LIBMTP_mtpdevice_t* device);
-  int GetCapacity(LIBMTP_mtpdevice_t* device);
+  bool GetSupportedFiletypes(QList<Song::FileType>* ret, LIBMTP_mtpdevice_struct* device);
+  int GetFreeSpace(LIBMTP_mtpdevice_struct* device);
+  int GetCapacity(LIBMTP_mtpdevice_struct* device);
 
 private:
   

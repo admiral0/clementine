@@ -1,6 +1,6 @@
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Woverloaded-virtual -Wall -Wno-sign-compare")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Woverloaded-virtual -Wall -Wno-sign-compare -Wno-deprecated-declarations --std=c++0x -U__STRICT_ANSI__")
 
 option(BUILD_WERROR "Build with -Werror" ON)
 
@@ -12,10 +12,23 @@ endif(BUILD_WERROR)
 
 include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(../3rdparty/gmock/gtest/include)
-include_directories(../3rdparty/sha2)
 if(WIN32)
   include_directories(../3rdparty/qtwin)
 endif(WIN32)
+
+# Activate fast QString concatenation
+if (QT_VERSION_MINOR GREATER 5)
+  if (QT_VERSION_MINOR GREATER 7)
+    add_definitions(-DQT_USE_QSTRINGBUILDER)
+  else(QT_VERSION_MINOR GREATER 7)
+    add_definitions(-DQT_USE_FAST_CONCATENATION -DQT_USE_FAST_OPERATOR_PLUS)
+  endif(QT_VERSION_MINOR GREATER 7)
+endif(QT_VERSION_MINOR GREATER 5)
+add_definitions(-DQT_NO_URL_CAST_FROM_STRING)
+
+if(ENABLE_IMOBILEDEVICE AND IMOBILEDEVICE_VERSION VERSION_GREATER 1.1.1)
+  set(IMOBILEDEVICE_USES_UDIDS ON)
+endif()
 
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${GLIB_INCLUDE_DIRS})
@@ -26,6 +39,12 @@ include_directories(${QTSINGLEAPPLICATION_INCLUDE_DIRS})
 include_directories(${QTIOCOMPRESSOR_INCLUDE_DIRS})
 include_directories(${QXT_INCLUDE_DIRS})
 include_directories(${ECHONEST_INCLUDE_DIRS})
+include_directories(${SHA2_INCLUDE_DIRS})
+include_directories(${CHROMAPRINT_INCLUDE_DIRS})
+include_directories(${MYGPOQT_INCLUDE_DIRS})
+
+find_package(OpenGL)
+include_directories(${OPENGL_INCLUDE_DIR})
 
 if(HAVE_LIBINDICATE)
   link_directories(${INDICATEQT_LIBRARY_DIRS})
@@ -40,9 +59,11 @@ if(HAVE_BREAKPAD)
   include_directories(../3rdparty/google-breakpad)
 endif(HAVE_BREAKPAD)
 
-if(HAVE_REMOTE)
-  include_directories(${PJSIP_INCLUDE_DIRS})
-endif(HAVE_REMOTE)
+include_directories(${CMAKE_SOURCE_DIR}/ext/libclementine-common)
+include_directories(${CMAKE_SOURCE_DIR}/ext/libclementine-tagreader)
+include_directories(${CMAKE_BINARY_DIR}/ext/libclementine-tagreader)
+include_directories(${CMAKE_SOURCE_DIR}/ext/libclementine-remote)
+include_directories(${CMAKE_BINARY_DIR}/ext/libclementine-remote)
 
 cmake_policy(SET CMP0011 NEW)
 include(../cmake/ParseArguments.cmake)
@@ -58,21 +79,21 @@ set(SOURCES
   analyzers/sonogram.cpp
   analyzers/turbine.cpp
 
+  core/appearance.cpp
+  core/application.cpp
   core/backgroundstreams.cpp
-  core/backgroundthread.cpp
   core/commandlineoptions.cpp
   core/crashreporting.cpp
   core/database.cpp
   core/deletefiles.cpp
-  core/encoding.cpp
   core/filesystemmusicstorage.cpp
+  core/filesystemwatcherinterface.cpp
   core/fht.cpp
-  core/fmpsparser.cpp
   core/globalshortcutbackend.cpp
   core/globalshortcuts.cpp
   core/gnomeglobalshortcutbackend.cpp
-  core/logging.cpp
   core/mergedproxymodel.cpp
+  core/metatypes.cpp
   core/multisortfilterproxy.cpp
   core/musicstorage.cpp
   core/network.cpp
@@ -80,12 +101,15 @@ set(SOURCES
   core/organise.cpp
   core/organiseformat.cpp
   core/player.cpp
+  core/qtfslistener.cpp
   core/qxtglobalshortcutbackend.cpp
   core/scopedtransaction.cpp
   core/settingsprovider.cpp
+  core/signalchecker.cpp
   core/song.cpp
   core/songloader.cpp
   core/stylesheetloader.cpp
+  core/tagreaderclient.cpp
   core/taskmanager.cpp
   core/urlhandler.cpp
   core/utilities.cpp
@@ -94,12 +118,14 @@ set(SOURCES
   covers/albumcoverfetchersearch.cpp
   covers/albumcoverloader.cpp
   covers/amazoncoverprovider.cpp
-  covers/artloader.cpp
   covers/coverprovider.cpp
   covers/coverproviders.cpp
   covers/coversearchstatistics.cpp
   covers/coversearchstatisticsdialog.cpp
+  covers/currentartloader.cpp
+  covers/discogscoverprovider.cpp
   covers/kittenloader.cpp
+  covers/musicbrainzcoverprovider.cpp
 
   devices/connecteddevice.cpp
   devices/devicedatabasebackend.cpp
@@ -118,21 +144,29 @@ set(SOURCES
   globalsearch/digitallyimportedsearchprovider.cpp
   globalsearch/globalsearch.cpp
   globalsearch/globalsearchitemdelegate.cpp
-  globalsearch/globalsearchpopup.cpp
+  globalsearch/globalsearchmodel.cpp
+  globalsearch/globalsearchsettingspage.cpp
   globalsearch/globalsearchsortmodel.cpp
-  globalsearch/globalsearchtooltip.cpp
-  globalsearch/globalsearchwidget.cpp
+  globalsearch/globalsearchview.cpp
+  globalsearch/groovesharksearchprovider.cpp
+  globalsearch/icecastsearchprovider.cpp
   globalsearch/librarysearchprovider.cpp
+  globalsearch/savedradiosearchprovider.cpp
   globalsearch/searchprovider.cpp
+  globalsearch/searchproviderstatuswidget.cpp
   globalsearch/simplesearchprovider.cpp
-  globalsearch/tooltipactionwidget.cpp
-  globalsearch/tooltipresultwidget.cpp
+  globalsearch/somafmsearchprovider.cpp
+  globalsearch/soundcloudsearchprovider.cpp
+  globalsearch/suggestionwidget.cpp
+  globalsearch/urlsearchprovider.cpp
 
-  internet/digitallyimportedservice.cpp
+  internet/cloudfileservice.cpp
+  internet/digitallyimportedclient.cpp
   internet/digitallyimportedservicebase.cpp
   internet/digitallyimportedsettingspage.cpp
   internet/digitallyimportedurlhandler.cpp
-  internet/groovesharksearchplaylisttype.cpp
+  internet/geolocator.cpp
+  internet/groovesharkradio.cpp
   internet/groovesharkservice.cpp
   internet/groovesharksettingspage.cpp
   internet/groovesharkurlhandler.cpp
@@ -148,15 +182,21 @@ set(SOURCES
   internet/jamendodynamicplaylist.cpp
   internet/jamendoplaylistitem.cpp
   internet/jamendoservice.cpp
+  internet/localredirectserver.cpp
   internet/magnatunedownloaddialog.cpp
   internet/magnatuneplaylistitem.cpp
   internet/magnatunesettingspage.cpp
   internet/magnatuneservice.cpp
   internet/magnatuneurlhandler.cpp
+  internet/oauthenticator.cpp
   internet/savedradio.cpp
-  internet/skyfmservice.cpp
+  internet/searchboxwidget.cpp
   internet/somafmservice.cpp
   internet/somafmurlhandler.cpp
+  internet/soundcloudservice.cpp
+  internet/subsonicservice.cpp
+  internet/subsonicsettingspage.cpp
+  internet/subsonicurlhandler.cpp
 
   library/groupbydialog.cpp
   library/library.cpp
@@ -172,26 +212,34 @@ set(SOURCES
   library/librarywatcher.cpp
   library/sqlrow.cpp
 
-  musicbrainz/echoprinter.cpp
-  musicbrainz/fingerprinter.cpp
+  musicbrainz/acoustidclient.cpp
+  musicbrainz/chromaprinter.cpp
   musicbrainz/musicbrainzclient.cpp
-  musicbrainz/musicdnsclient.cpp
   musicbrainz/tagfetcher.cpp
+
+  networkremote/incomingdataparser.cpp
+  networkremote/networkremote.cpp
+  networkremote/networkremotehelper.cpp
+  networkremote/outgoingdatacreator.cpp
+  networkremote/remoteclient.cpp
+  networkremote/zeroconf.cpp
 
   playlist/dynamicplaylistcontrols.cpp
   playlist/playlist.cpp
   playlist/playlistbackend.cpp
   playlist/playlistcontainer.cpp
   playlist/playlistdelegates.cpp
+  playlist/playlistfilterparser.cpp
   playlist/playlistfilter.cpp
   playlist/playlistheader.cpp
   playlist/playlistitem.cpp
+  playlist/playlistlistcontainer.cpp
+  playlist/playlistlistmodel.cpp
   playlist/playlistmanager.cpp
   playlist/playlistsequence.cpp
   playlist/playlisttabbar.cpp
   playlist/playlistundocommands.cpp
   playlist/playlistview.cpp
-  playlist/specialplaylisttype.cpp
   playlist/queue.cpp
   playlist/queuemanager.cpp
   playlist/songloaderinserter.cpp
@@ -204,11 +252,31 @@ set(SOURCES
   playlistparsers/parserbase.cpp
   playlistparsers/playlistparser.cpp
   playlistparsers/plsparser.cpp
+  playlistparsers/wplparser.cpp
   playlistparsers/xmlparser.cpp
   playlistparsers/xspfparser.cpp
 
-  resolvers/libraryresolver.cpp
-  resolvers/songresolver.cpp
+  podcasts/addpodcastbyurl.cpp
+  podcasts/addpodcastdialog.cpp
+  podcasts/addpodcastpage.cpp
+  podcasts/fixedopmlpage.cpp
+  podcasts/gpoddersearchpage.cpp
+  podcasts/gpoddersync.cpp
+  podcasts/gpoddertoptagsmodel.cpp
+  podcasts/gpoddertoptagspage.cpp
+  podcasts/itunessearchpage.cpp
+  podcasts/podcast.cpp
+  podcasts/podcastbackend.cpp
+  podcasts/podcastdiscoverymodel.cpp
+  podcasts/podcastdownloader.cpp
+  podcasts/podcastepisode.cpp
+  podcasts/podcastinfowidget.cpp
+  podcasts/podcastservice.cpp
+  podcasts/podcastservicemodel.cpp
+  podcasts/podcastsettingspage.cpp
+  podcasts/podcastparser.cpp
+  podcasts/podcastupdater.cpp
+  podcasts/podcasturlloader.cpp
 
   smartplaylists/generator.cpp
   smartplaylists/generatorinserter.cpp
@@ -232,6 +300,8 @@ set(SOURCES
   songinfo/songinfosettingspage.cpp
   songinfo/songinfotextview.cpp
   songinfo/songinfoview.cpp
+  songinfo/songkickconcerts.cpp
+  songinfo/songkickconcertwidget.cpp
   songinfo/songplaystats.cpp
   songinfo/ultimatelyricsprovider.cpp
   songinfo/ultimatelyricsreader.cpp
@@ -242,6 +312,7 @@ set(SOURCES
   transcoder/transcoderoptionsdialog.cpp
   transcoder/transcoderoptionsflac.cpp
   transcoder/transcoderoptionsmp3.cpp
+  transcoder/transcoderoptionsopus.cpp
   transcoder/transcoderoptionsspeex.cpp
   transcoder/transcoderoptionsvorbis.cpp
   transcoder/transcoderoptionswma.cpp
@@ -253,8 +324,10 @@ set(SOURCES
   ui/albumcovermanager.cpp
   ui/albumcovermanagerlist.cpp
   ui/albumcoversearcher.cpp
+  ui/appearancesettingspage.cpp
   ui/backgroundstreamssettingspage.cpp
   ui/behavioursettingspage.cpp
+  ui/console.cpp
   ui/coverfromurldialog.cpp
   ui/edittagdialog.cpp
   ui/equalizer.cpp
@@ -264,6 +337,7 @@ set(SOURCES
   ui/iconloader.cpp
   ui/mainwindow.cpp
   ui/networkproxysettingspage.cpp
+  ui/networkremotesettingspage.cpp
   ui/notificationssettingspage.cpp
   ui/organisedialog.cpp
   ui/organiseerrordialog.cpp
@@ -272,6 +346,7 @@ set(SOURCES
   ui/screensaver.cpp
   ui/settingsdialog.cpp
   ui/settingspage.cpp
+  ui/standarditemiconloader.cpp
   ui/systemtrayicon.cpp
   ui/trackselectiondialog.cpp
   ui/windows7thumbbar.cpp
@@ -303,7 +378,6 @@ set(SOURCES
   widgets/ratingwidget.cpp
   widgets/renametablineedit.cpp
   widgets/sliderwidget.cpp
-  widgets/spinbox.cpp
   widgets/stickyslider.cpp
   widgets/stretchheaderview.cpp
   widgets/stylehelper.cpp
@@ -323,11 +397,12 @@ set(HEADERS
   analyzers/sonogram.h
   analyzers/turbine.h
 
+  core/application.h
   core/backgroundstreams.h
-  core/backgroundthread.h
   core/crashreporting.h
   core/database.h
   core/deletefiles.h
+  core/filesystemwatcherinterface.h
   core/globalshortcuts.h
   core/globalshortcutbackend.h
   core/gnomeglobalshortcutbackend.h
@@ -336,7 +411,9 @@ set(HEADERS
   core/network.h
   core/organise.h
   core/player.h
+  core/qtfslistener.h
   core/songloader.h
+  core/tagreaderclient.h
   core/taskmanager.h
   core/urlhandler.h
 
@@ -344,11 +421,13 @@ set(HEADERS
   covers/albumcoverfetchersearch.h
   covers/albumcoverloader.h
   covers/amazoncoverprovider.h
-  covers/artloader.h
   covers/coverprovider.h
   covers/coverproviders.h
   covers/coversearchstatisticsdialog.h
+  covers/currentartloader.h
+  covers/discogscoverprovider.h
   covers/kittenloader.h
+  covers/musicbrainzcoverprovider.h
 
   devices/connecteddevice.h
   devices/devicedatabasebackend.h
@@ -364,40 +443,49 @@ set(HEADERS
   engines/gstenginepipeline.h
   engines/gstelementdeleter.h
 
-  globalsearch/digitallyimportedsearchprovider.h
-  globalsearch/librarysearchprovider.h
   globalsearch/globalsearch.h
-  globalsearch/globalsearchpopup.h
-  globalsearch/globalsearchtooltip.h
-  globalsearch/globalsearchwidget.h
+  globalsearch/globalsearchmodel.h
+  globalsearch/globalsearchsettingspage.h
+  globalsearch/globalsearchview.h
+  globalsearch/groovesharksearchprovider.h
   globalsearch/searchprovider.h
-  globalsearch/tooltipactionwidget.h
-  globalsearch/tooltipresultwidget.h
+  globalsearch/simplesearchprovider.h
+  globalsearch/soundcloudsearchprovider.h
+  globalsearch/suggestionwidget.h
 
+  internet/cloudfileservice.h
+  internet/digitallyimportedclient.h
   internet/digitallyimportedservicebase.h
   internet/digitallyimportedsettingspage.h
-  internet/groovesharksearchplaylisttype.h
+  internet/geolocator.h
   internet/groovesharkservice.h
   internet/groovesharksettingspage.h
   internet/groovesharkurlhandler.h
   internet/icecastbackend.h
   internet/icecastfilterwidget.h
   internet/icecastmodel.h
-  internet/icecastservice.h 
+  internet/icecastservice.h
   internet/internetmimedata.h
   internet/internetmodel.h
   internet/internetservice.h
+  internet/internetsongmimedata.h
   internet/internetview.h
   internet/internetviewcontainer.h
   internet/jamendodynamicplaylist.h
   internet/jamendoservice.h
+  internet/localredirectserver.h
   internet/magnatunedownloaddialog.h
   internet/magnatunesettingspage.h
   internet/magnatuneservice.h
+  internet/oauthenticator.h
   internet/savedradio.h
-  internet/skyfmservice.h
+  internet/searchboxwidget.h
   internet/somafmservice.h
   internet/somafmurlhandler.h
+  internet/soundcloudservice.h
+  internet/subsonicservice.h
+  internet/subsonicsettingspage.h
+  internet/subsonicurlhandler.h
 
   library/groupbydialog.h
   library/library.h
@@ -410,9 +498,15 @@ set(HEADERS
   library/libraryviewcontainer.h
   library/librarywatcher.h
 
+  musicbrainz/acoustidclient.h
   musicbrainz/musicbrainzclient.h
-  musicbrainz/musicdnsclient.h
   musicbrainz/tagfetcher.h
+  
+  networkremote/networkremotehelper.h
+  networkremote/networkremote.h
+  networkremote/incomingdataparser.h
+  networkremote/outgoingdatacreator.h
+  networkremote/remoteclient.h
 
   playlist/dynamicplaylistcontrols.h
   playlist/playlist.h
@@ -422,6 +516,8 @@ set(HEADERS
   playlist/playlistfilter.h
   playlist/playlistheader.h
   playlist/playlistitemmimedata.h
+  playlist/playlistlistcontainer.h
+  playlist/playlistlistmodel.h
   playlist/playlistmanager.h
   playlist/playlistsequence.h
   playlist/playlisttabbar.h
@@ -440,9 +536,24 @@ set(HEADERS
   playlistparsers/plsparser.h
   playlistparsers/xspfparser.h
 
-  resolvers/libraryresolver.h
-  resolvers/resolver.h
-  resolvers/songresolver.h
+  podcasts/addpodcastbyurl.h
+  podcasts/addpodcastdialog.h
+  podcasts/addpodcastpage.h
+  podcasts/fixedopmlpage.h
+  podcasts/gpoddersearchpage.h
+  podcasts/gpoddersync.h
+  podcasts/gpoddertoptagsmodel.h
+  podcasts/gpoddertoptagspage.h
+  podcasts/itunessearchpage.h
+  podcasts/podcastbackend.h
+  podcasts/podcastdiscoverymodel.h
+  podcasts/podcastdownloader.h
+  podcasts/podcastinfowidget.h
+  podcasts/podcastservice.h
+  podcasts/podcastservicemodel.h
+  podcasts/podcastsettingspage.h
+  podcasts/podcastupdater.h
+  podcasts/podcasturlloader.h
 
   smartplaylists/generator.h
   smartplaylists/generatorinserter.h
@@ -464,6 +575,8 @@ set(HEADERS
   songinfo/songinfosettingspage.h
   songinfo/songinfotextview.h
   songinfo/songinfoview.h
+  songinfo/songkickconcerts.h
+  songinfo/songkickconcertwidget.h
   songinfo/songplaystats.h
   songinfo/ultimatelyricsprovider.h
   songinfo/ultimatelyricsreader.h
@@ -480,8 +593,10 @@ set(HEADERS
   ui/albumcovermanager.h
   ui/albumcovermanagerlist.h
   ui/albumcoversearcher.h
+  ui/appearancesettingspage.h
   ui/backgroundstreamssettingspage.h
   ui/behavioursettingspage.h
+  ui/console.h
   ui/coverfromurldialog.h
   ui/edittagdialog.h
   ui/equalizer.h
@@ -489,6 +604,7 @@ set(HEADERS
   ui/globalshortcutssettingspage.h
   ui/mainwindow.h
   ui/networkproxysettingspage.h
+  ui/networkremotesettingspage.h
   ui/notificationssettingspage.h
   ui/organisedialog.h
   ui/organiseerrordialog.h
@@ -496,6 +612,7 @@ set(HEADERS
   ui/qtsystemtrayicon.h
   ui/settingsdialog.h
   ui/settingspage.h
+  ui/standarditemiconloader.h
   ui/systemtrayicon.h
   ui/trackselectiondialog.h
   ui/windows7thumbbar.h
@@ -525,7 +642,6 @@ set(HEADERS
   widgets/ratingwidget.h
   widgets/renametablineedit.h
   widgets/sliderwidget.h
-  widgets/spinbox.h
   widgets/stickyslider.h
   widgets/stretchheaderview.h
   widgets/trackslider.h
@@ -539,8 +655,10 @@ set(UI
 
   devices/deviceproperties.ui
 
-  globalsearch/globalsearchpopup.ui
-  globalsearch/globalsearchwidget.ui
+  globalsearch/globalsearchsettingspage.ui
+  globalsearch/globalsearchview.ui
+  globalsearch/searchproviderstatuswidget.ui
+  globalsearch/suggestionwidget.ui
 
   internet/digitallyimportedsettingspage.ui
   internet/groovesharksettingspage.ui
@@ -548,7 +666,9 @@ set(UI
   internet/internetviewcontainer.ui
   internet/magnatunedownloaddialog.ui
   internet/magnatunesettingspage.ui
+  internet/searchboxwidget.ui
   internet/spotifysettingspage.ui
+  internet/subsonicsettingspage.ui
 
   library/groupbydialog.ui
   library/libraryfilterwidget.ui
@@ -557,10 +677,16 @@ set(UI
 
   playlist/dynamicplaylistcontrols.ui
   playlist/playlistcontainer.ui
+  playlist/playlistlistcontainer.ui
   playlist/playlistsequence.ui
   playlist/queuemanager.ui
 
-  remote/remotesettingspage.ui
+  podcasts/addpodcastbyurl.ui
+  podcasts/addpodcastdialog.ui
+  podcasts/gpoddersearchpage.ui
+  podcasts/itunessearchpage.ui
+  podcasts/podcastinfowidget.ui
+  podcasts/podcastsettingspage.ui
 
   smartplaylists/querysearchpage.ui
   smartplaylists/querysortpage.ui
@@ -568,6 +694,7 @@ set(UI
   smartplaylists/searchtermwidget.ui
   smartplaylists/wizardfinishpage.ui
 
+  songinfo/songkickconcertwidget.ui
   songinfo/songinfosettingspage.ui
 
   transcoder/transcodedialog.ui
@@ -576,6 +703,7 @@ set(UI
   transcoder/transcoderoptionsdialog.ui
   transcoder/transcoderoptionsflac.ui
   transcoder/transcoderoptionsmp3.ui
+  transcoder/transcoderoptionsopus.ui
   transcoder/transcoderoptionsspeex.ui
   transcoder/transcoderoptionsvorbis.ui
   transcoder/transcoderoptionswma.ui
@@ -585,8 +713,10 @@ set(UI
   ui/addstreamdialog.ui
   ui/albumcovermanager.ui
   ui/albumcoversearcher.ui
+  ui/appearancesettingspage.ui
   ui/backgroundstreamssettingspage.ui
   ui/behavioursettingspage.ui
+  ui/console.ui
   ui/coverfromurldialog.ui
   ui/edittagdialog.ui
   ui/equalizer.ui
@@ -594,6 +724,7 @@ set(UI
   ui/globalshortcutssettingspage.ui
   ui/mainwindow.ui
   ui/networkproxysettingspage.ui
+  ui/networkremotesettingspage.ui
   ui/notificationssettingspage.ui
   ui/organisedialog.ui
   ui/organiseerrordialog.ui
@@ -616,6 +747,8 @@ set(RESOURCES
   ../data/data.qrc
 )
 
+set(OTHER_SOURCES)
+
 set(LINGUAS "All" CACHE STRING "A space-seperated list of translations to compile in to Clementine, or \"None\".")
 if (LINGUAS STREQUAL "All")
   # build LANGUAGES from all existing .po files
@@ -628,7 +761,7 @@ else (LINGUAS STREQUAL "All")
   if (NOT LINGUAS OR LINGUAS STREQUAL "None")
     set (LANGUAGES "")
   else (NOT LINGUAS OR LINGUAS STREQUAL "None")
-    string(REGEX MATCHALL [a-zA-Z_]+
+    string(REGEX MATCHALL [a-zA-Z_@]+
            LANGUAGES ${LINGUAS})
   endif (NOT LINGUAS OR LINGUAS STREQUAL "None")
 endif (LINGUAS STREQUAL "All")
@@ -636,34 +769,31 @@ endif (LINGUAS STREQUAL "All")
 option(USE_INSTALL_PREFIX "Look for data in CMAKE_INSTALL_PREFIX" ON)
 
 # Visualisations
-if(ENABLE_VISUALISATIONS)
-
-  list(APPEND SOURCES
+optional_source(ENABLE_VISUALISATIONS
+  SOURCES
     visualisations/projectmpresetmodel.cpp
     visualisations/projectmvisualisation.cpp
     visualisations/visualisationcontainer.cpp
     visualisations/visualisationoverlay.cpp
     visualisations/visualisationselector.cpp
-  )
-  list(APPEND HEADERS
+  HEADERS
     visualisations/projectmpresetmodel.h
     visualisations/projectmvisualisation.h
     visualisations/visualisationcontainer.h
     visualisations/visualisationoverlay.h
     visualisations/visualisationselector.h
-  )
-  list(APPEND UI
+  UI
     visualisations/visualisationoverlay.ui
     visualisations/visualisationselector.ui
-  )
-endif(ENABLE_VISUALISATIONS)
+)
 
 # Lastfm
-if(HAVE_LIBLASTFM)
-  list(APPEND SOURCES
+optional_source(HAVE_LIBLASTFM
+  SOURCES
     covers/lastfmcoverprovider.cpp
     globalsearch/lastfmsearchprovider.cpp
     internet/fixlastfm.cpp
+    internet/lastfmcompat.cpp
     internet/lastfmservice.cpp
     internet/lastfmsettingspage.cpp
     internet/lastfmstationdialog.cpp
@@ -672,11 +802,8 @@ if(HAVE_LIBLASTFM)
     songinfo/echonesttags.cpp
     songinfo/lastfmtrackinfoprovider.cpp
     songinfo/tagwidget.cpp
-    suggesters/lastfmsuggester.cpp
-  )
-  list(APPEND HEADERS
+  HEADERS
     covers/lastfmcoverprovider.h
-    globalsearch/lastfmsearchprovider.h
     internet/lastfmservice.h
     internet/lastfmsettingspage.h
     internet/lastfmstationdialog.h
@@ -684,56 +811,71 @@ if(HAVE_LIBLASTFM)
     songinfo/echonesttags.h
     songinfo/lastfmtrackinfoprovider.h
     songinfo/tagwidget.h
-    suggesters/lastfmsuggester.h
-  )
-  list(APPEND UI
+  UI
     internet/lastfmsettingspage.ui
     internet/lastfmstationdialog.ui
-  )
-endif(HAVE_LIBLASTFM)
+)
 
-if(HAVE_SPOTIFY)
-  list(APPEND SOURCES
+# Spotify
+optional_source(HAVE_SPOTIFY
+  SOURCES
     globalsearch/spotifysearchprovider.cpp
-    internet/spotifyblobdownloader.cpp
-    internet/spotifysearchplaylisttype.cpp
     internet/spotifyserver.cpp
     internet/spotifyservice.cpp
     internet/spotifysettingspage.cpp
-    resolvers/spotifyresolver.cpp
-  )
-  list(APPEND HEADERS
+  HEADERS
     globalsearch/spotifysearchprovider.h
-    internet/spotifyblobdownloader.h
     internet/spotifyserver.h
     internet/spotifyservice.h
     internet/spotifysettingspage.h
-    resolvers/spotifyresolver.h
-  )
-endif(HAVE_SPOTIFY)
+  INCLUDE_DIRECTORIES
+    ${CMAKE_SOURCE_DIR}/ext/libclementine-spotifyblob
+    ${CMAKE_BINARY_DIR}/ext/libclementine-spotifyblob
+)
 
-if(APPLE)
-  list(APPEND HEADERS core/macglobalshortcutbackend.h)
-  list(APPEND HEADERS devices/macdevicelister.h)
-  list(APPEND HEADERS ui/macscreensaver.h)
-  list(APPEND HEADERS ui/macsystemtrayicon.h)
-  list(APPEND HEADERS widgets/maclineedit.h)
-  list(APPEND SOURCES core/macglobalshortcutbackend.mm)
-  list(APPEND SOURCES devices/macdevicelister.mm)
-  list(APPEND SOURCES globalsearch/globalsearchpopup.mm)
-  list(APPEND SOURCES ui/globalshortcutgrabber.mm)
-  list(APPEND SOURCES ui/macscreensaver.cpp)
-  list(APPEND SOURCES ui/macsystemtrayicon.mm)
-  list(APPEND SOURCES widgets/maclineedit.mm)
-  list(APPEND SOURCES widgets/osd_mac.mm)
-  include_directories(${GROWL}/Headers)
-else(APPLE)
-  if(WIN32)
-    list(APPEND SOURCES widgets/osd_win.cpp)
-  else(WIN32)
-    list(APPEND SOURCES widgets/osd_x11.cpp)
-  endif(WIN32)
-endif(APPLE)
+optional_source(HAVE_SPOTIFY_DOWNLOADER
+  SOURCES
+    internet/spotifyblobdownloader.cpp
+  HEADERS
+    internet/spotifyblobdownloader.h
+  INCLUDE_DIRECTORIES
+    ${QCA_INCLUDE_DIRS}
+)
+
+# Platform specific - OS X
+optional_source(APPLE
+  INCLUDE_DIRECTORIES
+    ${GROWL}/Headers
+    ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/google-breakpad/client/mac/build/Release/Breakpad.framework
+  SOURCES
+    core/macfslistener.mm
+    core/macglobalshortcutbackend.mm
+    core/mac_startup.mm
+    core/scoped_nsautorelease_pool.mm
+    devices/macdevicelister.mm
+    networkremote/bonjour.mm
+    ui/globalshortcutgrabber.mm
+    ui/macscreensaver.cpp
+    ui/macsystemtrayicon.mm
+    widgets/osd_mac.mm
+  HEADERS
+    core/macfslistener.h
+    core/macglobalshortcutbackend.h
+    devices/macdevicelister.h
+    ui/macsystemtrayicon.h
+)
+
+# Platform specific - Windows
+optional_source(WIN32
+  SOURCES
+    networkremote/tinysvcmdns.cpp
+    widgets/osd_win.cpp
+  INCLUDE_DIRECTORIES
+    ${CMAKE_SOURCE_DIR}/3rdparty/tinysvcmdns
+)
+
+# Platform specific - X11
+optional_source(LINUX SOURCES widgets/osd_x11.cpp)
 
 # DBUS and MPRIS - Linux specific
 if(HAVE_DBUS)
@@ -766,6 +908,11 @@ if(HAVE_DBUS)
       dbus/org.mpris.MediaPlayer2.TrackList.xml
       core/mpris2.h mpris::Mpris2 core/mpris2_tracklist Mpris2TrackList)
 
+  # MPRIS 2.1 DBUS interfaces
+  qt4_add_dbus_adaptor(SOURCES
+      dbus/org.mpris.MediaPlayer2.Playlists.xml
+      core/mpris2.h mpris::Mpris2 core/mpris2_playlists Mpris2Playlists)
+
   # org.freedesktop.Notifications DBUS interface
   qt4_add_dbus_interface(SOURCES
       dbus/org.freedesktop.Notifications.xml
@@ -776,6 +923,33 @@ if(HAVE_DBUS)
       dbus/org.gnome.SettingsDaemon.MediaKeys.xml
       dbus/gnomesettingsdaemon)
 
+  # org.freedesktop.Avahi.Server interface
+  add_custom_command(
+      OUTPUT
+      ${CMAKE_CURRENT_BINARY_DIR}/dbus/avahiserver.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/dbus/avahiserver.h
+      COMMAND ${QT_DBUSXML2CPP_EXECUTABLE}
+      dbus/org.freedesktop.Avahi.Server.xml
+      -p ${CMAKE_CURRENT_BINARY_DIR}/dbus/avahiserver
+      -i dbus/metatypes.h
+      DEPENDS dbus/org.freedesktop.Avahi.Server.xml
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  list(APPEND HEADERS ${CMAKE_CURRENT_BINARY_DIR}/dbus/avahiserver.h)
+  list(APPEND SOURCES ${CMAKE_CURRENT_BINARY_DIR}/dbus/avahiserver.cpp)
+
+  # org.freedesktop.Avahi.EntryGroup interface
+  add_custom_command(
+      OUTPUT
+      ${CMAKE_CURRENT_BINARY_DIR}/dbus/avahientrygroup.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/dbus/avahientrygroup.h
+      COMMAND ${QT_DBUSXML2CPP_EXECUTABLE}
+      dbus/org.freedesktop.Avahi.EntryGroup.xml
+      -p ${CMAKE_CURRENT_BINARY_DIR}/dbus/avahientrygroup
+      -i dbus/metatypes.h
+      DEPENDS dbus/org.freedesktop.Avahi.EntryGroup.xml
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  list(APPEND HEADERS ${CMAKE_CURRENT_BINARY_DIR}/dbus/avahientrygroup.h)
+  list(APPEND SOURCES ${CMAKE_CURRENT_BINARY_DIR}/dbus/avahientrygroup.cpp)
 
   # DeviceKit DBUS interfaces
   if(HAVE_DEVICEKIT)
@@ -787,216 +961,205 @@ if(HAVE_DBUS)
         dbus/udisksdevice)
   endif(HAVE_DEVICEKIT)
 
-  # MPRIS source
-  list(APPEND SOURCES core/mpris.cpp core/mpris1.cpp core/mpris2.cpp)
-  list(APPEND HEADERS core/mpris.h   core/mpris1.h   core/mpris2.h)
-
   # Wiimotedev interface classes
   if(ENABLE_WIIMOTEDEV)
     qt4_add_dbus_interface(SOURCES
         dbus/org.wiimotedev.deviceEvents.xml
         dbus/wiimotedev)
-
-    list(APPEND SOURCES
-      wiimotedev/shortcuts.cpp
-      wiimotedev/wiimotesettingspage.cpp
-      wiimotedev/wiimoteshortcutgrabber.cpp
-    )
-    list(APPEND HEADERS
-      wiimotedev/shortcuts.h
-      wiimotedev/wiimotesettingspage.h
-      wiimotedev/wiimoteshortcutgrabber.h
-    )
   endif(ENABLE_WIIMOTEDEV)
-
-  # DeviceKit lister source
-  if(HAVE_DEVICEKIT)
-    list(APPEND SOURCES devices/devicekitlister.cpp)
-    list(APPEND HEADERS devices/devicekitlister.h)
-  endif(HAVE_DEVICEKIT)
-
-  # Gnome Screensaver DBus interface
-  list(APPEND SOURCES ui/dbusscreensaver.cpp)
 endif(HAVE_DBUS)
 
-# Libgpod device backend
-if(HAVE_LIBGPOD)
-  include_directories(${LIBGPOD_INCLUDE_DIRS})
+optional_source(HAVE_DBUS
+  SOURCES
+    core/mpris.cpp
+    core/mpris1.cpp
+    core/mpris2.cpp
+    networkremote/avahi.cpp
+    ui/dbusscreensaver.cpp
+  HEADERS
+    core/mpris.h
+    core/mpris1.h
+    core/mpris2.h
+)
 
-  list(APPEND SOURCES devices/gpoddevice.cpp devices/gpodloader.cpp)
-  list(APPEND HEADERS devices/gpoddevice.h devices/gpodloader.h)
-endif(HAVE_LIBGPOD)
+optional_source(HAVE_WIIMOTEDEV
+  SOURCES
+    wiimotedev/shortcuts.cpp
+    wiimotedev/wiimotesettingspage.cpp
+    wiimotedev/wiimoteshortcutgrabber.cpp
+  HEADERS
+    wiimotedev/shortcuts.h
+    wiimotedev/wiimotesettingspage.h
+    wiimotedev/wiimoteshortcutgrabber.h
+)
+
+optional_source(HAVE_DEVICEKIT
+  SOURCES devices/devicekitlister.cpp
+  HEADERS devices/devicekitlister.h
+)
+
+# Libgpod device backend
+optional_source(HAVE_LIBGPOD
+  INCLUDE_DIRECTORIES ${LIBGPOD_INCLUDE_DIRS}
+  SOURCES
+    devices/gpoddevice.cpp
+    devices/gpodloader.cpp
+  HEADERS
+    devices/gpoddevice.h
+    devices/gpodloader.h
+)
 
 # GIO device backend
-if(HAVE_GIO)
-  include_directories(${GIO_INCLUDE_DIRS})
-
-  list(APPEND SOURCES devices/giolister.cpp)
-  list(APPEND HEADERS devices/giolister.h)
-endif(HAVE_GIO)
+optional_source(HAVE_GIO
+  INCLUDE_DIRECTORIES ${GIO_INCLUDE_DIRS}
+  SOURCES devices/giolister.cpp
+  HEADERS devices/giolister.h
+)
 
 # CDIO backend and device
-if(HAVE_AUDIOCD)
-  list(APPEND SOURCES devices/cddadevice.cpp)
-  list(APPEND SOURCES devices/cddalister.cpp)
-
-  list(APPEND HEADERS devices/cddadevice.h)
-  list(APPEND HEADERS devices/cddalister.h)
-endif(HAVE_AUDIOCD)
+optional_source(HAVE_AUDIOCD
+  SOURCES
+    devices/cddadevice.cpp
+    devices/cddalister.cpp
+  HEADERS
+    devices/cddadevice.h
+    devices/cddalister.h
+)
 
 # libimobiledevice backend and device
-if(HAVE_IMOBILEDEVICE)
-  include_directories(${IMOBILEDEVICE_INCLUDE_DIRS})
-  include_directories(${PLIST_INCLUDE_DIRS})
-  include_directories(${PLISTPP_INCLUDE_DIRS})
-
-  list(APPEND SOURCES devices/afcdevice.cpp)
-  list(APPEND SOURCES devices/afcfile.cpp)
-  list(APPEND SOURCES devices/afctransfer.cpp)
-  list(APPEND SOURCES devices/ilister.cpp)
-  list(APPEND SOURCES devices/imobiledeviceconnection.cpp)
-
-  list(APPEND HEADERS devices/afcdevice.h)
-  list(APPEND HEADERS devices/afcfile.h)
-  list(APPEND HEADERS devices/afctransfer.h)
-  list(APPEND HEADERS devices/ilister.h)
-endif(HAVE_IMOBILEDEVICE)
+optional_source(HAVE_IMOBILEDEVICE
+  INCLUDE_DIRECTORIES
+    ${IMOBILEDEVICE_INCLUDE_DIRS}
+    ${PLIST_INCLUDE_DIRS}
+    ${PLISTPP_INCLUDE_DIRS}
+  SOURCES
+    devices/afcdevice.cpp
+    devices/afcfile.cpp
+    devices/afctransfer.cpp
+    devices/ilister.cpp
+    devices/imobiledeviceconnection.cpp
+  HEADERS
+    devices/afcdevice.h
+    devices/afcfile.h
+    devices/afctransfer.h
+    devices/ilister.h
+)
 
 # mtp device
-if(HAVE_LIBMTP)
-  include_directories(${LIBMTP_INCLUDE_DIRS})
-
-  if(LINUX)
-    list(APPEND SOURCES devices/mtplister.cpp)
-    list(APPEND HEADERS devices/mtplister.h)
-  endif(LINUX)
-
-  list(APPEND SOURCES devices/mtpconnection.cpp)
-  list(APPEND SOURCES devices/mtpdevice.cpp)
-  list(APPEND SOURCES devices/mtploader.cpp)
-
-  list(APPEND SOURCES devices/mtpconnection.h)
-  list(APPEND HEADERS devices/mtpdevice.h)
-  list(APPEND HEADERS devices/mtploader.h)
-  
-endif(HAVE_LIBMTP)
-
-# Windows media lister
-IF(WIN32)
-  list(APPEND SOURCES devices/wmdmdevice.cpp)
-  list(APPEND SOURCES devices/wmdmlister.cpp)
-  list(APPEND SOURCES devices/wmdmloader.cpp)
-  list(APPEND SOURCES devices/wmdmprogress.cpp)
-  list(APPEND SOURCES devices/wmdmthread.cpp)
-
-  list(APPEND HEADERS devices/wmdmdevice.h)
-  list(APPEND HEADERS devices/wmdmlister.h)
-  list(APPEND HEADERS devices/wmdmloader.h)
-ENDIF(WIN32)
-
-# Mac specific startup stuff
-if(APPLE)
-  include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/google-breakpad/client/mac/build/Release/Breakpad.framework)
-  list(APPEND SOURCES core/mac_startup.mm)
-endif(APPLE)
-
-if(HAVE_REMOTE)
-  list(APPEND HEADERS
-    remote/icesession.h
-    remote/portforwarder.h
-    remote/remote.h
-    remote/remotesettingspage.h
-    remote/streampipeline.h
-  )
-  list(APPEND SOURCES
-    remote/icesession.cpp
-    remote/portforwarder.h
-    remote/remote.cpp
-    remote/remotesettingspage.cpp
-    remote/streampipeline.cpp
-  )
-endif(HAVE_REMOTE)
+optional_source(HAVE_LIBMTP
+  INCLUDE_DIRECTORIES ${LIBMTP_INCLUDE_DIRS}
+  SOURCES
+    devices/mtpconnection.cpp
+    devices/mtpdevice.cpp
+    devices/mtploader.cpp
+  HEADERS
+    devices/mtpdevice.h
+    devices/mtploader.h
+)
 
 if(LINUX)
-  # Hack to add Clementine to the Unity system tray whitelist
-  list(APPEND SOURCES core/ubuntuunityhack.cpp)
-  list(APPEND HEADERS core/ubuntuunityhack.h)
+  optional_source(HAVE_LIBMTP
+    INCLUDE_DIRECTORIES ${LIBMTP_INCLUDE_DIRS}
+    SOURCES
+      devices/mtplister.cpp
+    HEADERS
+      devices/mtplister.h
+  )
 endif(LINUX)
 
-# OS-specific sources that should be searched for translatable strings even
-# if they're not compiled
-list(APPEND OTHER_SOURCES
-  core/macglobalshortcutbackend.h
-  core/macglobalshortcutbackend.mm
-  core/modelfuturewatcher.h
-  core/mpris.cpp
-  core/mpris.h
-  core/mpris1.cpp
-  core/mpris1.h
-  core/mpris2.cpp
-  core/mpris2.h
-  core/ubuntuunityhack.cpp
-  core/ubuntuunityhack.h
-  devices/afcdevice.cpp
-  devices/afcdevice.h
-  devices/afcfile.cpp
-  devices/afcfile.h
-  devices/afctransfer.cpp
-  devices/afctransfer.h
-  devices/cddadevice.cpp
-  devices/cddadevice.h
-  devices/cddalister.cpp
-  devices/cddalister.h
-  devices/devicekitlister.h
-  devices/devicekitlister.cpp
-  devices/gpoddevice.cpp
-  devices/gpoddevice.h
-  devices/gpodloader.cpp
-  devices/gpodloader.h
-  devices/ilister.cpp
-  devices/ilister.h
-  devices/imobiledeviceconnection.cpp
-  devices/imobiledeviceconnection.h
-  devices/mtpconnection.cpp
-  devices/mtpconnection.h
-  devices/mtpdevice.cpp
-  devices/mtpdevice.h
-  devices/mtploader.cpp
-  devices/mtploader.h
-  devices/wmdmlister.cpp
-  devices/wmdmlister.h
-  devices/wmdmloader.h
-  devices/wmdmloader.cpp
-  internet/spotifyblobdownloader.cpp
-  internet/spotifyblobdownloader.h
-  internet/spotifysettingspage.cpp
-  internet/spotifysettingspage.h
-  ${CMAKE_CURRENT_BINARY_DIR}/ui_spotifysettingspage.h
-  internet/spotifysearchplaylisttype.cpp
-  internet/spotifysearchplaylisttype.h
-  internet/spotifyserver.cpp
-  internet/spotifyserver.h
-  internet/spotifyservice.cpp
-  internet/spotifyservice.h
-  remote/remote.cpp
-  remote/remote.h
-  remote/remotesettingspage.cpp
-  remote/remotesettingspage.h
-  ${CMAKE_CURRENT_BINARY_DIR}/ui_remotesettingspage.h
-  suggesters/lastfmsuggester.cpp
-  suggesters/lastfmsuggester.h
-  ui/macsystemtrayicon.h
-  ui/macsystemtrayicon.mm
-  wiimotedev/wiimotesettingspage.cpp
-  wiimotedev/wiimotesettingspage.h
-  wiimotedev/wiimoteshortcutgrabber.cpp
-  wiimotedev/wiimoteshortcutgrabber.h
-  ${CMAKE_CURRENT_BINARY_DIR}/ui_wiimotesettingspage.h
-  ${CMAKE_CURRENT_BINARY_DIR}/ui_wiimoteshortcutgrabber.h
-  widgets/osd_mac.mm
-  widgets/osd_win.cpp
-  widgets/osd_x11.cpp
+# Windows media lister
+optional_source(WIN32
+  SOURCES
+    devices/wmdmdevice.cpp
+    devices/wmdmlister.cpp
+    devices/wmdmloader.cpp
+    devices/wmdmprogress.cpp
+    devices/wmdmthread.cpp
+  HEADERS
+    devices/wmdmdevice.h
+    devices/wmdmlister.h
+    devices/wmdmloader.h
+)
+
+# Moodbar support
+optional_source(HAVE_MOODBAR
+  SOURCES
+    moodbar/moodbarcontroller.cpp
+    moodbar/moodbaritemdelegate.cpp
+    moodbar/moodbarloader.cpp
+    moodbar/moodbarpipeline.cpp
+    moodbar/moodbarproxystyle.cpp
+    moodbar/moodbarrenderer.cpp
+  HEADERS
+    moodbar/moodbarcontroller.h
+    moodbar/moodbaritemdelegate.h
+    moodbar/moodbarloader.h
+    moodbar/moodbarpipeline.h
+    moodbar/moodbarproxystyle.h
+)
+
+# Google Drive support
+optional_source(HAVE_GOOGLE_DRIVE
+  SOURCES
+    internet/googledriveclient.cpp
+    internet/googledriveservice.cpp
+    internet/googledrivesettingspage.cpp
+    internet/googledriveurlhandler.cpp
+  HEADERS
+    internet/googledriveclient.h
+    internet/googledriveservice.h
+    internet/googledrivesettingspage.h
+    internet/googledriveurlhandler.h
+  UI
+    internet/googledrivesettingspage.ui
+)
+
+# Ubuntu One file support
+optional_source(HAVE_UBUNTU_ONE
+  SOURCES
+    internet/ubuntuoneauthenticator.cpp
+    internet/ubuntuoneservice.cpp
+    internet/ubuntuonesettingspage.cpp
+    internet/ubuntuoneurlhandler.cpp
+  HEADERS
+    internet/ubuntuoneauthenticator.h
+    internet/ubuntuoneservice.h
+    internet/ubuntuonesettingspage.h
+    internet/ubuntuoneurlhandler.h
+  UI
+    internet/ubuntuonesettingspage.ui
+)
+
+# Dropbox support
+optional_source(HAVE_DROPBOX
+  SOURCES
+    internet/dropboxauthenticator.cpp
+    internet/dropboxservice.cpp
+    internet/dropboxsettingspage.cpp
+    internet/dropboxurlhandler.cpp
+  HEADERS
+    internet/dropboxauthenticator.h
+    internet/dropboxservice.h
+    internet/dropboxsettingspage.h
+    internet/dropboxurlhandler.h
+  UI
+    internet/dropboxsettingspage.ui
+)
+
+# Skydrive support
+optional_source(HAVE_SKYDRIVE
+  SOURCES
+    internet/skydriveservice.cpp
+    internet/skydriveurlhandler.cpp
+  HEADERS
+    internet/skydriveservice.h
+    internet/skydriveurlhandler.h
+)
+
+# Hack to add Clementine to the Unity system tray whitelist
+optional_source(LINUX
+  SOURCES core/ubuntuunityhack.cpp
+  HEADERS core/ubuntuunityhack.h
 )
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
@@ -1009,13 +1172,13 @@ qt4_wrap_cpp(MOC ${HEADERS})
 qt4_wrap_ui(UIC ${UI})
 qt4_add_resources(QRC ${RESOURCES})
 
-add_pot(
+add_pot(POT
   ${CMAKE_CURRENT_SOURCE_DIR}/translations/header
   ${CMAKE_CURRENT_SOURCE_DIR}/translations/translations.pot
   ${SOURCES} ${MOC} ${UIC} ${OTHER_SOURCES}
+  ../data/oauthsuccess.html
 )
 add_po(PO clementine_
-  POT ${CMAKE_CURRENT_SOURCE_DIR}/translations/translations.pot
   LANGUAGES ${LANGUAGES}
   DIRECTORY translations
 )
@@ -1025,20 +1188,25 @@ add_library(clementine_lib STATIC
   ${MOC}
   ${UIC}
   ${QRC}
+  ${POT}
   ${PO}
+  ${OTHER_UIC_SOURCES}
 )
 
 add_dependencies(clementine_lib pot)
 
 
 target_link_libraries(clementine_lib
-  chardet
-  echoprint
-  sha2
+  libclementine-common
+  libclementine-tagreader
+  libclementine-remote
+  ${SHA2_LIBRARIES}
+  ${TAGLIB_LIBRARIES}
+  ${MYGPOQT_LIBRARIES}
+  ${CHROMAPRINT_LIBRARIES}
   ${ECHONEST_LIBRARIES}
   ${GOBJECT_LIBRARIES}
   ${GLIB_LIBRARIES}
-  ${TAGLIB_LIBRARIES}
   ${QJSON_LIBRARIES}
   ${QT_LIBRARIES}
   ${GSTREAMER_BASE_LIBRARIES}
@@ -1049,8 +1217,8 @@ target_link_libraries(clementine_lib
   ${QTSINGLECOREAPPLICATION_LIBRARIES}
   ${QTIOCOMPRESSOR_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
-  dl
   z
+  Qocoa
 )
 
 if(ENABLE_VISUALISATIONS)
@@ -1081,8 +1249,13 @@ if(HAVE_IMOBILEDEVICE)
     ${USBMUXD_LIBRARIES}
     gstafcsrc
   )
+  link_directories(${IMOBILEDEVICE_LIBRARY_DIRS})
   link_directories(${USBMUXD_LIBRARY_DIRS})
 endif(HAVE_IMOBILEDEVICE)
+
+if(HAVE_MOODBAR)
+  target_link_libraries(clementine_lib gstmoodbar)
+endif()
 
 if(HAVE_LIBMTP)
   target_link_libraries(clementine_lib ${LIBMTP_LIBRARIES})
@@ -1091,15 +1264,6 @@ endif(HAVE_LIBMTP)
 if(HAVE_LIBINDICATE)
   target_link_libraries(clementine_lib ${INDICATEQT_LIBRARIES})
 endif(HAVE_LIBINDICATE)
-
-if(HAVE_REMOTE)
-  target_link_libraries(clementine_lib ${GLOOX_LIBRARIES})
-  link_directories(${GLOOX_LIBRARY_DIRS})
-  target_link_libraries(clementine_lib xrme)
-  target_link_libraries(clementine_lib portfwd)
-  target_link_libraries(clementine_lib ${PJSIP_LIBRARIES})
-  link_directories(${PJSIP_LIBRARY_DIRS})
-endif(HAVE_REMOTE)
 
 if(HAVE_BREAKPAD)
   if (LINUX)
@@ -1115,9 +1279,15 @@ endif(HAVE_BREAKPAD)
 if(HAVE_SPOTIFY)
   target_link_libraries(clementine_lib
     clementine-spotifyblob-messages
-    gstspotifytcpsrc
   )
 endif(HAVE_SPOTIFY)
+
+if(HAVE_SPOTIFY_DOWNLOADER)
+  target_link_libraries(clementine_lib
+    ${QCA_LIBRARIES}
+  )
+  link_directories(${QCA_LIBRARY_DIRS})
+endif(HAVE_SPOTIFY_DOWNLOADER)
 
 if (APPLE)
   target_link_libraries(clementine_lib
@@ -1147,20 +1317,25 @@ if (WIN32)
   target_link_libraries(clementine_lib
     ${ZLIB_LIBRARIES}
     ${MSWMDM_LIBRARIES}
-    ${SAC_SHIM_LIBRARIES}
     ${QTSPARKLE_LIBRARIES}
+    tinysvcmdns
     qtwin
   )
 endif (WIN32)
 
-if (LINUX)
+if (UNIX AND NOT APPLE)
   # Hack: the Gold linker pays attention to the order that libraries are
   # specified on the link line.  -lX11 and -ldl are provided earlier in the link
   # command but they're actually used by libraries that appear after them, so
   # they end up getting ignored.  This appends them to the very end of the link
   # line, ensuring they're always used.
-  target_link_libraries(clementine_lib -lX11 -ldl)
-endif (LINUX)
+  find_package(X11)
+  if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+    target_link_libraries(clementine_lib ${X11_X11_LIB})
+  else ()
+    target_link_libraries(clementine_lib ${X11_X11_LIB} ${CMAKE_DL_LIBS})
+  endif ()
+endif ()
 
 add_dependencies(clementine_lib qtsingleapplication)
 
@@ -1187,6 +1362,11 @@ add_executable(clementine
   ${CLEMENTINE-WIN32-RESOURCES}
   main.cpp
 )
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+  target_link_libraries(clementine execinfo)
+endif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+
 target_link_libraries(clementine
   clementine_lib
 )
@@ -1195,6 +1375,7 @@ target_link_libraries(clementine
 if(HAVE_SPOTIFY_BLOB)
   add_dependencies(clementine clementine-spotifyblob)
 endif(HAVE_SPOTIFY_BLOB)
+add_dependencies(clementine clementine-tagreader)
 
 set_target_properties(clementine PROPERTIES
   MACOSX_BUNDLE_INFO_PLIST "../dist/Info.plist"
@@ -1248,19 +1429,27 @@ if (APPLE)
   add_custom_target(clementine-breakpad
     DEPENDS ${PROJECT_BINARY_DIR}/clementine.breakpad)
 
+  if (APPLE_DEVELOPER_ID)
+    add_custom_command(TARGET clementine
+      POST_BUILD
+      COMMAND
+      codesign -s "${APPLE_DEVELOPER_ID}" -fv ${PROJECT_BINARY_DIR}/clementine.app
+    )
+  endif()
+
 
   add_custom_command(
-    OUTPUT ${PROJECT_BINARY_DIR}/clementine-${CLEMENTINE_VERSION_RPM}.dmg
-    ${CMAKE_COMMAND} -E remove -f ${PROJECT_BINARY_DIR}/clementine-${CLEMENTINE_VERSION_RPM}.dmg
-    COMMAND macdeployqt clementine.app -no-plugins -dmg
+    OUTPUT ${PROJECT_BINARY_DIR}/clementine-${CLEMENTINE_VERSION_SPARKLE}.dmg
+    ${CMAKE_COMMAND} -E remove -f ${PROJECT_BINARY_DIR}/clementine-${CLEMENTINE_VERSION_SPARKLE}.dmg
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/../dist/create-dmg.sh ${PROJECT_BINARY_DIR}/clementine.app
     COMMAND ${CMAKE_COMMAND} -E rename
       ${PROJECT_BINARY_DIR}/clementine.dmg
-      ${PROJECT_BINARY_DIR}/clementine-${CLEMENTINE_VERSION_RPM}.dmg
+      ${PROJECT_BINARY_DIR}/clementine-${CLEMENTINE_VERSION_SPARKLE}.dmg
     DEPENDS clementine
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   )
   add_custom_target(dmg
-    DEPENDS ${PROJECT_BINARY_DIR}/clementine-${CLEMENTINE_VERSION_RPM}.dmg)
+    DEPENDS ${PROJECT_BINARY_DIR}/clementine-${CLEMENTINE_VERSION_SPARKLE}.dmg)
 else (APPLE)
   install(TARGETS clementine
     RUNTIME DESTINATION bin

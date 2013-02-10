@@ -28,11 +28,13 @@
 
 class QCleanlooksStyle;
 
+class Application;
 class DynamicPlaylistControls;
 class LibraryBackend;
 class PlaylistHeader;
 class RadioLoadingIndicator;
 class RatingItemDelegate;
+class QTimeLine;
 
 
 // This proxy style works around a bug/feature introduced in Qt 4.7's QGtkStyle
@@ -56,15 +58,26 @@ private:
 
 class PlaylistView : public QTreeView {
   Q_OBJECT
-  Q_PROPERTY(bool background_enabled 
-             READ background_enabled 
-             WRITE set_background_enabled 
-             NOTIFY BackgroundPropertyChanged)
  public:
+
+  enum BackgroundImageType {
+    Default,
+    None,
+    Custom,
+    AlbumCover
+  };
+
   PlaylistView(QWidget* parent = 0);
 
   static const int kStateVersion;
+  // Constants for settings: are persistent, values should not be changed
+  static const char* kSettingBackgroundImageType;
+  static const char* kSettingBackgroundImageFilename;
+  static const int kSettingBackgroundBlurLevel;
 
+  static ColumnAlignmentMap DefaultColumnAlignment();
+
+  void SetApplication(Application* app);
   void SetItemDelegates(LibraryBackend* backend);
   void SetPlaylist(Playlist* playlist);
   void RemoveSelected();
@@ -72,13 +85,13 @@ class PlaylistView : public QTreeView {
   void SetReadOnlySettings(bool read_only) { read_only_settings_ = read_only; }
 
   Playlist* playlist() const { return playlist_; }
-  bool      background_enabled() const { return background_enabled_; }
+  BackgroundImageType background_image_type() const { return background_image_type_; }
+  Qt::Alignment column_alignment(int section) const;
 
   // QTreeView
   void drawTree(QPainter* painter, const QRegion& region) const;
   void drawRow(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
-  void keyPressEvent(QKeyEvent* event);
-  void setModel(QAbstractItemModel *model);
+  void setModel(QAbstractItemModel* model);
 
  public slots:
   void ReloadSettings();
@@ -88,6 +101,11 @@ class PlaylistView : public QTreeView {
   void JumpToLastPlayedTrack();
   void closeEditor(QWidget* editor, QAbstractItemDelegate::EndEditHint hint);
   void DynamicModeChanged(bool dynamic);
+  void SetColumnAlignment(int section, Qt::Alignment alignment);
+
+  void CopyCurrentSongToClipboard() const;
+  void CurrentSongChanged(const Song& new_song, const QString& uri, const QImage& cover_art);
+  void PlayerStopped();
 
  signals:
   void PlayItem(const QModelIndex& index);
@@ -96,8 +114,11 @@ class PlaylistView : public QTreeView {
   void SeekTrack(int gap);
   void FocusOnFilterSignal(QKeyEvent *event);
   void BackgroundPropertyChanged();
+  void ColumnAlignmentChanged(const ColumnAlignmentMap& alignment);
 
  protected:
+  // QWidget
+  void keyPressEvent(QKeyEvent* event);
   void contextMenuEvent(QContextMenuEvent* e);
   void hideEvent(QHideEvent* event);
   void showEvent(QShowEvent* event);
@@ -105,7 +126,6 @@ class PlaylistView : public QTreeView {
   void mouseMoveEvent(QMouseEvent* event);
   void mousePressEvent(QMouseEvent* event);
   void leaveEvent(QEvent*);
-  void scrollContentsBy(int dx, int dy);
   void paintEvent(QPaintEvent *event);
   void dragMoveEvent(QDragMoveEvent *event);
   void dragEnterEvent(QDragEnterEvent *event);
@@ -113,6 +133,12 @@ class PlaylistView : public QTreeView {
   void dropEvent(QDropEvent *event);
   void resizeEvent(QResizeEvent* event);
   bool eventFilter(QObject* object, QEvent* event);
+
+  // QAbstractScrollArea
+  void scrollContentsBy(int dx, int dy);
+
+  // QAbstractItemView
+  void rowsInserted(const QModelIndex& parent, int start, int end);
 
  private slots:
   void LoadGeometry();
@@ -129,34 +155,61 @@ class PlaylistView : public QTreeView {
   void RatingHoverIn(const QModelIndex& index, const QPoint& pos);
   void RatingHoverOut();
 
+  void FadePreviousBackgroundImage(qreal value);
+
  private:
   void ReloadBarPixmaps();
   QList<QPixmap> LoadBarPixmap(const QString& filename);
   void UpdateCachedCurrentRowPixmap(QStyleOptionViewItemV4 option,
                                     const QModelIndex& index);
 
-  inline void set_background_enabled(bool bg) { background_enabled_ = bg; emit BackgroundPropertyChanged(); }
+  void set_background_image_type(BackgroundImageType bg) { background_image_type_ = bg; emit BackgroundPropertyChanged(); }
+  // Save image as the background_image_ after applying some modifications (opacity, ...).
+  // Should be used instead of modifying background_image_ directly
+  void set_background_image(const QImage& image);
 
  private:
   static const int kGlowIntensitySteps;
   static const int kAutoscrollGraceTimeout;
   static const int kDropIndicatorWidth;
   static const int kDropIndicatorGradientWidth;
-
+  static const qreal kBackgroundOpacity;
+  
   QList<int> GetEditableColumns();
   QModelIndex NextEditableIndex(const QModelIndex& current);
   QModelIndex PrevEditableIndex(const QModelIndex& current);
 
   void RepositionDynamicControls();
-  
+
+  Application* app_;
   PlaylistProxyStyle* style_;
   Playlist* playlist_;
   PlaylistHeader* header_;
   bool setting_initial_header_layout_;
   bool upgrading_from_qheaderview_;
   bool read_only_settings_;
+  int upgrading_from_version_;
 
-  bool background_enabled_;
+  BackgroundImageType background_image_type_;
+  // Stores the background image to be displayed. As we want this image to be
+  // particular (in terms of format, opacity), you should probably use
+  // set_background_image_type instead of modifying background_image_ directly
+  QImage background_image_;
+  int blur_radius_;
+  // Used if background image is a filemane
+  QString background_image_filename_;
+  QImage current_song_cover_art_;
+  QPixmap cached_scaled_background_image_;
+  
+  // For fading when image change
+  QPixmap previous_background_image_;
+  qreal previous_background_image_opacity_;
+  QTimeLine* fade_animation_;
+  
+  // To know if we should redraw the background or not
+  int last_height_;
+  int last_width_;
+  bool force_background_redraw_;
 
   bool glow_enabled_;
   bool currently_glowing_;
@@ -188,6 +241,8 @@ class PlaylistView : public QTreeView {
   bool drag_over_;
 
   DynamicPlaylistControls* dynamic_controls_;
+
+  ColumnAlignmentMap column_alignment_;
 };
 
 #endif // PLAYLISTVIEW_H

@@ -16,6 +16,8 @@
 */
 
 #include "xspfparser.h"
+#include "core/timeconstants.h"
+#include "core/utilities.h"
 
 #include <QDomDocument>
 #include <QFile>
@@ -34,12 +36,12 @@ SongList XSPFParser::Load(QIODevice *device, const QString& playlist_path,
   SongList ret;
 
   QXmlStreamReader reader(device);
-  if (!ParseUntilElement(&reader, "playlist") ||
-      !ParseUntilElement(&reader, "trackList")) {
+  if (!Utilities::ParseUntilElement(&reader, "playlist") ||
+      !Utilities::ParseUntilElement(&reader, "trackList")) {
     return ret;
   }
 
-  while (!reader.atEnd() && ParseUntilElement(&reader, "track")) {
+  while (!reader.atEnd() && Utilities::ParseUntilElement(&reader, "track")) {
     Song song = ParseTrack(&reader, dir);
     if (song.is_valid()) {
       ret << song;
@@ -90,13 +92,13 @@ Song XSPFParser::ParseTrack(QXmlStreamReader* reader, const QDir& dir) const {
   }
 
 return_song:
-  Song song;
+  Song song = LoadSong(location, 0, dir);
+
+  // Override metadata with what was in the playlist
   song.set_title(title);
   song.set_artist(artist);
   song.set_album(album);
   song.set_length_nanosec(nanosec);
-  LoadSong(location, 0, dir, &song);
-
   return song;
 }
 

@@ -16,7 +16,6 @@
 */
 
 #include "transcoder.h"
-#include "core/logging.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -26,6 +25,9 @@
 #include <QtDebug>
 
 #include <boost/bind.hpp>
+
+#include "core/logging.h"
+#include "core/signalchecker.h"
 
 using boost::shared_ptr;
 
@@ -231,6 +233,7 @@ QList<TranscoderPreset> Transcoder::GetAllPresets() {
   ret << PresetForFileType(Song::Type_OggSpeex);
   ret << PresetForFileType(Song::Type_Asf);
   ret << PresetForFileType(Song::Type_Wav);
+  ret << PresetForFileType(Song::Type_OggOpus);
   return ret;
 }
 
@@ -248,6 +251,8 @@ TranscoderPreset Transcoder::PresetForFileType(Song::FileType type) {
       return TranscoderPreset(type, "Ogg Flac",   "ogg",  "audio/x-flac",   "application/ogg");
     case Song::Type_OggSpeex:
       return TranscoderPreset(type, "Ogg Speex",  "spx",  "audio/x-speex",  "application/ogg");
+    case Song::Type_OggOpus:
+      return TranscoderPreset(type, "Ogg Opus",  "opus",  "audio/x-opus",  "application/ogg");
     case Song::Type_Asf:
       return TranscoderPreset(type, "Windows Media audio", "wma", "audio/x-wma", "video/x-ms-asf");
     case Song::Type_Wav:
@@ -335,7 +340,8 @@ Transcoder::StartJobStatus Transcoder::MaybeStartNextJob() {
 
 void Transcoder::NewPadCallback(GstElement*, GstPad* pad, gboolean, gpointer data) {
   JobState* state = reinterpret_cast<JobState*>(data);
-  GstPad* const audiopad = gst_element_get_pad(state->convert_element_, "sink");
+  GstPad* const audiopad = gst_element_get_static_pad(
+      state->convert_element_, "sink");
 
   if (GST_PAD_IS_LINKED(audiopad)) {
     qLog(Debug) << "audiopad is already linked, unlinking old pad";
@@ -401,17 +407,17 @@ bool Transcoder::StartJob(const Job &job) {
   // Create the pipeline.
   // This should be a scoped_ptr, but scoped_ptr doesn't support custom
   // destructors.
-  state->pipeline_.reset(gst_pipeline_new("pipeline"),
-                        boost::bind(gst_object_unref, _1));
+  state->pipeline_ = gst_pipeline_new("pipeline");
   if (!state->pipeline_) return false;
 
   // Create all the elements
-  GstElement* src     = CreateElement("filesrc", state->pipeline_.get());
-  GstElement* decode  = CreateElement("decodebin2", state->pipeline_.get());
-  GstElement* convert = CreateElement("audioconvert", state->pipeline_.get());
-  GstElement* codec   = CreateElementForMimeType("Codec/Encoder/Audio", job.preset.codec_mimetype_, state->pipeline_.get());
-  GstElement* muxer   = CreateElementForMimeType("Codec/Muxer", job.preset.muxer_mimetype_, state->pipeline_.get());
-  GstElement* sink    = CreateElement("filesink", state->pipeline_.get());
+  GstElement* src      = CreateElement("filesrc", state->pipeline_);
+  GstElement* decode   = CreateElement("decodebin2", state->pipeline_);
+  GstElement* convert  = CreateElement("audioconvert", state->pipeline_);
+  GstElement* resample = CreateElement("audioresample", state->pipeline_);
+  GstElement* codec    = CreateElementForMimeType("Codec/Encoder/Audio", job.preset.codec_mimetype_, state->pipeline_);
+  GstElement* muxer    = CreateElementForMimeType("Codec/Muxer", job.preset.muxer_mimetype_, state->pipeline_);
+  GstElement* sink     = CreateElement("filesink", state->pipeline_);
 
   if (!src || !decode || !convert || !sink)
     return false;
@@ -431,25 +437,25 @@ bool Transcoder::StartJob(const Job &job) {
   // Join them together
   gst_element_link(src, decode);
   if (codec && muxer)
-    gst_element_link_many(convert, codec, muxer, sink, NULL);
+    gst_element_link_many(convert, resample, codec, muxer, sink, NULL);
   else if (codec)
-    gst_element_link_many(convert, codec, sink, NULL);
+    gst_element_link_many(convert, resample, codec, sink, NULL);
   else if (muxer)
-    gst_element_link_many(convert, muxer, sink, NULL);
+    gst_element_link_many(convert, resample, muxer, sink, NULL);
 
   // Set properties
-  g_object_set(src, "location", job.input.toLocal8Bit().constData(), NULL);
-  g_object_set(sink, "location", job.output.toLocal8Bit().constData(), NULL);
+  g_object_set(src, "location", job.input.toUtf8().constData(), NULL);
+  g_object_set(sink, "location", job.output.toUtf8().constData(), NULL);
 
   // Set callbacks
   state->convert_element_ = convert;
 
-  g_signal_connect(decode, "new-decoded-pad", G_CALLBACK(NewPadCallback), state.get());
-  gst_bus_set_sync_handler(gst_pipeline_get_bus(GST_PIPELINE(state->pipeline_.get())), BusCallbackSync, state.get());
-  state->bus_callback_id_ = gst_bus_add_watch(gst_pipeline_get_bus(GST_PIPELINE(state->pipeline_.get())), BusCallback, state.get());
+  CHECKED_GCONNECT(decode, "new-decoded-pad", &NewPadCallback, state.get());
+  gst_bus_set_sync_handler(gst_pipeline_get_bus(GST_PIPELINE(state->pipeline_)), BusCallbackSync, state.get());
+  state->bus_callback_id_ = gst_bus_add_watch(gst_pipeline_get_bus(GST_PIPELINE(state->pipeline_)), BusCallback, state.get());
 
   // Start the pipeline
-  gst_element_set_state(state->pipeline_.get(), GST_STATE_PLAYING);
+  gst_element_set_state(state->pipeline_, GST_STATE_PLAYING);
 
   // GStreamer now transcodes in another thread, so we can return now and do
   // something else.  Keep the JobState object around.  It'll post an event
@@ -457,6 +463,13 @@ bool Transcoder::StartJob(const Job &job) {
   current_jobs_ << state;
 
   return true;
+}
+
+Transcoder::JobState::~JobState() {
+  if (pipeline_) {
+    gst_element_set_state(pipeline_, GST_STATE_NULL);
+    gst_object_unref(pipeline_);
+  }
 }
 
 bool Transcoder::event(QEvent* e) {
@@ -481,7 +494,7 @@ bool Transcoder::event(QEvent* e) {
     // Remove event handlers from the gstreamer pipeline so they don't get
     // called after the pipeline is shutting down
     gst_bus_set_sync_handler(gst_pipeline_get_bus(GST_PIPELINE(
-        finished_event->state_->pipeline_.get())), NULL, NULL);
+        finished_event->state_->pipeline_)), NULL, NULL);
     g_source_remove(finished_event->state_->bus_callback_id_);
 
     // Remove it from the list - this will also destroy the GStreamer pipeline
@@ -510,14 +523,14 @@ void Transcoder::Cancel() {
 
     // Remove event handlers from the gstreamer pipeline so they don't get
     // called after the pipeline is shutting down
-    gst_bus_set_sync_handler(gst_pipeline_get_bus(GST_PIPELINE(
-        state->pipeline_.get())), NULL, NULL);
+    gst_bus_set_sync_handler(gst_pipeline_get_bus(
+        GST_PIPELINE(state->pipeline_)), NULL, NULL);
     g_source_remove(state->bus_callback_id_);
 
     // Stop the pipeline
-    if (gst_element_set_state(state->pipeline_.get(), GST_STATE_NULL) == GST_STATE_CHANGE_ASYNC) {
+    if (gst_element_set_state(state->pipeline_, GST_STATE_NULL) == GST_STATE_CHANGE_ASYNC) {
       // Wait for it to finish stopping...
-      gst_element_get_state(state->pipeline_.get(), NULL, NULL, GST_CLOCK_TIME_NONE);
+      gst_element_get_state(state->pipeline_, NULL, NULL, GST_CLOCK_TIME_NONE);
     }
 
     // Remove the job, this destroys the GStreamer pipeline too
@@ -536,8 +549,8 @@ QMap<QString, float> Transcoder::GetProgress() const {
     gint64 duration = 0;
     GstFormat format = GST_FORMAT_TIME;
 
-    gst_element_query_position(state->pipeline_.get(), &format, &position);
-    gst_element_query_duration(state->pipeline_.get(), &format, &duration);
+    gst_element_query_position(state->pipeline_, &format, &position);
+    gst_element_query_duration(state->pipeline_, &format, &duration);
 
     ret[state->job_.input] = float(position) / duration;
   }

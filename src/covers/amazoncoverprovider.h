@@ -31,14 +31,15 @@ class AmazonCoverProvider : public CoverProvider {
 public:
   AmazonCoverProvider(QObject* parent = NULL);
 
-  static const char* kAccessKey;
-  static const char* kSecretAccessKey;
+  static const char* kAccessKeyB64;
+  static const char* kSecretAccessKeyB64;
   static const char* kUrl;
+  static const char* kAssociateTag;
 
   bool StartSearch(const QString& artist, const QString& album, int id);
 
 private slots:
-  void QueryFinished();
+  void QueryFinished(QNetworkReply* reply, int id);
 
 private:
   void ReadItem(QXmlStreamReader* reader, CoverSearchResults* results);
@@ -46,7 +47,6 @@ private:
 
 private:
   QNetworkAccessManager* network_;
-  QMap<QNetworkReply*, int> pending_queries_;
 };
 
 #endif // AMAZONCOVERPROVIDER_H

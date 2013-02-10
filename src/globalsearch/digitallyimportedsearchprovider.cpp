@@ -20,37 +20,39 @@
 #include "internet/digitallyimportedservicebase.h"
 
 DigitallyImportedSearchProvider::DigitallyImportedSearchProvider(
-  DigitallyImportedServiceBase* service, QObject* parent)
-    : SimpleSearchProvider(parent),
+  DigitallyImportedServiceBase* service, Application* app, QObject* parent)
+    : SimpleSearchProvider(app, parent),
       service_(service)
 {
-  Init(service_->name(), service->url_scheme(), service_->icon(), false, false);
-  icon_ = ScaleAndPad(QImage(service_->icon_path()));
+  Init(service_->name(), service->api_service_name(), service_->icon(),
+       ArtIsInSongMetadata | CanGiveSuggestions | CanShowConfig);
 
   set_safe_words(QStringList() << "sky.fm" << "skyfm" << "di.fm" << "difm"
                                << "digitallyimported");
+  set_max_suggestion_count(5);
 
-  connect(service_, SIGNAL(StreamsChanged()), SLOT(RecreateItems()));
-  RecreateItems();
-}
+  connect(service_, SIGNAL(StreamsChanged()), SLOT(MaybeRecreateItems()));
 
-void DigitallyImportedSearchProvider::LoadArtAsync(int id, const Result& result) {
-  emit ArtLoaded(id, icon_);
+  // Load the channel list on startup only if it doesn't involve going to update
+  // info from the server.
+  if (!service_->IsChannelListStale())
+    RecreateItems();
 }
 
 void DigitallyImportedSearchProvider::RecreateItems() {
   QList<Item> items;
 
-  DigitallyImportedServiceBase::StreamList streams = service_->Streams();
+  DigitallyImportedClient::ChannelList channels = service_->Channels();
 
-  foreach (const DigitallyImportedServiceBase::Stream& stream, streams) {
+  foreach (const DigitallyImportedClient::Channel& channel, channels) {
     Song song;
-    song.set_title(stream.name_);
-    song.set_artist(service_->service_description());
-    song.set_url(QUrl(service_->url_scheme() + "://" + stream.key_));
-
+    service_->SongFromChannel(channel, &song);
     items << Item(song);
   }
 
   SetItems(items);
+}
+
+void DigitallyImportedSearchProvider::ShowConfig() {
+  service_->ShowSettingsDialog();
 }

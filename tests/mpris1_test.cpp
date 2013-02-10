@@ -21,8 +21,7 @@
 #include "playlist/playlistmanager.h"
 #include "playlist/playlistsequence.h"
 #ifdef HAVE_LIBLASTFM
-#include "internet/fixlastfm.h"
-#include <lastfm/Track>
+  #include "internet/lastfmcompat.h"
 #endif
 
 #include "gmock/gmock.h"
@@ -207,7 +206,11 @@ TEST_F(Mpris1Test, GetsStatus) {
   status = mpris_->player()->GetStatus();
   EXPECT_EQ(0, status.random);
 
-  sequence_->SetShuffleMode(PlaylistSequence::Shuffle_Album);
+  sequence_->SetShuffleMode(PlaylistSequence::Shuffle_InsideAlbum);
+  status = mpris_->player()->GetStatus();
+  EXPECT_EQ(1, status.random);
+
+  sequence_->SetShuffleMode(PlaylistSequence::Shuffle_Albums);
   status = mpris_->player()->GetStatus();
   EXPECT_EQ(1, status.random);
 
@@ -233,7 +236,12 @@ TEST_F(Mpris1Test, HandlesShuffleModeChanged) {
   sequence_->SetShuffleMode(PlaylistSequence::Shuffle_All);
   ASSERT_EQ(0, spy.count());
 
-  sequence_->SetShuffleMode(PlaylistSequence::Shuffle_Album);
+  sequence_->SetShuffleMode(PlaylistSequence::Shuffle_InsideAlbum);
+  ASSERT_EQ(1, spy.count());
+  EXPECT_EQ(1, spy[0][0].value<DBusStatus>().random);
+  spy.clear();
+
+  sequence_->SetShuffleMode(PlaylistSequence::Shuffle_Albums);
   ASSERT_EQ(1, spy.count());
   EXPECT_EQ(1, spy[0][0].value<DBusStatus>().random);
   spy.clear();

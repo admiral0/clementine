@@ -17,8 +17,8 @@
 
 #include "config.h"
 #include "commandlineoptions.h"
-#include "logging.h"
 #include "version.h"
+#include "core/logging.h"
 
 #include <cstdlib>
 #include <getopt.h>
@@ -53,7 +53,6 @@ const char* CommandlineOptions::kHelpText =
     "%20:\n"
     "  -o, --show-osd            %21\n"
     "  -y, --toggle-pretty-osd   %22\n"
-    "      --search-popup        %23\n"
     "  -g, --language <lang>     %24\n"
     "      --quiet               %25\n"
     "      --verbose             %26\n"
@@ -75,8 +74,6 @@ CommandlineOptions::CommandlineOptions(int argc, char** argv)
     play_track_at_(-1),
     show_osd_(false),
     toggle_pretty_osd_(false),
-    show_search_popup_(false),
-    stun_test_(StunTestNone),
     log_levels_(logging::kDefaultLogLevels)
 {
 #ifdef Q_OS_DARWIN
@@ -123,14 +120,11 @@ bool CommandlineOptions::Parse() {
     {"play-track",        required_argument, 0, 'k'},
     {"show-osd",          no_argument,       0, 'o'},
     {"toggle-pretty-osd", no_argument,       0, 'y'},
-    {"search-popup",      no_argument,       0, SearchPopup},
     {"language",          required_argument, 0, 'g'},
     {"quiet",             no_argument,       0, Quiet},
     {"verbose",           no_argument,       0, Verbose},
     {"log-levels",        required_argument, 0, LogLevels},
     {"version",           no_argument,       0, Version},
-
-    {"stun-test",   required_argument, 0, 'z'},
 
     {0, 0, 0, 0}
   };
@@ -166,7 +160,6 @@ bool CommandlineOptions::Parse() {
             tr("Other options"),
             tr("Display the on-screen-display"),
             tr("Toggle visibility for the pretty on-screen-display"),
-            tr("Display the global search popup"),
             tr("Change the language"),
             tr("Equivalent to --log-levels *:1"),
             tr("Equivalent to --log-levels *:3"),
@@ -193,7 +186,6 @@ bool CommandlineOptions::Parse() {
       case Quiet:      log_levels_ = "1";               break;
       case Verbose:    log_levels_ = "3";               break;
       case LogLevels:  log_levels_ = QString(optarg);   break;
-      case SearchPopup: show_search_popup_ = true;      break;
       case Version: {
         QString version_text = QString(kVersionText).arg(CLEMENTINE_VERSION_DISPLAY);
         std::cout << version_text.toLocal8Bit().constData() << std::endl;
@@ -219,13 +211,6 @@ bool CommandlineOptions::Parse() {
         if (!ok) play_track_at_ = -1;
         break;
 
-      case 'z': {
-        // Stun test
-        QString direction = QString(optarg);
-        stun_test_ = direction == "offer" ? StunTestOffer : StunTestAccept;
-        break;
-      }
-
       case '?':
       default:
         return false;
@@ -235,10 +220,11 @@ bool CommandlineOptions::Parse() {
   // Get any filenames or URLs following the arguments
   for (int i=optind ; i<argc_ ; ++i) {
     QString value = QFile::decodeName(argv_[i]);
-    if (value.contains("://"))
-      urls_ << value;
+    QFileInfo file_info(value);
+    if (file_info.exists())
+      urls_ << QUrl::fromLocalFile(file_info.canonicalFilePath());
     else
-      urls_ << QUrl::fromLocalFile(QFileInfo(value).canonicalFilePath());
+      urls_ << QUrl::fromUserInput(value);
   }
 
   return true;
@@ -253,7 +239,6 @@ bool CommandlineOptions::is_empty() const {
          play_track_at_ == -1 &&
          show_osd_ == false &&
          toggle_pretty_osd_ == false &&
-         show_search_popup_ == false &&
          urls_.isEmpty();
 }
 
@@ -290,7 +275,6 @@ QDataStream& operator<<(QDataStream& s, const CommandlineOptions& a) {
     << a.seek_by_
     << a.play_track_at_
     << a.show_osd_
-    << a.show_search_popup_
     << a.urls_
     << a.log_levels_
     << a.toggle_pretty_osd_;
@@ -309,7 +293,6 @@ QDataStream& operator>>(QDataStream& s, CommandlineOptions& a) {
     >> a.seek_by_
     >> a.play_track_at_
     >> a.show_osd_
-    >> a.show_search_popup_
     >> a.urls_
     >> a.log_levels_
     >> a.toggle_pretty_osd_;

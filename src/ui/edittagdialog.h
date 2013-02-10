@@ -22,16 +22,15 @@
 #include <QModelIndexList>
 
 #include "config.h"
-#include "core/backgroundthread.h"
 #include "core/song.h"
+#include "covers/albumcoverloaderoptions.h"
 #include "musicbrainz/tagfetcher.h"
 #include "playlist/playlistitem.h"
 #include "widgets/lineedit.h"
 #include "trackselectiondialog.h"
 
+class Application;
 class AlbumCoverChoiceController;
-class AlbumCoverLoader;
-class CoverProviders;
 class LibraryBackend;
 class Ui_EditTagDialog;
 
@@ -44,13 +43,13 @@ class EditTagDialog : public QDialog {
   Q_OBJECT
 
 public:
-  EditTagDialog(CoverProviders* cover_providers, QWidget* parent = 0);
+  EditTagDialog(Application* app, QWidget* parent = 0);
   ~EditTagDialog();
 
   static const char* kHintText;
+  static const char* kSettingsGroup;
 
   void SetSongs(const SongList& songs, const PlaylistItemList& items = PlaylistItemList());
-  void SetTagCompleter(LibraryBackend* backend);
 
   PlaylistItemList playlist_items() const { return playlist_items_; }
 
@@ -62,6 +61,7 @@ signals:
 protected:
   bool eventFilter(QObject* o, QEvent* e);
   void showEvent(QShowEvent*);
+  void hideEvent(QHideEvent*);
 
 private slots:
   void SetSongsFinished();
@@ -127,6 +127,7 @@ private:
   void UpdateStatisticsTab(const Song& song);
 
   bool SetLoading(const QString& message);
+  void SetSongListVisibility(bool visible);
 
   // Called by QtConcurrentRun
   QList<Data> LoadData(const SongList& songs) const;
@@ -135,10 +136,8 @@ private:
 private:
   Ui_EditTagDialog* ui_;
 
-  CoverProviders* cover_providers_;
+  Application* app_;
   AlbumCoverChoiceController* album_cover_choice_controller_;
-
-  LibraryBackend* backend_;
 
   bool loading_;
 
@@ -150,7 +149,7 @@ private:
 
   TagFetcher* tag_fetcher_;
 
-  BackgroundThread<AlbumCoverLoader>* cover_loader_;
+  AlbumCoverLoaderOptions cover_options_;
   quint64 cover_art_id_;
   bool cover_art_is_set_;
 

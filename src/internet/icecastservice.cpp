@@ -15,11 +15,7 @@
    along with Clementine.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "icecastservice.h"
-
 #include <algorithm>
-using std::sort;
-using std::unique;
 
 #include <QDesktopServices>
 #include <QFutureWatcher>
@@ -32,19 +28,29 @@ using std::unique;
 #include "icecastbackend.h"
 #include "icecastfilterwidget.h"
 #include "icecastmodel.h"
+#include "icecastservice.h"
 #include "internetmodel.h"
+#include "core/application.h"
+#include "core/closure.h"
+#include "core/database.h"
 #include "core/mergedproxymodel.h"
 #include "core/network.h"
 #include "core/taskmanager.h"
+#include "globalsearch/globalsearch.h"
+#include "globalsearch/icecastsearchprovider.h"
 #include "playlist/songplaylistitem.h"
 #include "ui/iconloader.h"
+
+using std::sort;
+using std::unique;
+
 
 const char* IcecastService::kServiceName = "Icecast";
 const char* IcecastService::kDirectoryUrl = "http://data.clementine-player.org/icecast-directory";
 const char* IcecastService::kHomepage = "http://dir.xiph.org/";
 
-IcecastService::IcecastService(InternetModel* parent)
-    : InternetService(kServiceName, parent, parent),
+IcecastService::IcecastService(Application* app, InternetModel* parent)
+    : InternetService(kServiceName, app, parent, parent),
       network_(new NetworkAccessManager(this)),
       context_menu_(NULL),
       backend_(NULL),
@@ -53,11 +59,13 @@ IcecastService::IcecastService(InternetModel* parent)
       load_directory_task_id_(0)
 {
   backend_ = new IcecastBackend;
-  backend_->moveToThread(parent->db_thread());
-  backend_->Init(parent->db_thread()->Worker());
+  backend_->moveToThread(app_->database()->thread());
+  backend_->Init(app_->database());
 
   model_ = new IcecastModel(backend_, this);
   filter_->SetIcecastModel(model_);
+
+  app_->global_search()->AddProvider(new IcecastSearchProvider(backend_, app_, this));
 }
 
 IcecastService::~IcecastService() {
@@ -89,7 +97,7 @@ void IcecastService::LoadDirectory() {
   RequestDirectory(QUrl(kDirectoryUrl));
 
   if (!load_directory_task_id_) {
-    load_directory_task_id_ = model()->task_manager()->StartTask(
+    load_directory_task_id_ = app_->task_manager()->StartTask(
         tr("Downloading Icecast directory"));
   }
 }
@@ -100,13 +108,11 @@ void IcecastService::RequestDirectory(const QUrl& url) {
                    QNetworkRequest::AlwaysNetwork);
 
   QNetworkReply* reply = network_->get(req);
-  connect(reply, SIGNAL(finished()), SLOT(DownloadDirectoryFinished()));
+  NewClosure(reply, SIGNAL(finished()), this,
+             SLOT(DownloadDirectoryFinished(QNetworkReply*)), reply);
 }
 
-void IcecastService::DownloadDirectoryFinished() {
-  QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
-  Q_ASSERT(reply);
-
+void IcecastService::DownloadDirectoryFinished(QNetworkReply* reply) {
   if (reply->attribute(QNetworkRequest::RedirectionTargetAttribute).isValid()) {
     // Discard the old reply and follow the redirect
     reply->deleteLater();
@@ -116,10 +122,12 @@ void IcecastService::DownloadDirectoryFinished() {
 
   QFuture<IcecastBackend::StationList> future =
       QtConcurrent::run(this, &IcecastService::ParseDirectory, reply);
-  QFutureWatcher<IcecastBackend::StationList>* watcher =
-      new QFutureWatcher<IcecastBackend::StationList>(this);
+  QFutureWatcher<void>* watcher = new QFutureWatcher<void>(this);
   watcher->setFuture(future);
-  connect(watcher, SIGNAL(finished()), SLOT(ParseDirectoryFinished()));
+  NewClosure(watcher, SIGNAL(finished()), this,
+      SLOT(ParseDirectoryFinished(QFuture<IcecastBackend::StationList>)),
+      future);
+  connect(watcher, SIGNAL(finished()), watcher, SLOT(deleteLater()));
 }
 
 namespace {
@@ -181,10 +189,9 @@ QStringList FilterGenres(const QStringList& genres) {
 
 }
 
-void IcecastService::ParseDirectoryFinished() {
-  QFutureWatcher<IcecastBackend::StationList >* watcher =
-      static_cast<QFutureWatcher<IcecastBackend::StationList>*>(sender());
-  IcecastBackend::StationList all_stations = watcher->result();
+void IcecastService::ParseDirectoryFinished(
+    QFuture<IcecastBackend::StationList> future) {
+  IcecastBackend::StationList all_stations = future.result();
   sort(all_stations.begin(), all_stations.end(), StationSorter<IcecastBackend::Station>());
   // Remove duplicates by name. These tend to be multiple URLs for the same station.
   IcecastBackend::StationList::iterator it =
@@ -213,9 +220,8 @@ void IcecastService::ParseDirectoryFinished() {
   }
 
   backend_->ClearAndAddStations(all_stations);
-  delete watcher;
 
-  model()->task_manager()->SetTaskFinished(load_directory_task_id_);
+  app_->task_manager()->SetTaskFinished(load_directory_task_id_);
   load_directory_task_id_ = 0;
 }
 
@@ -267,17 +273,12 @@ QWidget* IcecastService::HeaderWidget() const {
   return filter_;
 }
 
-void IcecastService::ShowContextMenu(const QModelIndex& index,
-                                     const QPoint& global_pos) {
+void IcecastService::ShowContextMenu(const QPoint& global_pos) {
   EnsureMenuCreated();
 
-  if (index.model() == model_)
-    context_item_ = index;
-  else
-    context_item_ = QModelIndex();
-
-  const bool can_play = context_item_.isValid() &&
-                        model_->GetSong(context_item_).is_valid();
+  const bool can_play = model()->current_index().isValid() &&
+                        model()->current_index().model() == model_ &&
+                        model_->GetSong(model()->current_index()).is_valid();
 
   GetAppendToPlaylistAction()->setEnabled(can_play);
   GetReplacePlaylistAction()->setEnabled(can_play);
@@ -292,14 +293,13 @@ void IcecastService::EnsureMenuCreated() {
   context_menu_ = new QMenu;
 
   context_menu_->addActions(GetPlaylistActions());
-  context_menu_->addAction(IconLoader::Load("download"), tr("Open dir.xiph.org in browser"), this, SLOT(Homepage()));
+  context_menu_->addAction(IconLoader::Load("download"), tr("Open %1 in browser").arg("dir.xiph.org"), this, SLOT(Homepage()));
   context_menu_->addAction(IconLoader::Load("view-refresh"), tr("Refresh station list"), this, SLOT(LoadDirectory()));
+
+  context_menu_->addSeparator();
+  context_menu_->addMenu(filter_->menu());
 }
 
 void IcecastService::Homepage() {
   QDesktopServices::openUrl(QUrl(kHomepage));
-}
-
-QModelIndex IcecastService::GetCurrentIndex() {
-  return context_item_;
 }

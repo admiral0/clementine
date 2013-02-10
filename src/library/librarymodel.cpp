@@ -21,6 +21,7 @@
 #include "librarydirectorymodel.h"
 #include "libraryview.h"
 #include "sqlrow.h"
+#include "core/application.h"
 #include "core/database.h"
 #include "core/logging.h"
 #include "core/taskmanager.h"
@@ -34,6 +35,7 @@
 #include <QFuture>
 #include <QFutureWatcher>
 #include <QMetaEnum>
+#include <QPixmapCache>
 #include <QSettings>
 #include <QStringList>
 #include <QUrl>
@@ -49,26 +51,33 @@ using smart_playlists::QueryGenerator;
 const char* LibraryModel::kSmartPlaylistsMimeType = "application/x-clementine-smart-playlist-generator";
 const char* LibraryModel::kSmartPlaylistsSettingsGroup = "SerialisedSmartPlaylists";
 const int LibraryModel::kSmartPlaylistsVersion = 4;
+const int LibraryModel::kPrettyCoverSize = 32;
 
-typedef QFuture<SqlRowList> RootQueryFuture;
-typedef QFutureWatcher<SqlRowList> RootQueryWatcher;
+typedef QFuture<LibraryModel::QueryResult> RootQueryFuture;
+typedef QFutureWatcher<LibraryModel::QueryResult> RootQueryWatcher;
 
-LibraryModel::LibraryModel(LibraryBackend* backend, TaskManager* task_manager,
+static bool IsArtistGroupBy(const LibraryModel::GroupBy by) {
+  return by == LibraryModel::GroupBy_Artist || by == LibraryModel::GroupBy_AlbumArtist;
+}
+
+static bool IsCompilationArtistNode(const LibraryItem* node) {
+  return node == node->parent->compilation_artist_node_;
+}
+
+LibraryModel::LibraryModel(LibraryBackend* backend, Application* app,
                            QObject* parent)
   : SimpleTreeModel<LibraryItem>(new LibraryItem(this), parent),
     backend_(backend),
-    task_manager_(task_manager),
+    app_(app),
     dir_model_(new LibraryDirectoryModel(backend, this)),
     show_smart_playlists_(false),
     show_various_artists_(true),
     total_song_count_(0),
     artist_icon_(":/icons/22x22/x-clementine-artist.png"),
     album_icon_(":/icons/22x22/x-clementine-album.png"),
-    no_cover_icon_(":nocover.png"),
     playlists_dir_icon_(IconLoader::Load("folder-sound")),
     playlist_icon_(":/icons/22x22/x-clementine-albums.png"),
     init_task_id_(-1),
-    pretty_cover_size_(32, 32),
     use_pretty_covers_(false),
     show_dividers_(true)
 {
@@ -77,11 +86,26 @@ LibraryModel::LibraryModel(LibraryBackend* backend, TaskManager* task_manager,
   group_by_[0] = GroupBy_Artist;
   group_by_[1] = GroupBy_Album;
   group_by_[2] = GroupBy_None;
-  
-  no_cover_icon_pretty_ = QImage(":nocover.png").scaled(pretty_cover_size_,
-                                                    Qt::KeepAspectRatio,
-                                                    Qt::SmoothTransformation);
 
+  cover_loader_options_.desired_height_ = kPrettyCoverSize;
+  cover_loader_options_.pad_output_image_ = true;
+  cover_loader_options_.scale_output_image_ = true;
+
+  connect(app_->album_cover_loader(),
+          SIGNAL(ImageLoaded(quint64,QImage)),
+          SLOT(AlbumArtLoaded(quint64,QImage)));
+
+  no_cover_icon_ = QPixmap(":nocover.png").scaled(
+        kPrettyCoverSize, kPrettyCoverSize,
+        Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+  connect(backend_, SIGNAL(SongsDiscovered(SongList)), SLOT(SongsDiscovered(SongList)));
+  connect(backend_, SIGNAL(SongsDeleted(SongList)), SLOT(SongsDeleted(SongList)));
+  connect(backend_, SIGNAL(SongsStatisticsChanged(SongList)), SLOT(SongsStatisticsChanged(SongList)));
+  connect(backend_, SIGNAL(DatabaseReset()), SLOT(Reset()));
+  connect(backend_, SIGNAL(TotalSongCountUpdated(int)), SLOT(TotalSongCountUpdatedSlot(int)));
+
+  backend_->UpdateTotalSongCountAsync();
 }
 
 LibraryModel::~LibraryModel() {
@@ -103,14 +127,6 @@ void LibraryModel::set_show_dividers(bool show_dividers) {
 }
 
 void LibraryModel::Init(bool async) {
-  connect(backend_, SIGNAL(SongsDiscovered(SongList)), SLOT(SongsDiscovered(SongList)));
-  connect(backend_, SIGNAL(SongsDeleted(SongList)), SLOT(SongsDeleted(SongList)));
-  connect(backend_, SIGNAL(SongsStatisticsChanged(SongList)), SLOT(SongsStatisticsChanged(SongList)));
-  connect(backend_, SIGNAL(DatabaseReset()), SLOT(Reset()));
-  connect(backend_, SIGNAL(TotalSongCountUpdated(int)), SLOT(TotalSongCountUpdatedSlot(int)));
-
-  backend_->UpdateTotalSongCountAsync();
-
   if (async) {
     // Show a loading indicator in the model.
     LibraryItem* loading = new LibraryItem(LibraryItem::Type_LoadingIndicator, root_);
@@ -119,7 +135,7 @@ void LibraryModel::Init(bool async) {
     reset();
 
     // Show a loading indicator in the status bar too.
-    init_task_id_ = task_manager_->StartTask(tr("Loading songs"));
+    init_task_id_ = app_->task_manager()->StartTask(tr("Loading songs"));
 
     ResetAsync();
   } else {
@@ -150,12 +166,12 @@ void LibraryModel::SongsDiscovered(const SongList& songs) {
       GroupBy type = group_by_[i];
       if (type == GroupBy_None) break;
 
-      // Special case: if we're at the top level and the song is a compilation
-      // and the top level is Artists, then we want the Various Artists node :(
-      if (i == 0 && type == GroupBy_Artist && song.is_compilation()) {
-        if (compilation_artist_node_ == NULL)
-          CreateCompilationArtistNode(true, root_);
-        container = compilation_artist_node_;
+      // Special case: if the song is a compilation and the current GroupBy
+      // level is Artists, then we want the Various Artists node :(
+      if (IsArtistGroupBy(type) && song.is_compilation()) {
+        if (container->compilation_artist_node_ == NULL)
+          CreateCompilationArtistNode(true, container);
+        container = container->compilation_artist_node_;
       } else {
         // Otherwise find the proper container at this level based on the
         // item's key
@@ -165,7 +181,7 @@ void LibraryModel::SongsDiscovered(const SongList& songs) {
           case GroupBy_Artist:      key = song.artist(); break;
           case GroupBy_Composer:    key = song.composer(); break;
           case GroupBy_Genre:       key = song.genre(); break;
-          case GroupBy_AlbumArtist: key = song.albumartist(); break;
+          case GroupBy_AlbumArtist: key = song.effective_albumartist(); break;
           case GroupBy_Year:
             key = QString::number(qMax(0, song.year())); break;
           case GroupBy_YearAlbum:
@@ -216,16 +232,17 @@ LibraryItem* LibraryModel::CreateCompilationArtistNode(bool signal, LibraryItem*
   if (signal)
     beginInsertRows(ItemToIndex(parent), parent->children.count(), parent->children.count());
 
-  compilation_artist_node_ =
+  parent->compilation_artist_node_ =
       new LibraryItem(LibraryItem::Type_Container, parent);
-  compilation_artist_node_->key = tr("Various Artists");
-  compilation_artist_node_->sort_text = " various";
-  compilation_artist_node_->container_level = parent->container_level + 1;
+  parent->compilation_artist_node_->compilation_artist_node_ = NULL;
+  parent->compilation_artist_node_->key = tr("Various artists");
+  parent->compilation_artist_node_->sort_text = " various";
+  parent->compilation_artist_node_->container_level = parent->container_level + 1;
 
   if (signal)
     endInsertRows();
 
-  return compilation_artist_node_;
+  return parent->compilation_artist_node_;
 }
 
 QString LibraryModel::DividerKey(GroupBy type, LibraryItem* item) const {
@@ -340,8 +357,8 @@ void LibraryModel::SongsDeleted(const SongList& songs) {
         divider_keys << DividerKey(group_by_[0], node);
 
       // Special case the Various Artists node
-      if (node == compilation_artist_node_)
-        compilation_artist_node_ = NULL;
+      if (IsCompilationArtistNode(node))
+        node->parent->compilation_artist_node_ = NULL;
       else
         container_nodes_[node->container_level].remove(node->key);
 
@@ -378,33 +395,66 @@ void LibraryModel::SongsDeleted(const SongList& songs) {
   }
 }
 
-QVariant LibraryModel::AlbumIcon(const QModelIndex& index, int role) const {  
-  
-  // the easiest way to get from *here* to working out what album art an index 
-  // represents seems to be to get the node's child songs and look at their metadata.
-  // if none is found, return the generic CD icon
+QString LibraryModel::AlbumIconPixmapCacheKey(const QModelIndex& index) const {
+  QStringList path;
+  QModelIndex index_copy(index);
+  while (index_copy.isValid()) {
+    path.prepend(index_copy.data().toString());
+    index_copy = index_copy.parent();
+  }
 
-  // Cache the art in the item's metadata field
+  return "libraryart:" + path.join("/");
+}
+
+QVariant LibraryModel::AlbumIcon(const QModelIndex& index) {
   LibraryItem* item = IndexToItem(index);
   if (!item)
-    return no_cover_icon_pretty_;
-  if (!item->metadata.image().isNull())
-    return item->metadata.image();
-  
+    return no_cover_icon_;
+
+  // Check the cache for a pixmap we already loaded.
+  const QString cache_key = AlbumIconPixmapCacheKey(index);
+  QPixmap cached_pixmap;
+  if (QPixmapCache::find(cache_key, &cached_pixmap)) {
+    return cached_pixmap;
+  }
+
+  // Maybe we're loading a pixmap already?
+  if (pending_cache_keys_.contains(cache_key)) {
+    return no_cover_icon_;
+  }
+
+  // No art is cached and we're not loading it already.  Load art for the first
+  // Song in the album.
   SongList songs = GetChildSongs(index);
   if (!songs.isEmpty()) {
-    const Song& s = songs.first();
-    QPixmap pixmap = AlbumCoverLoader::TryLoadPixmap(
-      s.art_automatic(), s.art_manual(), s.url().toLocalFile());
-
-    if (!pixmap.isNull()) {
-      QImage image = pixmap.toImage().scaled(
-            pretty_cover_size_, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-      item->metadata.set_image(image);
-      return image;
-    }
+    const quint64 id = app_->album_cover_loader()->LoadImageAsync(
+          cover_loader_options_, songs.first());
+    pending_art_[id] = ItemAndCacheKey(item, cache_key);
+    pending_cache_keys_.insert(cache_key);
   }
-  return no_cover_icon_pretty_;
+
+  return no_cover_icon_;
+}
+
+void LibraryModel::AlbumArtLoaded(quint64 id, const QImage& image) {
+  ItemAndCacheKey item_and_cache_key = pending_art_.take(id);
+  LibraryItem* item = item_and_cache_key.first;
+  const QString& cache_key = item_and_cache_key.second;
+  if (!item)
+    return;
+
+  pending_cache_keys_.remove(cache_key);
+
+  // Insert this image in the cache.
+  if (image.isNull()) {
+    // Set the no_cover image so we don't continually try to load art.
+    QPixmapCache::insert(cache_key, no_cover_icon_);
+  } else {
+    QPixmapCache::insert(cache_key, QPixmap::fromImage(image));
+  }
+
+  const QModelIndex index = ItemToIndex(item);
+  emit dataChanged(index, index);
 }
 
 QVariant LibraryModel::data(const QModelIndex& index, int role) const {
@@ -415,15 +465,16 @@ QVariant LibraryModel::data(const QModelIndex& index, int role) const {
   // QModelIndex& version of GetChildSongs, which satisfies const-ness, instead
   // of the LibraryItem* version, which doesn't.
   if (use_pretty_covers_) {    
-    bool album_node = false;
+    bool is_album_node = false;
     if (role == Qt::DecorationRole && item->type == LibraryItem::Type_Container) {
       GroupBy container_type = group_by_[item->container_level];
-      album_node = container_type == GroupBy_Album 
-                    || container_type == GroupBy_YearAlbum
-                    || container_type == GroupBy_AlbumArtist;
+      is_album_node = container_type == GroupBy_Album
+                   || container_type == GroupBy_YearAlbum;
     }
-    if (album_node)
-      return AlbumIcon(index, role);
+    if (is_album_node) {
+      // It has const behaviour some of the time - that's ok right?
+      return const_cast<LibraryModel*>(this)->AlbumIcon(index);
+    }
   }
 
   return data(item, role);
@@ -449,6 +500,7 @@ QVariant LibraryModel::data(const LibraryItem* item, int role) const {
             case GroupBy_YearAlbum:
               return album_icon_;
             case GroupBy_Artist:
+            case GroupBy_AlbumArtist:
               return artist_icon_;
             default:
               break;
@@ -507,55 +559,28 @@ QVariant LibraryModel::data(const LibraryItem* item, int role) const {
   return QVariant();
 }
 
-SqlRowList LibraryModel::RunRootQuery(const QueryOptions& query_options,
-                                      const Grouping& group_by) {
-  // Warning: Some copy-paste with LazyPopulate here
+bool LibraryModel::HasCompilations(const LibraryQuery& query) {
+  LibraryQuery q = query;
+  q.AddCompilationRequirement(true);
+  q.SetLimit(1);
 
-  // Information about what we want the children to be
-  GroupBy child_type = group_by[0];
-
-  // Initialise the query.  child_type says what type of thing we want (artists,
-  // songs, etc.)
-  LibraryQuery q(query_options);
-  InitQuery(child_type, &q);
-
-  // Top-level artists is special - we don't want compilation albums appearing
-  if (child_type == GroupBy_Artist) {
-    q.AddCompilationRequirement(false);
-  }
-
-  // Execute the query
   QMutexLocker l(backend_->db()->Mutex());
-  if (!backend_->ExecQuery(&q))
-    return SqlRowList();
+  if (!backend_->ExecQuery(&q)) return false;
 
-  SqlRowList rows;
-  while (q.Next()) {
-    rows << SqlRow(q);
-  }
-  return rows;
+  return q.Next();
 }
 
-void LibraryModel::LazyPopulate(LibraryItem* parent, bool signal) {
-  if (parent->lazy_loaded)
-    return;
-  parent->lazy_loaded = true;
-
-  // Warning: Some copy-paste with RunRootQuery here
+LibraryModel::QueryResult LibraryModel::RunQuery(LibraryItem* parent) {
+  QueryResult result;
 
   // Information about what we want the children to be
-  int child_level = parent->container_level + 1;
+  int child_level = parent == root_ ? 0 : parent->container_level + 1;
   GroupBy child_type = child_level >= 3 ? GroupBy_None : group_by_[child_level];
 
   // Initialise the query.  child_type says what type of thing we want (artists,
   // songs, etc.)
   LibraryQuery q(query_options_);
   InitQuery(child_type, &q);
-
-  // Top-level artists is special - we don't want compilation albums appearing
-  if (child_level == 0 && child_type == GroupBy_Artist) {
-    q.AddCompilationRequirement(false);
-  }
 
   // Walk up through the item's parents adding filters as necessary
   LibraryItem* p = parent;
@@ -564,18 +589,44 @@ void LibraryModel::LazyPopulate(LibraryItem* parent, bool signal) {
     p = p->parent;
   }
 
+  // Artists GroupBy is special - we don't want compilation albums appearing
+  if (IsArtistGroupBy(child_type)) {
+    // Add the special Various artists node
+    if (show_various_artists_ && HasCompilations(q)) {
+      result.create_va = true;
+    }
+
+    // Don't show compilations again outside the Various artists node
+    q.AddCompilationRequirement(false);
+  }
+
   // Execute the query
   QMutexLocker l(backend_->db()->Mutex());
   if (!backend_->ExecQuery(&q))
-    return;
+    return result;
+
+  while (q.Next()) {
+    result.rows << SqlRow(q);
+  }
+  return result;
+}
+
+void LibraryModel::PostQuery(LibraryItem* parent,
+                             const LibraryModel::QueryResult& result,
+                             bool signal) {
+  // Information about what we want the children to be
+  int child_level = parent == root_ ? 0 : parent->container_level + 1;
+  GroupBy child_type = child_level >= 3 ? GroupBy_None : group_by_[child_level];
+
+  if (result.create_va) {
+    CreateCompilationArtistNode(signal, parent);
+  }
 
   // Step through the results
-  while (q.Next()) {
-    // Warning: Some copy-paste with ResetAsyncQueryFinished here
-
+  foreach (const SqlRow& row, result.rows) {
     // Create the item - it will get inserted into the model here
     LibraryItem* item =
-        ItemFromQuery(child_type, signal, child_level == 0, parent, SqlRow(q),
+        ItemFromQuery(child_type, signal, child_level == 0, parent, row,
                       child_level);
 
     // Save a pointer to it for later
@@ -586,9 +637,18 @@ void LibraryModel::LazyPopulate(LibraryItem* parent, bool signal) {
   }
 }
 
+void LibraryModel::LazyPopulate(LibraryItem* parent, bool signal) {
+  if (parent->lazy_loaded)
+    return;
+  parent->lazy_loaded = true;
+
+  QueryResult result = RunQuery(parent);
+  PostQuery(parent, result, signal);
+}
+
 void LibraryModel::ResetAsync() {
   RootQueryFuture future = QtConcurrent::run(
-        this, &LibraryModel::RunRootQuery, query_options_, group_by_);
+        this, &LibraryModel::RunQuery, root_);
   RootQueryWatcher* watcher = new RootQueryWatcher(this);
   watcher->setFuture(future);
 
@@ -597,55 +657,36 @@ void LibraryModel::ResetAsync() {
 
 void LibraryModel::ResetAsyncQueryFinished() {
   RootQueryWatcher* watcher = static_cast<RootQueryWatcher*>(sender());
-  const SqlRowList rows = watcher->result();
+  const struct QueryResult result = watcher->result();
   watcher->deleteLater();
 
   BeginReset();
   root_->lazy_loaded = true;
 
-  foreach (const SqlRow& row, rows) {
-    // Warning: Some copy-paste with LazyPopulate here
-
-    const GroupBy child_type = group_by_[0];
-
-    // Create the item - it will get inserted into the model here
-    LibraryItem* item =
-        ItemFromQuery(child_type, false, true, root_, row, 0);
-
-    // Save a pointer to it for later
-    if (child_type == GroupBy_None)
-      song_nodes_[item->metadata.id()] = item;
-    else
-      container_nodes_[0][item->key] = item;
-  }
+  PostQuery(root_, result, false);
 
   if (init_task_id_ != -1) {
-    task_manager_->SetTaskFinished(init_task_id_);
+    app_->task_manager()->SetTaskFinished(init_task_id_);
     init_task_id_ = -1;
   }
 
-  reset();
+  endResetModel();
 }
 
 void LibraryModel::BeginReset() {
+  beginResetModel();
   delete root_;
   song_nodes_.clear();
   container_nodes_[0].clear();
   container_nodes_[1].clear();
   container_nodes_[2].clear();
   divider_nodes_.clear();
-  compilation_artist_node_ = NULL;
+  pending_art_.clear();
   smart_playlist_node_ = NULL;
 
   root_ = new LibraryItem(this);
+  root_->compilation_artist_node_ = NULL;
   root_->lazy_loaded = false;
-
-  if (show_various_artists_) {
-    // Various artists?
-    if (group_by_[0] == GroupBy_Artist &&
-        backend_->HasCompilations(query_options_))
-      CreateCompilationArtistNode(false, root_);
-  }
 
   // Smart playlists?
   if (show_smart_playlists_ && query_options_.filter().isEmpty())
@@ -658,7 +699,7 @@ void LibraryModel::Reset() {
   // Populate top level
   LazyPopulate(root_, false);
 
-  reset();
+  endResetModel();
 }
 
 void LibraryModel::InitQuery(GroupBy type, LibraryQuery* q) {
@@ -683,7 +724,7 @@ void LibraryModel::InitQuery(GroupBy type, LibraryQuery* q) {
     q->SetColumnSpec("DISTINCT genre");
     break;
   case GroupBy_AlbumArtist:
-    q->SetColumnSpec("DISTINCT albumartist");
+    q->SetColumnSpec("DISTINCT effective_albumartist");
     break;
   case GroupBy_None:
     q->SetColumnSpec("%songs_table.ROWID, " + Song::kColumnSpec);
@@ -700,11 +741,11 @@ void LibraryModel::FilterQuery(GroupBy type, LibraryItem* item, LibraryQuery* q)
 
   switch (type) {
   case GroupBy_Artist:
-    if (item == compilation_artist_node_)
+    if (IsCompilationArtistNode(item))
       q->AddCompilationRequirement(true);
     else {
-      if (item->container_level == 0) // Stupid hack
-        q->AddCompilationRequirement(false);
+      // Don't duplicate compilations outside the Various artists node
+      q->AddCompilationRequirement(false);
       q->AddWhere("artist", item->key);
     }
     break;
@@ -725,7 +766,13 @@ void LibraryModel::FilterQuery(GroupBy type, LibraryItem* item, LibraryQuery* q)
     q->AddWhere("genre", item->key);
     break;
   case GroupBy_AlbumArtist:
-    q->AddWhere("albumartist", item->key);
+    if (IsCompilationArtistNode(item))
+      q->AddCompilationRequirement(true);
+    else {
+      // Don't duplicate compilations outside the Various artists node
+      q->AddCompilationRequirement(false);
+      q->AddWhere("effective_albumartist", item->key);
+    }
     break;
   case GroupBy_FileType:
     q->AddWhere("filetype", item->metadata.filetype());
@@ -748,6 +795,7 @@ LibraryItem* LibraryModel::InitItem(GroupBy type, bool signal, LibraryItem *pare
 
   // Initialise the item depending on what type it's meant to be
   LibraryItem* item = new LibraryItem(item_type, parent);
+  item->compilation_artist_node_ = NULL;
   item->container_level = container_level;
   return item;
 }
@@ -837,7 +885,7 @@ LibraryItem* LibraryModel::ItemFromSong(GroupBy type,
   case GroupBy_Composer:                      item->key = s.composer();
   case GroupBy_Genre: if (item->key.isNull()) item->key = s.genre();
   case GroupBy_Album: if (item->key.isNull()) item->key = s.album();
-  case GroupBy_AlbumArtist: if (item->key.isNull()) item->key = s.albumartist();
+  case GroupBy_AlbumArtist: if (item->key.isNull()) item->key = s.effective_albumartist();
     item->display_text = TextOrUnknown(item->key);
     item->sort_text = SortTextForArtist(item->key);
     break;
@@ -894,20 +942,20 @@ void LibraryModel::FinishItem(GroupBy type,
   }
 }
 
-QString LibraryModel::TextOrUnknown(const QString& text) const {
+QString LibraryModel::TextOrUnknown(const QString& text) {
   if (text.isEmpty()) {
     return tr("Unknown");
   }
   return text;
 }
 
-QString LibraryModel::PrettyYearAlbum(int year, const QString& album) const {
+QString LibraryModel::PrettyYearAlbum(int year, const QString& album) {
   if (year <= 0)
     return TextOrUnknown(album);
   return QString::number(year) + " - " + TextOrUnknown(album);
 }
 
-QString LibraryModel::SortText(QString text) const {
+QString LibraryModel::SortText(QString text) {
   if (text.isEmpty()) {
     text = " unknown";
   } else {
@@ -918,7 +966,7 @@ QString LibraryModel::SortText(QString text) const {
   return text;
 }
 
-QString LibraryModel::SortTextForArtist(QString artist) const {
+QString LibraryModel::SortTextForArtist(QString artist) {
   artist = SortText(artist);
 
   if (artist.startsWith("the ")) {
@@ -928,12 +976,12 @@ QString LibraryModel::SortTextForArtist(QString artist) const {
   return artist;
 }
 
-QString LibraryModel::SortTextForYear(int year) const {
+QString LibraryModel::SortTextForYear(int year) {
   QString str = QString::number(year);
   return QString("0").repeated(qMax(0, 4 - str.length())) + str;
 }
 
-QString LibraryModel::SortTextForSong(const Song& song) const {
+QString LibraryModel::SortTextForSong(const Song& song) {
   QString ret = QString::number(qMax(0, song.disc()) * 1000 + qMax(0, song.track()));
   ret.prepend(QString("0").repeated(6 - ret.length()));
   ret.append(song.url().toString());
@@ -1243,3 +1291,5 @@ void LibraryModel::TotalSongCountUpdatedSlot(int count) {
   total_song_count_ = count;
   emit TotalSongCountUpdated(count);
 }
+
+

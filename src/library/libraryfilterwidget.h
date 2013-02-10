@@ -25,7 +25,6 @@
 #include "librarymodel.h"
 
 class GroupByDialog;
-class LineEditInterface;
 class SettingsDialog;
 class Ui_LibraryFilterWidget;
 
@@ -50,12 +49,15 @@ class LibraryFilterWidget : public QWidget {
     AlwaysDelayed,
   };
 
+  static QActionGroup* CreateGroupByActions(QObject* parent);
+
   void SetFilterHint(const QString& hint);
   void SetApplyFilterToLibrary(bool filter_applies_to_model) { filter_applies_to_model_ = filter_applies_to_model; }
   void SetDelayBehaviour(DelayBehaviour behaviour) { delay_behaviour_ = behaviour; }
   void SetAgeFilterEnabled(bool enabled);
   void SetGroupByEnabled(bool enabled);
 
+  QMenu* menu() const { return library_menu_; }
   void AddMenuAction(QAction* action);
 
   void SetSettingsGroup(const QString& group) { settings_group_ = group; }
@@ -82,6 +84,10 @@ class LibraryFilterWidget : public QWidget {
   void FilterDelayTimeout();
 
  private:
+  static QAction* CreateGroupByAction(const QString& text, QObject* parent,
+                                      const LibraryModel::Grouping& grouping);
+
+ private:
   Ui_LibraryFilterWidget* ui_;
   LibraryModel* model_;
 
@@ -100,11 +106,6 @@ class LibraryFilterWidget : public QWidget {
   DelayBehaviour delay_behaviour_;
 
   QString settings_group_;
-
-  // Since on Mac ui_->filter is nonexistent and on other platforms
-  // filter_ == ui_->filter, make sure to always use this field and
-  // not the one in the ui_ object!
-  LineEditInterface* filter_;
 };
 
 #endif // LIBRARYFILTERWIDGET_H

@@ -24,11 +24,14 @@
 
 #include "core/song.h"
 #include "playlist/playlistitem.h"
+#include "smartplaylists/generator.h"
 #include "ui/settingsdialog.h"
 #include "widgets/multiloadingindicator.h"
 
+class Application;
 class InternetModel;
 class LibraryFilterWidget;
+class QStandardItem;
 
 class InternetService : public QObject {
   Q_OBJECT
@@ -36,7 +39,8 @@ class InternetService : public QObject {
 public:
   // Constructs a new internet service with the given name and model. The name
   // should be user-friendly (like 'DigitallyImported' or 'Last.fm').
-  InternetService(const QString& name, InternetModel* model, QObject* parent = NULL);
+  InternetService(const QString& name, Application* app, InternetModel* model,
+                  QObject* parent = NULL);
   virtual ~InternetService() {}
 
   QString name() const { return name_; }
@@ -45,10 +49,16 @@ public:
   virtual QStandardItem* CreateRootItem() = 0;
   virtual void LazyPopulate(QStandardItem* parent) = 0;
 
-  virtual void ShowContextMenu(const QModelIndex& index, const QPoint& global_pos) {}
+  virtual void ShowContextMenu(const QPoint& global_pos) {}
   virtual void ItemDoubleClicked(QStandardItem* item) {}
+  // Create a generator for smart playlists
+  virtual smart_playlists::GeneratorPtr CreateGenerator(QStandardItem* item) { return smart_playlists::GeneratorPtr(); }
+  // Give the service a chance to do a custom action when data is dropped on it
+  virtual void DropMimeData(const QMimeData* data, const QModelIndex& index) {}
 
   virtual PlaylistItem::Options playlistitem_options() const { return PlaylistItem::Default; }
+  // Redefine this function to add service' specific actions to the playlist item
+  virtual QList<QAction*> playlistitem_actions(const Song& song) { return QList<QAction*>(); }
 
   virtual QWidget* HeaderWidget() const { return NULL; }
 
@@ -59,9 +69,12 @@ public:
 signals:
   void StreamError(const QString& message);
   void StreamMetadataFound(const QUrl& original_url, const Song& song);
-  void OpenSettingsAtPage(SettingsDialog::Page page);
 
   void AddToPlaylistSignal(QMimeData* data);
+  void ScrollToIndex(const QModelIndex& index);
+
+public slots:
+  virtual void ShowConfig() {}
 
 private slots:
   void AppendToPlaylist();
@@ -69,10 +82,6 @@ private slots:
   void OpenInNewPlaylist();
 
 protected:
-  // Subclass provides the currently selected QModelIndex on InternetService's
-  // request.
-  virtual QModelIndex GetCurrentIndex() = 0;
-
   // Returns all the playlist insertion related QActions (see below).
   QList<QAction*> GetPlaylistActions();
 
@@ -97,6 +106,13 @@ protected:
   void AddItemToPlaylist(const QModelIndex& index, AddMode add_mode);
   // Adds the 'indexes' elements to playlist using the 'add_mode' mode.
   void AddItemsToPlaylist(const QModelIndexList& indexes, AddMode add_mode);
+
+  // Convenient function for creating a item representing a song.
+  // Set some common properties (type=track, url, etc.)
+  QStandardItem* CreateSongItem(const Song& song);
+
+protected:
+  Application* app_;
 
 private:
   InternetModel* model_;

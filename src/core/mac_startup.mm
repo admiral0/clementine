@@ -21,7 +21,6 @@
 #import <AppKit/NSNibDeclarations.h>
 #import <AppKit/NSViewController.h>
 
-#import <Foundation/NSAutoreleasePool.h>
 #import <Foundation/NSBundle.h>
 #import <Foundation/NSError.h>
 #import <Foundation/NSFileManager.h>
@@ -36,6 +35,7 @@
 
 #import <QuartzCore/CALayer.h>
 
+#import "3rdparty/SPMediaKeyTap/SPMediaKeyTap.h"
 
 #include "config.h"
 #include "globalshortcuts.h"
@@ -45,18 +45,28 @@
 #include "macglobalshortcutbackend.h"
 #include "utilities.h"
 #include "core/logging.h"
+#include "core/scoped_cftyperef.h"
+#include "core/scoped_nsautorelease_pool.h"
 
 #ifdef HAVE_SPARKLE
 #import <Sparkle/SUUpdater.h>
 #endif
 
+#include <QApplication>
 #include <QCoreApplication>
 #include <QDir>
 #include <QEvent>
 #include <QFile>
 #include <QSettings>
+#include <QWidget>
 
 #include <QtDebug>
+
+QDebug operator <<(QDebug dbg, NSObject* object) {
+  QString ns_format = [[NSString stringWithFormat: @"%@", object] UTF8String];
+  dbg.nospace() << ns_format;
+  return dbg.space();
+}
 
 // Capture global media keys on Mac (Cocoa only!)
 // See: http://www.rogueamoeba.com/utm/2007/09/29/apple-keyboard-media-key-event-handling/
@@ -83,7 +93,7 @@ static bool BreakpadCallback(int, int, mach_port_t, void*) {
 }
 
 static BreakpadRef InitBreakpad() {
-  NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+  ScopedNSAutoreleasePool pool;
   BreakpadRef breakpad = nil;
   NSDictionary* plist = [[NSBundle mainBundle] infoDictionary];
   if (plist) {
@@ -151,14 +161,22 @@ static BreakpadRef InitBreakpad() {
     qLog(Warning)<<"Media key monitoring disabled";
 
 }
+
 - (BOOL) application: (NSApplication*)app openFile:(NSString*)filename {
-  qDebug() << "Wants to open:" << [filename UTF8String];
+  qLog(Debug) << "Wants to open:" << [filename UTF8String];
 
   if (application_handler_->LoadUrl(QString::fromUtf8([filename UTF8String]))) {
     return YES;
   }
 
   return NO;
+}
+
+- (void) application: (NSApplication*)app openFiles:(NSArray*)filenames {
+  qLog(Debug) << "Wants to open:" << filenames;
+  [filenames enumerateObjectsUsingBlock:^(id object, NSUInteger idx, BOOL* stop) {
+    [self application:app openFile:(NSString*)object];
+  }];
 }
 
 - (void) mediaKeyTap: (SPMediaKeyTap*)keyTap receivedMediaKeyEvent:(NSEvent*)event {
@@ -184,6 +202,12 @@ static BreakpadRef InitBreakpad() {
 #endif
   return NSTerminateNow;
 }
+
+- (BOOL) userNotificationCenter: (id)center shouldPresentNotification: (id)notification {
+  // Always show notifications, even if Clementine is in the foreground.
+  return YES;
+}
+
 @end
 
 @implementation MacApplication
@@ -216,12 +240,18 @@ static BreakpadRef InitBreakpad() {
   // this makes sure the delegate's shortcut_handler is set
   [delegate_ setShortcutHandler:shortcut_handler_];
   [self setDelegate:delegate_];
+
+  Class notification_center_class = NSClassFromString(@"NSUserNotificationCenter");
+  if (notification_center_class) {
+    id notification_center = [notification_center_class defaultUserNotificationCenter];
+    [notification_center setDelegate: delegate_];
+  }
 }
 
 -(void) sendEvent: (NSEvent*)event {
   // If event tap is not installed, handle events that reach the app instead
   BOOL shouldHandleMediaKeyEventLocally = ![SPMediaKeyTap usesGlobalMediaKeyTap];
-  
+
   if(shouldHandleMediaKeyEventLocally && [event type] == NSSystemDefined && [event subtype] == SPSystemDefinedEventMediaKeys) {
     [(id)[self delegate] mediaKeyTap: nil receivedMediaKeyEvent: event];
   }
@@ -234,7 +264,7 @@ static BreakpadRef InitBreakpad() {
 namespace mac {
 
 void MacMain() {
-  [[NSAutoreleasePool alloc] init];
+  ScopedNSAutoreleasePool pool;
   // Creates and sets the magic global variable so QApplication will find it.
   [MacApplication sharedApplication];
   #ifdef HAVE_SPARKLE
@@ -258,12 +288,10 @@ void CheckForUpdates() {
 }
 
 QString GetBundlePath() {
-  CFURLRef app_url = CFBundleCopyBundleURL(CFBundleGetMainBundle());
-  CFStringRef mac_path = CFURLCopyFileSystemPath(app_url, kCFURLPOSIXPathStyle);
-  const char* path = CFStringGetCStringPtr(mac_path, CFStringGetSystemEncoding());
+  ScopedCFTypeRef<CFURLRef> app_url(CFBundleCopyBundleURL(CFBundleGetMainBundle()));
+  ScopedCFTypeRef<CFStringRef> mac_path(CFURLCopyFileSystemPath(app_url.get(), kCFURLPOSIXPathStyle));
+  const char* path = CFStringGetCStringPtr(mac_path.get(), CFStringGetSystemEncoding());
   QString bundle_path = QString::fromUtf8(path);
-  CFRelease(app_url);
-  CFRelease(mac_path);
   return bundle_path;
 }
 
@@ -273,8 +301,7 @@ QString GetResourcesPath() {
 }
 
 QString GetApplicationSupportPath() {
-  NSAutoreleasePool* pool = [NSAutoreleasePool alloc];
-  [pool init];
+  ScopedNSAutoreleasePool pool;
   NSArray* paths = NSSearchPathForDirectoriesInDomains(
       NSApplicationSupportDirectory,
       NSUserDomainMask,
@@ -286,13 +313,11 @@ QString GetApplicationSupportPath() {
   } else {
     ret = "~/Library/Application Support";
   }
-  [pool drain];
   return ret;
 }
 
 QString GetMusicDirectory() {
-  NSAutoreleasePool* pool = [NSAutoreleasePool alloc];
-  [pool init];
+  ScopedNSAutoreleasePool pool;
   NSArray* paths = NSSearchPathForDirectoriesInDomains(
       NSMusicDirectory,
       NSUserDomainMask,
@@ -304,44 +329,7 @@ QString GetMusicDirectory() {
   } else {
     ret = "~/Music";
   }
-  [pool drain];
   return ret;
-}
-
-bool MigrateLegacyConfigFiles() {
-  bool moved_dir = false;
-  QString old_config_dir = QString("%1/.config/%2").arg(
-      QDir::homePath(), QCoreApplication::organizationName());
-  if (QFile::exists(old_config_dir)) {
-    QString new_config_dir = Utilities::GetConfigPath(Utilities::Path_Root);
-    // Create ~/Library/Application Support which should already exist anyway.
-    QDir::root().mkpath(GetApplicationSupportPath());
-
-    qDebug() << "Move from:" << old_config_dir
-             << "to:" << new_config_dir;
-
-    NSFileManager* file_manager = [[NSFileManager alloc] init];
-    NSError* error;
-    bool ret = [file_manager moveItemAtPath:
-        [NSString stringWithUTF8String: old_config_dir.toUtf8().constData()]
-        toPath:[NSString stringWithUTF8String: new_config_dir.toUtf8().constData()]
-        error: &error];
-    if (!ret) {
-      qLog(Warning) << [[error localizedDescription] UTF8String];
-    }
-    moved_dir = true;
-  }
-
-  QString old_config_path = QDir::homePath() + "/Library/Preferences/com.davidsansome.Clementine.plist";
-  if (QFile::exists(old_config_path)) {
-    QSettings settings;
-    bool ret = QFile::rename(old_config_path, settings.fileName());
-    if (ret) {
-      qLog(Warning) << "Migrated old config file: " << old_config_path << "to: " << settings.fileName();
-    }
-  }
-
-  return moved_dir;
 }
 
 static int MapFunctionKey(int keycode) {
@@ -443,6 +431,24 @@ QKeySequence KeySequenceFromNSEvent(NSEvent* event) {
   }
 
   return QKeySequence(key);
+}
+
+void DumpDictionary(CFDictionaryRef dict) {
+  NSDictionary* d = (NSDictionary*)dict;
+  NSLog(@"%@", d);
+}
+
+// NSWindowCollectionBehaviorFullScreenPrimary
+static const NSUInteger kFullScreenPrimary = 1 << 7;
+
+void EnableFullScreen(const QWidget& main_window) {
+  if (QSysInfo::MacintoshVersion == QSysInfo::MV_SNOWLEOPARD) {
+    return;  // Unsupported on 10.6
+  }
+
+  NSView* view = reinterpret_cast<NSView*>(main_window.winId());
+  NSWindow* window = [view window];
+  [window setCollectionBehavior: kFullScreenPrimary];
 }
 
 }  // namespace mac

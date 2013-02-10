@@ -23,26 +23,27 @@
 #include "library/sqlrow.h"
 #include "playlist/songmimedata.h"
 
+#include <QStack>
+
 
 LibrarySearchProvider::LibrarySearchProvider(LibraryBackendInterface* backend,
                                              const QString& name,
                                              const QString& id,
                                              const QIcon& icon,
+                                             bool enabled_by_default,
+                                             Application* app,
                                              QObject* parent)
-  : BlockingSearchProvider(parent),
-    backend_(backend),
-    cover_loader_(new BackgroundThreadImplementation<AlbumCoverLoader, AlbumCoverLoader>(this))
+  : BlockingSearchProvider(app, parent),
+    backend_(backend)
 {
-  Init(name, id, icon, false, true);
+  Hints hints = WantsSerialisedArtQueries | ArtIsInSongMetadata |
+                CanGiveSuggestions;
 
-  cover_loader_->Start(true);
-  cover_loader_->Worker()->SetDesiredHeight(kArtHeight);
-  cover_loader_->Worker()->SetPadOutputImage(true);
-  cover_loader_->Worker()->SetScaleOutputImage(true);
+  if (!enabled_by_default) {
+    hints |= DisabledByDefault;
+  }
 
-  connect(cover_loader_->Worker().get(),
-          SIGNAL(ImageLoaded(quint64,QImage)),
-          SLOT(AlbumArtLoaded(quint64,QImage)));
+  Init(name, id, icon, hints);
 }
 
 SearchProvider::ResultList LibrarySearchProvider::Search(int id, const QString& query) {
@@ -56,116 +57,68 @@ SearchProvider::ResultList LibrarySearchProvider::Search(int id, const QString& 
     return ResultList();
   }
 
-  const QStringList tokens = TokenizeQuery(query);
-
-  QMultiMap<QString, Song> albums;
-  QSet<QString> albums_with_non_track_matches;
-
+  // Build the result list
   ResultList ret;
-
   while (q.Next()) {
-    Song song;
-    song.InitFromQuery(q, true);
-
-    QString album_key = song.album();
-    if (song.is_compilation() && !song.albumartist().isEmpty()) {
-      album_key.prepend(song.albumartist() + " - ");
-    } else if (!song.is_compilation()) {
-      album_key.prepend(song.artist());
-    }
-
-    Result::MatchQuality quality = MatchQuality(tokens, song.title());
-
-    if (quality != Result::Quality_None) {
-      // If the query matched in the song title then we're interested in this
-      // as an individual song.
-      Result result(this);
-      result.type_ = Result::Type_Track;
-      result.metadata_ = song;
-      result.match_quality_ = quality;
-      ret << result;
-    } else {
-      // Otherwise we record this as being an interesting album.
-      albums_with_non_track_matches.insert(album_key);
-    }
-
-    albums.insertMulti(album_key, song);
-  }
-
-  // Add any albums that contained least one song that wasn't matched on the
-  // song title.
-  foreach (const QString& key, albums_with_non_track_matches) {
     Result result(this);
-    result.type_ = Result::Type_Album;
-    result.metadata_ = albums.value(key);
-    result.album_size_ = albums.count(key);
-    result.match_quality_ =
-        qMin(
-          MatchQuality(tokens, result.metadata_.albumartist()),
-          qMin(MatchQuality(tokens, result.metadata_.artist()),
-               MatchQuality(tokens, result.metadata_.album())));
-
-    result.album_songs_ = albums.values(key);
-    SortSongs(&result.album_songs_);
-
+    result.metadata_.InitFromQuery(q, true);
     ret << result;
   }
 
   return ret;
 }
 
-void LibrarySearchProvider::LoadArtAsync(int id, const Result& result) {
-  quint64 loader_id = cover_loader_->Worker()->LoadImageAsync(result.metadata_);
-  cover_loader_tasks_[loader_id] = id;
+MimeData* LibrarySearchProvider::LoadTracks(const ResultList& results) {
+  MimeData* ret = SearchProvider::LoadTracks(results);
+  static_cast<SongMimeData*>(ret)->backend = backend_;
+
+  return ret;
 }
 
-void LibrarySearchProvider::AlbumArtLoaded(quint64 id, const QImage& image) {
-  if (!cover_loader_tasks_.contains(id))
-    return;
-  int orig_id = cover_loader_tasks_.take(id);
+QStringList LibrarySearchProvider::GetSuggestions(int count) {
+  // We'd like to use order by random(), but that's O(n) in sqlite, so instead
+  // get the largest ROWID and pick a couple of random numbers within that
+  // range.
 
-  emit ArtLoaded(orig_id, image);
-}
+  LibraryQuery q;
+  q.SetColumnSpec("ROWID");
+  q.SetOrderBy("ROWID DESC");
+  q.SetIncludeUnavailable(true);
+  q.SetLimit(1);
 
-void LibrarySearchProvider::LoadTracksAsync(int id, const Result& result) {
-  SongList ret;
+  QStringList ret;
 
-  switch (result.type_) {
-  case Result::Type_Track:
-    // This is really easy - we just emit the track again.
-    ret << result.metadata_;
-    break;
+  if (!backend_->ExecQuery(&q) || !q.Next()) {
+    return ret;
+  }
 
-  case Result::Type_Album: {
-    // Find all the songs in this album.
-    LibraryQuery query;
-    query.SetColumnSpec("ROWID, " + Song::kColumnSpec);
-    query.AddCompilationRequirement(result.metadata_.is_compilation());
-    query.AddWhere("album", result.metadata_.album());
+  const int largest_rowid = q.Value(0).toInt();
 
-    if (!result.metadata_.is_compilation())
-      query.AddWhere("artist", result.metadata_.artist());
-
-    if (!backend_->ExecQuery(&query)) {
+  for (int attempt=0 ; attempt<count*5 ; ++attempt) {
+    if (ret.count() >= count) {
       break;
     }
 
-    while (query.Next()) {
-      Song song;
-      song.InitFromQuery(query, true);
-      ret << song;
+    LibraryQuery q;
+    q.SetColumnSpec("artist, album");
+    q.SetIncludeUnavailable(true);
+    q.AddWhere("ROWID", qrand() % largest_rowid);
+    q.SetLimit(1);
+
+    if (!backend_->ExecQuery(&q) || !q.Next()) {
+      continue;
     }
+
+    const QString artist = q.Value(0).toString();
+    const QString album  = q.Value(1).toString();
+
+    if (!artist.isEmpty() && !album.isEmpty())
+      ret << ((qrand() % 2 == 0) ? artist : album);
+    else if (!artist.isEmpty())
+      ret << artist;
+    else if (!album.isEmpty())
+      ret << album;
   }
 
-  default:
-    break;
-  }
-
-  SortSongs(&ret);
-
-  SongMimeData* mime_data = new SongMimeData;
-  mime_data->backend = backend_;
-  mime_data->songs = ret;
-
-  emit TracksLoaded(id, mime_data);
+  return ret;
 }

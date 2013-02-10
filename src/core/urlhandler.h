@@ -18,6 +18,7 @@
 #ifndef URLHANDLER_H
 #define URLHANDLER_H
 
+#include <QIcon>
 #include <QObject>
 #include <QUrl>
 
@@ -29,6 +30,7 @@ public:
 
   // The URL scheme that this handler handles.
   virtual QString scheme() const = 0;
+  virtual QIcon icon() const;
 
   // Returned by StartLoading() and LoadNext(), indicates what the player
   // should do when it wants to load a URL.
@@ -49,7 +51,8 @@ public:
 
     LoadResult(const QUrl& original_url = QUrl(),
                Type type = NoMoreTracks,
-               const QUrl& media_url = QUrl());
+               const QUrl& media_url = QUrl(),
+               qint64 length_nanosec_ = -1);
 
     // The url that the playlist item has in Url().
     // Might be something unplayable like lastfm://...
@@ -59,6 +62,9 @@ public:
 
     // The actual url to something that gstreamer can play.
     QUrl media_url_;
+
+    // Track length, if we are able to get it only now
+    qint64 length_nanosec_;
   };
 
   // Called by the Player when a song starts loading - gives the handler
@@ -68,6 +74,10 @@ public:
   // Called by the player when a song finishes - gives the handler a chance to
   // get another track to play.
   virtual LoadResult LoadNext(const QUrl& url) { return LoadResult(url); }
+
+  // Functions to be warned when something happen to a track handled by UrlHandler.
+  virtual void TrackAboutToEnd() { };
+  virtual void TrackSkipped() { };
 
 signals:
   void AsyncLoadComplete(const UrlHandler::LoadResult& result);

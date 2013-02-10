@@ -13,7 +13,8 @@ Build-Depends: debhelper (>= 7),
                libboost-serialization1.40-dev |
                libboost-serialization1.42-dev |
                libboost-serialization-dev,
-               libglew1.5-dev,
+               libglew1.5-dev |
+               libglew-dev,
                libqt4-dev,
                qt4-dev-tools,
                libqt4-opengl-dev,
@@ -26,7 +27,13 @@ Build-Depends: debhelper (>= 7),
                libusbmuxd-dev,
                libmtp-dev,
                libindicate-qt-dev,
-               libqjson-dev
+               libqjson-dev,
+               protobuf-compiler,
+               libprotobuf-dev,
+               libqca2-dev,
+               libchromaprint-dev | libfftw3-dev,
+               libfftw3-dev,
+               libsparsehash-dev
 Standards-Version: 3.8.1
 Homepage: http://www.clementine-player.org/
 
@@ -38,7 +45,8 @@ Depends: ${shlibs:Depends}, ${misc:Depends},
          gstreamer0.10-plugins-good,
          gstreamer0.10-alsa | gstreamer0.10-audiosink,
          gstreamer0.10-plugins-ugly,
-         libprojectm-data | projectm-data
+         libprojectm-data | projectm-data,
+         libqca2-plugin-ossl
 Description: Modern music player and library organiser inspired by Amarok 1.4
  Clementine focuses on a fast and easy-to-use interface for searching and
  playing your music.

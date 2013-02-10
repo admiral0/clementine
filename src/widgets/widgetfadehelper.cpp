@@ -16,6 +16,7 @@
 */
 
 #include "widgetfadehelper.h"
+#include "ui/qt_blurimage.h"
 
 #include <QResizeEvent>
 #include <QPainter>
@@ -24,9 +25,6 @@
 
 const int WidgetFadeHelper::kLoadingPadding = 9;
 const int WidgetFadeHelper::kLoadingBorderRadius = 10;
-
-// Exported by QtGui
-void qt_blurImage(QPainter *p, QImage &blurImage, qreal radius, bool quality, bool alphaOnly, int transposed = 0);
 
 WidgetFadeHelper::WidgetFadeHelper(QWidget* parent, int msec)
   : QWidget(parent),
@@ -51,6 +49,12 @@ bool WidgetFadeHelper::eventFilter(QObject* obj, QEvent* event) {
   // Don't care if we're hidden
   if (!isVisible())
     return false;
+
+  QResizeEvent* re = static_cast<QResizeEvent*>(event);
+  if (re->oldSize() == re->size()) {
+    // Ignore phoney resize events
+    return false;
+  }
 
   // Get a new capture of the parent
   hide();
@@ -102,13 +106,15 @@ void WidgetFadeHelper::CaptureParent() {
   blur_painter.setRenderHint(QPainter::Antialiasing);
   blur_painter.setRenderHint(QPainter::HighQualityAntialiasing);
 
+  blur_painter.translate(0.5, 0.5);
   blur_painter.setPen(QColor(200, 200, 200, 255));
   blur_painter.setBrush(QColor(200, 200, 200, 192));
   blur_painter.drawRoundedRect(loading_rect, kLoadingBorderRadius, kLoadingBorderRadius);
 
   blur_painter.setPen(palette().brush(QPalette::Text).color());
   blur_painter.setFont(loading_font);
-  blur_painter.drawText(loading_rect, Qt::AlignCenter, loading_text);
+  blur_painter.drawText(loading_rect.translated(-1, -1), Qt::AlignCenter, loading_text);
+  blur_painter.translate(-0.5, -0.5);
 
   blur_painter.end();
 
@@ -143,6 +149,7 @@ void WidgetFadeHelper::paintEvent(QPaintEvent* ) {
 
   if (fade_timeline_->state() != QTimeLine::Running) {
     // We're fading in the blur
+    p.drawPixmap(0, 0, original_pixmap_);
     p.setOpacity(blur_timeline_->currentValue());
   } else {
     // Fading out the blur into the new image

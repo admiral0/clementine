@@ -25,6 +25,7 @@
 
 #include "playlistitem.h"
 #include "playlistsequence.h"
+#include "core/tagreaderclient.h"
 #include "core/song.h"
 #include "smartplaylists/generator_fwd.h"
 
@@ -33,6 +34,7 @@ class PlaylistBackend;
 class PlaylistFilter;
 class Queue;
 class InternetModel;
+class InternetService;
 class TaskManager;
 
 class QSortFilterProxyModel;
@@ -42,6 +44,9 @@ namespace PlaylistUndoCommands {
   class InsertItems;
   class RemoveItems;
   class MoveItems;
+  class ReOrderItems;
+  class SortItems;
+  class ShuffleItems;
 }
 
 typedef QMap<int, Qt::Alignment> ColumnAlignmentMap;
@@ -67,6 +72,7 @@ class Playlist : public QAbstractListModel {
   friend class PlaylistUndoCommands::InsertItems;
   friend class PlaylistUndoCommands::RemoveItems;
   friend class PlaylistUndoCommands::MoveItems;
+  friend class PlaylistUndoCommands::ReOrderItems;
 
  public:
   Playlist(PlaylistBackend* backend,
@@ -107,6 +113,9 @@ class Playlist : public QAbstractListModel {
     Column_Score,
 
     Column_Comment,
+
+    Column_Source,
+    Column_Mood,
 
     ColumnCount
   };
@@ -161,16 +170,19 @@ class Playlist : public QAbstractListModel {
   Queue* queue() const { return queue_; }
 
   int id() const { return id_; }
+  const QString& ui_path() const { return ui_path_; }
+  void set_ui_path(const QString& path) { ui_path_ = path; }
 
   int current_row() const;
   int last_played_row() const;
-  int next_row() const;
-  int previous_row() const;
+  int next_row(bool ignore_repeat_track = false) const;
+  int previous_row(bool ignore_repeat_track = false) const;
 
   const QModelIndex current_index() const;
 
   bool stop_after_current() const;
   bool is_dynamic() const { return dynamic_playlist_; }
+  int dynamic_history_length() const;
 
   QString special_type() const { return special_type_; }
   void set_special_type(const QString& v) { special_type_ = v; }
@@ -178,7 +190,7 @@ class Playlist : public QAbstractListModel {
   const PlaylistItemPtr& item_at(int index) const { return items_[index]; }
   const bool has_item_at(int index) const { return index >= 0 && index < rowCount(); }
 
-  PlaylistItemPtr current_item() const { return current_item_; }
+  PlaylistItemPtr current_item() const;
 
   PlaylistItem::Options current_item_options() const;
   Song current_item_metadata() const;
@@ -194,12 +206,6 @@ class Playlist : public QAbstractListModel {
 
   QUndoStack* undo_stack() const { return undo_stack_; }
 
-  ColumnAlignmentMap column_alignments() const { return column_alignments_; }
-  void set_column_alignments(const ColumnAlignmentMap& column_alignments);
-  void set_column_align_left(int column);
-  void set_column_align_center(int column);
-  void set_column_align_right(int column);
-
   // Scrobbling
   qint64 scrobble_point_nanosec() const { return scrobble_point_; }
   LastFMStatus get_lastfm_status() const { return lastfm_status_; }
@@ -214,10 +220,12 @@ class Playlist : public QAbstractListModel {
   void InsertSongsOrLibraryItems(const SongList& items,             int pos = -1, bool play_now = false, bool enqueue = false);
   void InsertSmartPlaylist      (smart_playlists::GeneratorPtr gen, int pos = -1, bool play_now = false, bool enqueue = false);
   void InsertUrls               (const QList<QUrl>& urls,           int pos = -1, bool play_now = false, bool enqueue = false);
+  void InsertInternetItems      (InternetService* service,
+                                 const SongList& songs,             int pos = -1, bool play_now = false, bool enqueue = false);
   // Removes items with given indices from the playlist. This operation is not undoable.
   void RemoveItemsWithoutUndo   (const QList<int>& indices);
-  void UpdateItems              (const SongList& songs);
-
+  void ReshuffleIndices();
+  
   // If this playlist contains the current item, this method will apply the "valid" flag on it.
   // If the "valid" flag is false, the song will be greyed out. Otherwise the grey color will
   // be undone.
@@ -233,6 +241,7 @@ class Playlist : public QAbstractListModel {
 
   void StopAfter(int row);
   void ReloadItems(const QList<int>& rows);
+  void InformOfCurrentSongChange();
 
   // Changes rating of a song to the given value asynchronously
   void RateSong(const QModelIndex& index, double rating);
@@ -242,6 +251,9 @@ class Playlist : public QAbstractListModel {
   void AddSongInsertVetoListener(SongInsertVetoListener* listener);
   // Unregisters a SongInsertVetoListener object.
   void RemoveSongInsertVetoListener(SongInsertVetoListener* listener);
+
+  // Just emits the dataChanged() signal so the mood column is repainted.
+  void MoodbarUpdated(const QModelIndex& index);
 
   // QAbstractListModel
   int rowCount(const QModelIndex& = QModelIndex()) const { return items_.count(); }
@@ -267,14 +279,19 @@ class Playlist : public QAbstractListModel {
   void ClearStreamMetadata();
   void SetStreamMetadata(const QUrl& url, const Song& song);
   void ItemChanged(PlaylistItemPtr item);
+  void UpdateItems(const SongList& songs);
 
   void Clear();
+  void RemoveDuplicateSongs();
   void Shuffle();
 
   void ShuffleModeChanged(PlaylistSequence::ShuffleMode mode);
 
+  void ExpandDynamicPlaylist();
   void RepopulateDynamicPlaylist();
   void TurnOffDynamicPlaylist();
+
+  void SetColumnAlignment(const ColumnAlignmentMap& alignment);
 
  signals:
   void RestoreFinished();
@@ -292,9 +309,8 @@ class Playlist : public QAbstractListModel {
  private:
   void SetCurrentIsPaused(bool paused);
   void UpdateScrobblePoint();
-  void ReshuffleIndices();
-  int NextVirtualIndex(int i) const;
-  int PreviousVirtualIndex(int i) const;
+  int NextVirtualIndex(int i, bool ignore_repeat_track) const;
+  int PreviousVirtualIndex(int i, bool ignore_repeat_track) const;
   bool FilterContainsVirtualIndex(int i) const;
   void TurnOnDynamicPlaylist(smart_playlists::GeneratorPtr gen);
 
@@ -305,27 +321,29 @@ class Playlist : public QAbstractListModel {
   template<typename T>
   void InsertSongItems(const SongList& songs, int pos, bool play_now, bool enqueue);
 
+  void InsertDynamicItems(int count) ;
+ 
   // Modify the playlist without changing the undo stack.  These are used by
   // our friends in PlaylistUndoCommands
   void InsertItemsWithoutUndo(const PlaylistItemList& items, int pos,
                               bool enqueue = false);
   PlaylistItemList RemoveItemsWithoutUndo(int pos, int count);
   void MoveItemsWithoutUndo(const QList<int>& source_rows, int pos);
+  void MoveItemWithoutUndo(int source, int dest);
   void MoveItemsWithoutUndo(int start, const QList<int>& dest_rows);
+  void ReOrderWithoutUndo(const PlaylistItemList& new_items);
 
   void RemoveItemsNotInQueue();
 
   // Removes rows with given indices from this playlist.
   bool removeRows(QList<int>& rows);
 
-  void InformOfCurrentSongChange();
-
  private slots:
   void TracksAboutToBeDequeued(const QModelIndex&, int begin, int end);
   void TracksDequeued();
   void TracksEnqueued(const QModelIndex&, int begin, int end);
   void QueueLayoutChanged();
-  void SongSaveComplete();
+  void SongSaveComplete(TagReaderReply* reply, const QPersistentModelIndex& index);
   void ItemReloadComplete();
   void ItemsLoaded();
   void SongInsertVetoListenerDestroyed();
@@ -341,6 +359,7 @@ class Playlist : public QAbstractListModel {
   TaskManager* task_manager_;
   LibraryBackend* library_;
   int id_;
+  QString ui_path_;
 
   PlaylistItemList items_;
   QList<int> virtual_items_; // Contains the indices into items_ in the order
@@ -354,8 +373,6 @@ class Playlist : public QAbstractListModel {
   QPersistentModelIndex stop_after_;
   bool current_is_paused_;
   int current_virtual_index_;
-
-  PlaylistItemPtr current_item_;
 
   bool is_shuffled_;
 

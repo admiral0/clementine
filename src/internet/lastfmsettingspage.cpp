@@ -38,7 +38,8 @@ LastFMSettingsPage::LastFMSettingsPage(SettingsDialog* dialog)
   // Icons
   setWindowIcon(QIcon(":/last.fm/as.png"));
 
-  connect(service_, SIGNAL(AuthenticationComplete(bool)), SLOT(AuthenticationComplete(bool)));
+  connect(service_, SIGNAL(AuthenticationComplete(bool,QString)),
+          SLOT(AuthenticationComplete(bool,QString)));
   connect(service_, SIGNAL(UpdatedSubscriberStatus(bool)), SLOT(UpdatedSubscriberStatus(bool)));
   connect(ui_->login_state, SIGNAL(LogoutClicked()), SLOT(Logout()));
   connect(ui_->login_state, SIGNAL(LoginClicked()), SLOT(Login()));
@@ -63,7 +64,8 @@ void LastFMSettingsPage::Login() {
   service_->Authenticate(ui_->username->text(), ui_->password->text());
 }
 
-void LastFMSettingsPage::AuthenticationComplete(bool success) {
+void LastFMSettingsPage::AuthenticationComplete(bool success,
+                                                const QString& message) {
   if (!waiting_for_auth_)
     return; // Wasn't us that was waiting for auth
 
@@ -74,11 +76,15 @@ void LastFMSettingsPage::AuthenticationComplete(bool success) {
     ui_->password->clear();
     // Save settings
     Save();
-    RefreshControls(true);
   } else {
-    QMessageBox::warning(this, tr("Authentication failed"), tr("Your Last.fm credentials were incorrect"));
+    QString dialog_text = tr("Your Last.fm credentials were incorrect");
+    if (!message.isEmpty()) {
+      dialog_text = message;
+    }
+    QMessageBox::warning(this, tr("Authentication failed"), dialog_text);
   }
 
+  RefreshControls(success);
   service_->UpdateSubscriberStatus();
 }
 
@@ -86,6 +92,7 @@ void LastFMSettingsPage::Load() {
   ui_->scrobble->setChecked(service_->IsScrobblingEnabled());
   ui_->love_ban_->setChecked(service_->AreButtonsVisible());
   ui_->scrobble_button->setChecked(service_->IsScrobbleButtonVisible());
+  ui_->prefer_albumartist->setChecked(service_->PreferAlbumArtist());
 
   if (service_->IsAuthenticated()) {
     service_->UpdateSubscriberStatus();
@@ -116,6 +123,7 @@ void LastFMSettingsPage::Save() {
   s.setValue("ScrobblingEnabled", ui_->scrobble->isChecked());
   s.setValue("ShowLoveBanButtons", ui_->love_ban_->isChecked());
   s.setValue("ShowScrobbleButton", ui_->scrobble_button->isChecked());
+  s.setValue("PreferAlbumArtist", ui_->prefer_albumartist->isChecked());
   s.endGroup();
 
   service_->ReloadSettings();

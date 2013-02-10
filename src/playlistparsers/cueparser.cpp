@@ -17,6 +17,7 @@
 
 #include "cueparser.h"
 #include "core/logging.h"
+#include "core/timeconstants.h"
 
 #include <QBuffer>
 #include <QDateTime>
@@ -28,7 +29,7 @@
 #include <QtDebug>
 
 const char* CueParser::kFileLineRegExp = "(\\S+)\\s+(?:\"([^\"]+)\"|(\\S+))\\s*(?:\"([^\"]+)\"|(\\S+))?";
-const char* CueParser::kIndexRegExp = "(\\d{2}):(\\d{2}):(\\d{2})";
+const char* CueParser::kIndexRegExp = "(\\d{2,3}):(\\d{2}):(\\d{2})";
 
 const char* CueParser::kPerformer = "performer";
 const char* CueParser::kTitle = "title";
@@ -37,6 +38,9 @@ const char* CueParser::kFile = "file";
 const char* CueParser::kTrack = "track";
 const char* CueParser::kIndex = "index";
 const char* CueParser::kAudioTrackType = "audio";
+const char* CueParser::kRem = "rem";
+const char* CueParser::kGenre = "genre";
+const char* CueParser::kDate = "date";
 
 CueParser::CueParser(LibraryBackendInterface* library, QObject* parent)
     : ParserBase(library, parent)
@@ -64,6 +68,8 @@ SongList CueParser::Load(QIODevice* device, const QString& playlist_path, const 
     QString album_composer;
     QString file;
     QString file_type;
+    QString genre;
+    QString date;
 
     // -- FILE section
     do {
@@ -102,6 +108,21 @@ SongList CueParser::Load(QIODevice* device, const QString& playlist_path, const 
         if(splitted.size() > 2) {
           file_type = splitted[2];
         }
+
+      // REM
+      } else if(line_name == kRem) {
+          if(splitted.size() < 3) {
+              break;
+          }
+
+          // REM GENRE
+          if (line_value.toLower() == kGenre) {
+              genre = splitted[2];
+
+          // REM DATE
+          } else if(line_value.toLower() == kDate) {
+              date = splitted[2];
+          }
 
       // end of the header -> go into the track mode
       } else if(line_name == kTrack) {
@@ -148,7 +169,7 @@ SongList CueParser::Load(QIODevice* device, const QString& playlist_path, const 
         // for later (if it's valid of course)
         // please note that the same code is repeated just after this 'do-while' loop
         if(valid_file && !index.isEmpty() && (track_type.isEmpty() || track_type == kAudioTrackType)) {
-          entries.append(CueEntry(file, index, title, artist, album_artist, album, composer, album_composer));
+          entries.append(CueEntry(file, index, title, artist, album_artist, album, composer, album_composer, genre, date));
         }
 
         // clear the state
@@ -197,7 +218,7 @@ SongList CueParser::Load(QIODevice* device, const QString& playlist_path, const 
 
     // we didn't add the last song yet...
     if(valid_file && !index.isEmpty() && (track_type.isEmpty() || track_type == kAudioTrackType)) {
-      entries.append(CueEntry(file, index, title, artist, album_artist, album, composer, album_composer));
+      entries.append(CueEntry(file, index, title, artist, album_artist, album, composer, album_composer, genre, date));
     }
   }
 
@@ -271,6 +292,8 @@ bool CueParser::UpdateSong(const CueEntry& entry, const QString& next_index, Son
              entry.album, beginning, end);
   song->set_albumartist(entry.album_artist);
   song->set_composer(entry.PrettyComposer());
+  song->set_genre(entry.genre);
+  song->set_year(entry.date.toInt());
 
   return true;
 }
@@ -292,6 +315,8 @@ bool CueParser::UpdateLastSong(const CueEntry& entry, Song* song) const {
   song->set_artist(entry.PrettyArtist());
   song->set_album(entry.album);
   song->set_albumartist(entry.album_artist);
+  song->set_genre(entry.genre);
+  song->set_year(entry.date.toInt());
   song->set_composer(entry.PrettyComposer());
 
   // we don't do anything with the end here because it's already set to

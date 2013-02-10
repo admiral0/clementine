@@ -16,14 +16,16 @@
 */
 
 #include "config.h"
-#include "giolister.h"
-#include "core/logging.h"
 
 #include <QFile>
 #include <QStringList>
 #include <QtDebug>
 
 #include <boost/bind.hpp>
+
+#include "giolister.h"
+#include "core/logging.h"
+#include "core/signalchecker.h"
 
 QString GioLister::DeviceInfo::unique_id() const {
   if (mount)
@@ -91,11 +93,11 @@ void GioLister::Init() {
   g_list_free(mounts);
 
   // Connect signals from the monitor
-  g_signal_connect(monitor_, "volume-added", G_CALLBACK(VolumeAddedCallback), this);
-  g_signal_connect(monitor_, "volume-removed", G_CALLBACK(VolumeRemovedCallback), this);
-  g_signal_connect(monitor_, "mount-added", G_CALLBACK(MountAddedCallback), this);
-  g_signal_connect(monitor_, "mount-changed", G_CALLBACK(MountChangedCallback), this);
-  g_signal_connect(monitor_, "mount-removed", G_CALLBACK(MountRemovedCallback), this);
+  CHECKED_GCONNECT(monitor_, "volume-added", &VolumeAddedCallback, this);
+  CHECKED_GCONNECT(monitor_, "volume-removed", &VolumeRemovedCallback, this);
+  CHECKED_GCONNECT(monitor_, "mount-added", &MountAddedCallback, this);
+  CHECKED_GCONNECT(monitor_, "mount-changed", &MountChangedCallback, this);
+  CHECKED_GCONNECT(monitor_, "mount-removed", &MountRemovedCallback, this);
 }
 
 QStringList GioLister::DeviceUniqueIDs() {
@@ -480,19 +482,34 @@ void GioLister::UnmountDevice(const QString &id) {
 
   if (info.volume) {
     if (g_volume_can_eject(info.volume)) {
-      g_volume_eject(info.volume, G_MOUNT_UNMOUNT_NONE, NULL,
-                     (GAsyncReadyCallback) VolumeEjectFinished, NULL);
+      g_volume_eject_with_operation(
+          info.volume,
+          G_MOUNT_UNMOUNT_NONE,
+          NULL,
+          NULL,
+          (GAsyncReadyCallback) VolumeEjectFinished,
+          NULL);
       g_object_unref(info.volume);
       return;
     }
   }
 
   if (g_mount_can_eject(info.mount)) {
-    g_mount_eject(info.mount, G_MOUNT_UNMOUNT_NONE, NULL,
-                  (GAsyncReadyCallback) MountEjectFinished, NULL);
+    g_mount_eject_with_operation(
+        info.mount,
+        G_MOUNT_UNMOUNT_NONE,
+        NULL,
+        NULL,
+        (GAsyncReadyCallback) MountEjectFinished,
+        NULL);
   } else if (g_mount_can_unmount(info.mount)) {
-    g_mount_unmount(info.mount, G_MOUNT_UNMOUNT_NONE, NULL,
-                    (GAsyncReadyCallback) MountUnmountFinished, NULL);
+    g_mount_unmount_with_operation(
+        info.mount,
+        G_MOUNT_UNMOUNT_NONE,
+        NULL,
+        NULL,
+        (GAsyncReadyCallback) MountUnmountFinished,
+        NULL);
   }
 }
 
@@ -554,5 +571,3 @@ void GioLister::DoMountDevice(const QString& id, int request_id) {
                  VolumeMountFinished, NULL);
   emit DeviceMounted(id, request_id, true);
 }
-
-

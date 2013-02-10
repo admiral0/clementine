@@ -16,9 +16,11 @@
 */
 
 #include "organiseformat.h"
+#include "core/timeconstants.h"
 
 #include <QApplication>
 #include <QPalette>
+#include <QUrl>
 
 const char* OrganiseFormat::kTagPattern = "\\%([a-zA-Z]*)";
 const char* OrganiseFormat::kBlockPattern = "\\{([^{}]+)\\}";
@@ -140,13 +142,13 @@ QString OrganiseFormat::TagValue(const QString &tag, const Song &song) const {
   else if (tag == "samplerate")  value = QString::number(song.samplerate());
   else if (tag == "extension")   value = song.url().toLocalFile().section('.', -1, -1);
   else if (tag == "artistinitial") {
-    value = song.albumartist().trimmed();
-    if (value.isEmpty())  value = song.artist().trimmed();
+    value = song.effective_albumartist().trimmed();
+    if (replace_the_ && !value.isEmpty())
+      value.replace(QRegExp("^the\\s+", Qt::CaseInsensitive), "");
     if (!value.isEmpty()) value = value[0].toUpper();
   }
   else if (tag == "albumartist") {
-    value = song.albumartist();
-    if (value.isEmpty()) value = song.artist();
+    value = song.is_compilation() ? "Various Artists" : song.effective_albumartist();
   }
 
   if (replace_the_ && (tag == "artist" || tag == "albumartist"))

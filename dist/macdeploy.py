@@ -15,13 +15,18 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Clementine.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 import re
 import subprocess
 import sys
+import traceback
+
+LOGGER = logging.getLogger("macdeploy")
 
 FRAMEWORK_SEARCH_PATH=[
     '/target',
+    '/target/lib',
     '/Library/Frameworks',
     os.path.join(os.environ['HOME'], 'Library/Frameworks')
 ]
@@ -31,6 +36,7 @@ LIBRARY_SEARCH_PATH=['/target/lib', '/usr/local/lib', '/sw/lib']
 
 GSTREAMER_PLUGINS=[
     # Core plugins
+    'libgstapp.so',
     'libgstaudioconvert.so',
     'libgstaudiofx.so',
     'libgstaudiotestsrc.so',
@@ -39,6 +45,7 @@ GSTREAMER_PLUGINS=[
     'libgstcoreelements.so',
     'libgstdecodebin2.so',
     'libgstequalizer.so',
+    'libgstgdp.so',
     'libgstosxaudio.so',
     'libgsttcp.so',
     'libgsttypefindfunctions.so',
@@ -52,7 +59,6 @@ GSTREAMER_PLUGINS=[
     'libgstfaad.so',
     'libgstffmpeg.so',
     'libgstflac.so',
-    'libgstgio.so',
     'libgstid3demux.so',
     'libgstlame.so',
     'libgstmad.so',
@@ -61,7 +67,6 @@ GSTREAMER_PLUGINS=[
     'libgstmusepack.so',
     'libgstogg.so',
     'libgstqtdemux.so',
-    'libgstqtwrapper.so',
     'libgstreplaygain.so',
     'libgstspeex.so',
     'libgsttaglib.so',
@@ -75,11 +80,12 @@ GSTREAMER_PLUGINS=[
     # Icecast support
     'libgsticydemux.so',
 
-    # Fingerprinting support
-    'libgstofa.so',
-
     # CD support
     'libgstcdio.so',
+
+    # RTSP streaming
+    'libgstrtp.so',
+    'libgstrtsp.so',
 ]
 
 GSTREAMER_SEARCH_PATH=[
@@ -108,6 +114,10 @@ QT_PLUGINS_SEARCH_PATH=[
     '/Developer/Applications/Qt/plugins',
 ]
 
+GIO_MODULES_SEARCH_PATH=[
+    '/target/lib/gio/modules',
+]
+
 
 class Error(Exception):
   pass
@@ -133,7 +143,7 @@ class CouldNotFindGstreamerPluginError(Error):
   pass
 
 
-class CouldNotFindScriptPluginError(Error):
+class CouldNotFindGioModuleError(Error):
   pass
 
 
@@ -167,7 +177,9 @@ def GetBrokenLibraries(binary):
       continue
     if os.path.basename(binary) in line:
       continue
-    if re.match(r'^\s*/System/', line):
+    if 'libiconv' in line:
+      broken_libs['libs'].append(line)
+    elif re.match(r'^\s*/System/', line):
       continue  # System framework
     elif re.match(r'^\s*/usr/lib/', line):
       continue  # unix style system library
@@ -189,6 +201,7 @@ def FindFramework(path):
   for search_path in FRAMEWORK_SEARCH_PATH:
     abs_path = os.path.join(search_path, path)
     if os.path.exists(abs_path):
+      LOGGER.debug("Found framework '%s' in '%s'", path, search_path)
       return abs_path
 
   raise CouldNotFindFrameworkError(path)
@@ -199,6 +212,7 @@ def FindLibrary(path):
   for search_path in LIBRARY_SEARCH_PATH:
     abs_path = os.path.join(search_path, path)
     if os.path.exists(abs_path):
+      LOGGER.debug("Found library '%s' in '%s'", path, search_path)
       return abs_path
 
   raise CouldNotFindFrameworkError(path)
@@ -262,16 +276,18 @@ def FixBinary(path):
 
 def CopyLibrary(path):
   new_path = os.path.join(frameworks_dir, os.path.basename(path))
-  args = ['ditto', '--arch=i386', path, new_path]
+  args = ['ditto', '--arch=x86_64', path, new_path]
   commands.append(args)
+  LOGGER.info("Copying library '%s'", path)
   return new_path
 
 def CopyPlugin(path, subdir):
   new_path = os.path.join(plugins_dir, subdir, os.path.basename(path))
   args = ['mkdir', '-p', os.path.dirname(new_path)]
   commands.append(args)
-  args = ['ditto', '--arch=i386', path, new_path]
+  args = ['ditto', '--arch=x86_64', path, new_path]
   commands.append(args)
+  LOGGER.info("Copying plugin '%s'", path)
   return new_path
 
 def CopyFramework(path):
@@ -282,7 +298,7 @@ def CopyFramework(path):
       break
   args = ['mkdir', '-p', full_path]
   commands.append(args)
-  args = ['ditto', '--arch=i386', path, full_path]
+  args = ['ditto', '--arch=x86_64', path, full_path]
   commands.append(args)
 
   menu_nib = os.path.join(os.path.split(path)[0], 'Resources', 'qt_menu.nib')
@@ -290,13 +306,14 @@ def CopyFramework(path):
     args = ['cp', '-r', menu_nib, resources_dir]
     commands.append(args)
 
+  LOGGER.info("Copying framework '%s'", path)
   return os.path.join(full_path, parts[-1])
 
 def FixId(path, library_name):
   id = '@executable_path/../Frameworks/%s' % library_name
   args = ['install_name_tool', '-id', id, path]
   commands.append(args)
-  
+
 def FixLibraryId(path):
   library_name = os.path.basename(path)
   FixId(path, library_name)
@@ -309,6 +326,8 @@ def FixInstallPath(library_path, library, new_path):
   commands.append(args)
 
 def FindSystemLibrary(library_name):
+  if 'iconv' in library_name:
+    return None
   for path in ['/lib', '/usr/lib']:
     full_path = os.path.join(path, library_name)
     if os.path.exists(full_path):
@@ -358,29 +377,49 @@ def FindGstreamerPlugin(name):
   raise CouldNotFindGstreamerPluginError(name)
 
 
-FixBinary(binary)
+def FindGioModule(name):
+  for path in GIO_MODULES_SEARCH_PATH:
+    if os.path.exists(path):
+      for dir, dirs, files in os.walk(path):
+        if name in files:
+          return os.path.join(dir, name)
+  raise CouldNotFindGioModuleError(name)
 
-for plugin in GSTREAMER_PLUGINS:
-  FixPlugin(FindGstreamerPlugin(plugin), 'gstreamer')
 
-FixPlugin(FindGstreamerPlugin('gst-plugin-scanner'), '.')
+def main():
+  logging.basicConfig(filename="macdeploy.log", level=logging.DEBUG,
+                      format='%(asctime)s %(levelname)-8s %(message)s')
 
-try:
-  FixPlugin('clementine-spotifyblob', '.')
-except:
-  print 'Failed to find spotify blob'
+  FixBinary(binary)
 
-for plugin in QT_PLUGINS:
-  FixPlugin(FindQtPlugin(plugin), os.path.dirname(plugin))
+  for plugin in GSTREAMER_PLUGINS:
+    FixPlugin(FindGstreamerPlugin(plugin), 'gstreamer')
 
-if len(sys.argv) <= 2:
-  print 'Would run %d commands:' % len(commands)
+  FixPlugin(FindGstreamerPlugin('gst-plugin-scanner'), '.')
+  FixPlugin(FindGioModule('libgiognutls.so'), 'gio-modules')
+  FixPlugin(FindGioModule('libgiolibproxy.so'), 'gio-modules')
+
+  try:
+    FixPlugin('clementine-spotifyblob', '.')
+    FixPlugin('clementine-tagreader', '.')
+  except:
+    print 'Failed to find blob: %s' % traceback.format_exc()
+
+  for plugin in QT_PLUGINS:
+    FixPlugin(FindQtPlugin(plugin), os.path.dirname(plugin))
+
+  if len(sys.argv) <= 2:
+    print 'Would run %d commands:' % len(commands)
+    for command in commands:
+      print ' '.join(command)
+
+    print 'OK?'
+    raw_input()
+
   for command in commands:
-    print ' '.join(command)
+    p = subprocess.Popen(command)
+    os.waitpid(p.pid, 0)
 
-  print 'OK?'
-  raw_input()
 
-for command in commands:
-  p = subprocess.Popen(command)
-  os.waitpid(p.pid, 0)
+if __name__ == "__main__":
+  main()

@@ -19,20 +19,19 @@
  *   51 Franklin Steet, Fifth Floor, Boston, MA  02111-1307, USA.          *
  ***************************************************************************/
 
-#define DEBUG_PREFIX "Gst-Engine"
-
 #include "config.h"
 #include "gstengine.h"
 #include "gstenginepipeline.h"
 #include "core/logging.h"
+#include "core/taskmanager.h"
 #include "core/utilities.h"
 
 #ifdef HAVE_IMOBILEDEVICE
 # include "gst/afcsrc/gstafcsrc.h"
 #endif
 
-#ifdef HAVE_SPOTIFY
-# include "gst/spotifytcpsrc/gstspotifytcpsrc.h"
+#ifdef HAVE_MOODBAR
+# include "gst/moodbar/spectrum.h"
 #endif
 
 #include <math.h>
@@ -60,16 +59,21 @@ using boost::shared_ptr;
 
 const char* GstEngine::kSettingsGroup = "GstEngine";
 const char* GstEngine::kAutoSink = "autoaudiosink";
-const char* GstEngine::kHypnotoadPipeline = 
+const char* GstEngine::kHypnotoadPipeline =
       "audiotestsrc wave=6 ! "
       "audioecho intensity=1 delay=50000000 ! "
       "audioecho intensity=1 delay=25000000 ! "
       "equalizer-10bands "
       "band0=-24 band1=-3 band2=7.5 band3=12 band4=8 "
       "band5=6 band6=5 band7=6 band8=0 band9=-24";
+const char* GstEngine::kEnterprisePipeline =
+      "audiotestsrc wave=5 ! "
+      "audiocheblimit mode=0 cutoff=120";
 
-GstEngine::GstEngine()
+GstEngine::GstEngine(TaskManager* task_manager)
   : Engine::Base(),
+    task_manager_(task_manager),
+    buffering_task_id_(-1),
     delayq_(g_queue_new()),
     current_sample_(0),
     equalizer_enabled_(false),
@@ -78,6 +82,7 @@ GstEngine::GstEngine()
     rg_preamp_(0.0),
     rg_compression_(true),
     buffer_duration_nanosec_(1 * kNsecPerSec), // 1s
+    mono_playback_(false),
     seek_timer_(new QTimer(this)),
     timer_id_(-1),
     next_element_id_(0)
@@ -102,46 +107,8 @@ GstEngine::~GstEngine() {
   gst_deinit();
 }
 
-void GstEngine::SetEnv(const char *key, const QString &value) {
-#ifdef Q_OS_WIN32
-  putenv(QString("%1=%2").arg(key, value).toLocal8Bit().constData());
-#else
-  setenv(key, value.toLocal8Bit().constData(), 1);
-#endif
-}
-
 bool GstEngine::Init() {
-  QString scanner_path;
-  QString plugin_path;
-  QString registry_filename;
-
-  // On windows and mac we bundle the gstreamer plugins with clementine
-#if defined(Q_OS_DARWIN)
-  scanner_path = QCoreApplication::applicationDirPath() + "/../PlugIns/gst-plugin-scanner";
-  plugin_path = QCoreApplication::applicationDirPath() + "/../PlugIns/gstreamer";
-#elif defined(Q_OS_WIN32)
-  plugin_path = QCoreApplication::applicationDirPath() + "/gstreamer-plugins";
-#endif
-
-#if defined(Q_OS_WIN32) || defined(Q_OS_DARWIN)
-  registry_filename = Utilities::GetConfigPath(Utilities::Path_GstreamerRegistry);
-#endif
-
-  if (!scanner_path.isEmpty())
-    SetEnv("GST_PLUGIN_SCANNER", scanner_path);
-
-  if (!plugin_path.isEmpty()) {
-    SetEnv("GST_PLUGIN_PATH", plugin_path);
-    // Never load plugins from anywhere else.
-    SetEnv("GST_PLUGIN_SYSTEM_PATH", plugin_path);
-  }
-
-  if (!registry_filename.isEmpty()) {
-    SetEnv("GST_REGISTRY", registry_filename);
-  }
-
   initialising_ = QtConcurrent::run(&GstEngine::InitialiseGstreamer);
-
   return true;
 }
 
@@ -152,8 +119,8 @@ void GstEngine::InitialiseGstreamer() {
   afcsrc_register_static();
 #endif
 
-#ifdef HAVE_SPOTIFY
-  spotifytcpsrc_register_static();
+#ifdef HAVE_MOODBAR
+  gstmoodbar_register_static();
 #endif
 }
 
@@ -175,6 +142,8 @@ void GstEngine::ReloadSettings() {
   rg_compression_ = s.value("rgcompression", true).toBool();
 
   buffer_duration_nanosec_ = s.value("bufferduration", 4000).toLongLong() * kNsecPerMsec;
+
+  mono_playback_ = s.value("monoplayback", false).toBool();
 }
 
 
@@ -374,6 +343,7 @@ bool GstEngine::Load(const QUrl& url, Engine::TrackChangeFlags change,
   if (crossfade)
     StartFadeout();
 
+  BufferingFinished();
   current_pipeline_ = pipeline;
 
   SetVolume(volume_);
@@ -401,7 +371,7 @@ void GstEngine::StartFadeout() {
 bool GstEngine::Play(quint64 offset_nanosec) {
   EnsureInitialised();
 
-  if (!current_pipeline_)
+  if (!current_pipeline_ || current_pipeline_->is_buffering())
     return false;
 
   QFuture<GstStateChangeReturn> future = current_pipeline_->SetState(GST_STATE_PLAYING);
@@ -437,6 +407,7 @@ void GstEngine::PlayDone() {
     // Failure - give up
     qLog(Warning) << "Could not set thread to PLAYING.";
     current_pipeline_.reset();
+    BufferingFinished();
     return;
   }
 
@@ -465,6 +436,7 @@ void GstEngine::Stop() {
     StartFadeout();
 
   current_pipeline_.reset();
+  BufferingFinished();
   emit StateChanged(Engine::Empty);
 }
 
@@ -474,7 +446,7 @@ void GstEngine::FadeoutFinished() {
 }
 
 void GstEngine::Pause() {
-  if (!current_pipeline_)
+  if (!current_pipeline_ || current_pipeline_->is_buffering())
     return;
 
   if ( current_pipeline_->state() == GST_STATE_PLAYING ) {
@@ -486,7 +458,7 @@ void GstEngine::Pause() {
 }
 
 void GstEngine::Unpause() {
-  if (!current_pipeline_)
+  if (!current_pipeline_ || current_pipeline_->is_buffering())
     return;
 
   if ( current_pipeline_->state() == GST_STATE_PAUSED ) {
@@ -594,6 +566,7 @@ void GstEngine::HandlePipelineError(int pipeline_id, const QString& message,
 
   current_pipeline_.reset();
 
+  BufferingFinished();
   emit StateChanged(Engine::Empty);
   // unable to play media stream with this url
   emit InvalidSongRequested(url_);
@@ -615,8 +588,10 @@ void GstEngine::EndOfStreamReached(int pipeline_id, bool has_next_track) {
   if (!current_pipeline_.get() || current_pipeline_->id() != pipeline_id)
     return;
 
-  if (!has_next_track)
+  if (!has_next_track) {
     current_pipeline_.reset();
+    BufferingFinished();
+  }
   ClearScopeBuffers();
   emit TrackEnded();
 }
@@ -684,6 +659,7 @@ shared_ptr<GstEnginePipeline> GstEngine::CreatePipeline() {
   ret->set_output_device(sink_, device_);
   ret->set_replaygain(rg_enabled_, rg_mode_, rg_preamp_, rg_compression_);
   ret->set_buffer_duration_nanosec(buffer_duration_nanosec_);
+  ret->set_mono_playback(mono_playback_);
 
   ret->AddBufferConsumer(this);
   foreach (BufferConsumer* consumer, buffer_consumers_) {
@@ -695,6 +671,9 @@ shared_ptr<GstEnginePipeline> GstEngine::CreatePipeline() {
   connect(ret.get(), SIGNAL(MetadataFound(int, Engine::SimpleMetaBundle)),
           SLOT(NewMetaData(int, Engine::SimpleMetaBundle)));
   connect(ret.get(), SIGNAL(destroyed()), SLOT(ClearScopeBuffers()));
+  connect(ret.get(), SIGNAL(BufferingStarted()), SLOT(BufferingStarted()));
+  connect(ret.get(), SIGNAL(BufferingProgress(int)), SLOT(BufferingProgress(int)));
+  connect(ret.get(), SIGNAL(BufferingFinished()), SLOT(BufferingFinished()));
 
   return ret;
 }
@@ -705,6 +684,11 @@ shared_ptr<GstEnginePipeline> GstEngine::CreatePipeline(const QUrl& url,
 
   if (url.scheme() == "hypnotoad") {
     ret->InitFromString(kHypnotoadPipeline);
+    return ret;
+  }
+
+  if (url.scheme() == "enterprise") {
+    ret->InitFromString(kEnterprisePipeline);
     return ret;
   }
 
@@ -827,4 +811,24 @@ void GstEngine::SetBackgroundStreamVolume(int id, int volume) {
   shared_ptr<GstEnginePipeline> pipeline = background_streams_[id];
   Q_ASSERT(pipeline);
   pipeline->SetVolume(volume);
+}
+
+void GstEngine::BufferingStarted() {
+  if (buffering_task_id_ != -1) {
+    task_manager_->SetTaskFinished(buffering_task_id_);
+  }
+
+  buffering_task_id_ = task_manager_->StartTask(tr("Buffering"));
+  task_manager_->SetTaskProgress(buffering_task_id_, 0, 100);
+}
+
+void GstEngine::BufferingProgress(int percent) {
+  task_manager_->SetTaskProgress(buffering_task_id_, percent, 100);
+}
+
+void GstEngine::BufferingFinished() {
+  if (buffering_task_id_ != -1) {
+    task_manager_->SetTaskFinished(buffering_task_id_);
+    buffering_task_id_ = -1;
+  }
 }

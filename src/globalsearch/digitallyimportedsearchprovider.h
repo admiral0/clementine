@@ -23,20 +23,17 @@
 class DigitallyImportedServiceBase;
 
 class DigitallyImportedSearchProvider : public SimpleSearchProvider {
-  Q_OBJECT
-
 public:
   DigitallyImportedSearchProvider(DigitallyImportedServiceBase* service,
-                                  QObject* parent);
+                                  Application* app, QObject* parent);
 
-  void LoadArtAsync(int id, const Result& result);
+  void ShowConfig();
 
-private slots:
+protected:
   void RecreateItems();
 
 private:
   DigitallyImportedServiceBase* service_;
-  QImage icon_;
 };
 
 #endif // DIGITALLYIMPORTEDSEARCHPROVIDER_H

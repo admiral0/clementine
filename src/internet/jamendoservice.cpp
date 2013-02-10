@@ -20,6 +20,22 @@
 #include "jamendodynamicplaylist.h"
 #include "jamendoplaylistitem.h"
 #include "internetmodel.h"
+#include "core/application.h"
+#include "core/database.h"
+#include "core/logging.h"
+#include "core/mergedproxymodel.h"
+#include "core/network.h"
+#include "core/scopedtransaction.h"
+#include "core/taskmanager.h"
+#include "core/timeconstants.h"
+#include "globalsearch/globalsearch.h"
+#include "globalsearch/librarysearchprovider.h"
+#include "library/librarybackend.h"
+#include "library/libraryfilterwidget.h"
+#include "library/librarymodel.h"
+#include "smartplaylists/generator.h"
+#include "smartplaylists/querygenerator.h"
+#include "ui/iconloader.h"
 
 #include <QDesktopServices>
 #include <QFutureWatcher>
@@ -30,19 +46,6 @@
 #include <QtConcurrentRun>
 #include <QXmlStreamReader>
 #include "qtiocompressor.h"
-
-#include "core/database.h"
-#include "core/logging.h"
-#include "core/mergedproxymodel.h"
-#include "core/network.h"
-#include "core/scopedtransaction.h"
-#include "core/taskmanager.h"
-#include "library/librarybackend.h"
-#include "library/libraryfilterwidget.h"
-#include "library/librarymodel.h"
-#include "smartplaylists/generator.h"
-#include "smartplaylists/querygenerator.h"
-#include "ui/iconloader.h"
 
 const char* JamendoService::kServiceName = "Jamendo";
 const char* JamendoService::kDirectoryUrl =
@@ -67,20 +70,21 @@ const char* JamendoService::kSettingsGroup = "Jamendo";
 const int JamendoService::kBatchSize = 10000;
 const int JamendoService::kApproxDatabaseSize = 300000;
 
-JamendoService::JamendoService(InternetModel* parent)
-    : InternetService(kServiceName, parent, parent),
+JamendoService::JamendoService(Application* app, InternetModel* parent)
+    : InternetService(kServiceName, app, parent, parent),
       network_(new NetworkAccessManager(this)),
       context_menu_(NULL),
       library_backend_(NULL),
       library_filter_(NULL),
       library_model_(NULL),
       library_sort_model_(new QSortFilterProxyModel(this)),
+      search_provider_(NULL),
       load_database_task_id_(0),
       total_song_count_(0),
       accepted_download_(false) {
   library_backend_ = new LibraryBackend;
-  library_backend_->moveToThread(parent->db_thread());
-  library_backend_->Init(parent->db_thread()->Worker(), kSongsTable,
+  library_backend_->moveToThread(app_->database()->thread());
+  library_backend_->Init(app_->database(), kSongsTable,
                          QString::null, QString::null, kFtsTable);
   connect(library_backend_, SIGNAL(TotalSongCountUpdated(int)),
           SLOT(UpdateTotalSongCount(int)));
@@ -91,7 +95,7 @@ JamendoService::JamendoService(InternetModel* parent)
   using smart_playlists::Search;
   using smart_playlists::SearchTerm;
 
-  library_model_ = new LibraryModel(library_backend_, parent->task_manager(), this);
+  library_model_ = new LibraryModel(library_backend_, app_, this);
   library_model_->set_show_various_artists(false);
   library_model_->set_show_smart_playlists(false);
   library_model_->set_default_smart_playlists(LibraryModel::DefaultGenerators()
@@ -115,7 +119,19 @@ JamendoService::JamendoService(InternetModel* parent)
   library_sort_model_->setSourceModel(library_model_);
   library_sort_model_->setSortRole(LibraryModel::Role_SortText);
   library_sort_model_->setDynamicSortFilter(true);
+  library_sort_model_->setSortLocaleAware(true);
   library_sort_model_->sort(0);
+
+  search_provider_ = new LibrarySearchProvider(
+      library_backend_,
+      tr("Jamendo"),
+      "jamendo",
+      QIcon(":/providers/jamendo.png"),
+      false, app_, this);
+  app_->global_search()->AddProvider(search_provider_);
+  connect(app_->global_search(),
+          SIGNAL(ProviderToggled(const SearchProvider*,bool)),
+          SLOT(SearchProviderToggled(const SearchProvider*,bool)));
 }
 
 JamendoService::~JamendoService() {
@@ -130,7 +146,9 @@ QStandardItem* JamendoService::CreateRootItem() {
 void JamendoService::LazyPopulate(QStandardItem* item) {
   switch (item->data(InternetModel::Role_Type).toInt()) {
     case InternetModel::Type_Service: {
-      library_model_->Init();
+      if (total_song_count_ == 0 && !load_database_task_id_) {
+        DownloadDirectory();
+      }
       model()->merged_model()->AddSubModel(item->index(), library_sort_model_);
       break;
     }
@@ -141,11 +159,7 @@ void JamendoService::LazyPopulate(QStandardItem* item) {
 
 void JamendoService::UpdateTotalSongCount(int count) {
   total_song_count_ = count;
-  if (total_song_count_ == 0 && !load_database_task_id_) {
-    DownloadDirectory();
-  }
-  else {
-    //show smart playlist in song count if the db is loaded
+  if (total_song_count_ > 0) {
     library_model_->set_show_smart_playlists(true);
     accepted_download_ = true; //the user has previously accepted
   }
@@ -169,22 +183,22 @@ void JamendoService::DownloadDirectory() {
                  SLOT(DownloadDirectoryProgress(qint64,qint64)));
 
   if (!load_database_task_id_) {
-    load_database_task_id_ = model()->task_manager()->StartTask(
+    load_database_task_id_ = app_->task_manager()->StartTask(
         tr("Downloading Jamendo catalogue"));
   }
 }
 
 void JamendoService::DownloadDirectoryProgress(qint64 received, qint64 total) {
   float progress = float(received) / total;
-  model()->task_manager()->SetTaskProgress(load_database_task_id_,
-                                           int(progress * 100), 100);
+  app_->task_manager()->SetTaskProgress(load_database_task_id_,
+                                                  int(progress * 100), 100);
 }
 
 void JamendoService::DownloadDirectoryFinished() {
   QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
   Q_ASSERT(reply);
 
-  model()->task_manager()->SetTaskFinished(load_database_task_id_);
+  app_->task_manager()->SetTaskFinished(load_database_task_id_);
   load_database_task_id_ = 0;
 
   // TODO: Not leak reply.
@@ -196,7 +210,7 @@ void JamendoService::DownloadDirectoryFinished() {
     return;
   }
 
-  load_database_task_id_ = model()->task_manager()->StartTask(
+  load_database_task_id_ = app_->task_manager()->StartTask(
       tr("Parsing Jamendo catalogue"));
 
   QFuture<void> future = QtConcurrent::run(
@@ -239,7 +253,7 @@ void JamendoService::ParseDirectory(QIODevice* device) const {
       track_ids.clear();
 
       // Update progress info
-      model()->task_manager()->SetTaskProgress(
+      app_->task_manager()->SetTaskProgress(
             load_database_task_id_, total_count, kApproxDatabaseSize);
     }
   }
@@ -364,8 +378,8 @@ Song JamendoService::ReadTrack(const QString& artist,
         if (id == 0)
           continue;
 
-        QString ogg_url = QString(kOggStreamUrl).arg(id_text);
-        song.set_url(QUrl(ogg_url));
+        QString mp3_url = QString(kMp3StreamUrl).arg(id_text);
+        song.set_url(QUrl(mp3_url));
         song.set_art_automatic(album_cover);
         song.set_valid(true);
 
@@ -387,7 +401,7 @@ void JamendoService::ParseDirectoryFinished() {
   library_model_->set_show_smart_playlists(true);
   library_model_->Reset();
 
-  model()->task_manager()->SetTaskFinished(load_database_task_id_);
+  app_->task_manager()->SetTaskFinished(load_database_task_id_);
   load_database_task_id_ = 0;
 }
 
@@ -402,7 +416,7 @@ void JamendoService::EnsureMenuCreated() {
   download_album_ = context_menu_->addAction(IconLoader::Load("download"),
       tr("Download this album..."), this, SLOT(DownloadAlbum()));
   context_menu_->addSeparator();
-  context_menu_->addAction(IconLoader::Load("download"), tr("Open jamendo.com in browser"), this, SLOT(Homepage()));
+  context_menu_->addAction(IconLoader::Load("download"), tr("Open %1 in browser").arg("jamendo.com"), this, SLOT(Homepage()));
   context_menu_->addAction(IconLoader::Load("view-refresh"), tr("Refresh catalogue"), this, SLOT(DownloadDirectory()));
 
   if (accepted_download_) {
@@ -411,19 +425,17 @@ void JamendoService::EnsureMenuCreated() {
     library_filter_->SetLibraryModel(library_model_);
     library_filter_->SetFilterHint(tr("Search Jamendo"));
     library_filter_->SetAgeFilterEnabled(false);
+
+    context_menu_->addSeparator();
+    context_menu_->addMenu(library_filter_->menu());
   }
 }
 
-void JamendoService::ShowContextMenu(const QModelIndex& index, const QPoint& global_pos) {
+void JamendoService::ShowContextMenu(const QPoint& global_pos) {
   EnsureMenuCreated();
 
-  if (index.model() == library_sort_model_) {
-    context_item_ = index;
-  } else {
-    context_item_ = QModelIndex();
-  }
-
-  const bool enabled = accepted_download_ && context_item_.isValid();
+  const bool enabled = accepted_download_ &&
+                       model()->current_index().model() == library_sort_model_;
 
   //make menu items visible and enabled only when needed
   GetAppendToPlaylistAction()->setVisible(accepted_download_);
@@ -445,13 +457,9 @@ QWidget* JamendoService::HeaderWidget() const {
   return library_filter_;
 }
 
-QModelIndex JamendoService::GetCurrentIndex() {
-  return context_item_;
-}
-
 void JamendoService::AlbumInfo() {
   SongList songs(library_model_->GetChildSongs(
-      library_sort_model_->mapToSource(context_item_)));
+      library_sort_model_->mapToSource(model()->current_index())));
   if (songs.isEmpty())
     return;
 
@@ -465,7 +473,7 @@ void JamendoService::AlbumInfo() {
 
 void JamendoService::DownloadAlbum() {
   SongList songs(library_model_->GetChildSongs(
-      library_sort_model_->mapToSource(context_item_)));
+      library_sort_model_->mapToSource(model()->current_index())));
   if (songs.isEmpty())
     return;
 
@@ -479,4 +487,13 @@ void JamendoService::DownloadAlbum() {
 
 void JamendoService::Homepage() {
   QDesktopServices::openUrl(QUrl(kHomepage));
+}
+
+void JamendoService::SearchProviderToggled(const SearchProvider* provider,
+                                           bool enabled) {
+  // If the use enabled our provider and he hasn't downloaded the directory yet,
+  // prompt him to do so now.
+  if (provider == search_provider_ && enabled && total_song_count_ == 0) {
+    DownloadDirectory();
+  }
 }

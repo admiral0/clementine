@@ -27,10 +27,13 @@
 #include "library/library.h"
 #include "library/libraryplaylistitem.h"
 
-
+#include <QSqlQuery>
 #include <QtConcurrentRun>
 #include <QtDebug>
 
+
+PlaylistItem::~PlaylistItem() {
+}
 
 PlaylistItem* PlaylistItem::NewFromType(const QString& type) {
   if (type == "Library")

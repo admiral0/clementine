@@ -15,22 +15,32 @@
    along with Clementine.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "timeconstants.h"
 #include "utilities.h"
-#include "core/logging.h"
 
-#include "sha2.h"
+#include <stdlib.h>
 
-#include <QCoreApplication>
+#include <boost/scoped_array.hpp>
+
+#include <QApplication>
 #include <QDateTime>
 #include <QDesktopServices>
 #include <QDir>
 #include <QIODevice>
+#include <QMetaEnum>
+#include <QMouseEvent>
 #include <QStringList>
-#include <QTemporaryFile>
-#include <QUrl>
+#include <QTcpServer>
 #include <QtDebug>
+#include <QTemporaryFile>
 #include <QtGlobal>
+#include <QUrl>
+#include <QWidget>
+#include <QXmlStreamReader>
+
+#include "core/logging.h"
+#include "timeconstants.h"
+
+#include "sha2.h"
 
 #if defined(Q_OS_UNIX)
 #  include <sys/statvfs.h>
@@ -38,11 +48,21 @@
 #  include <windows.h>
 #endif
 
+#ifdef Q_OS_LINUX
+#  include <sys/syscall.h>
+#endif
 #ifdef Q_OS_DARWIN
-#  include "core/mac_startup.h"
+#  include <sys/resource.h>
 #endif
 
-#include <boost/scoped_array.hpp>
+#ifdef Q_OS_DARWIN
+#  include "core/mac_startup.h"
+#  include "core/mac_utilities.h"
+#  include "core/scoped_cftyperef.h"
+#  include "CoreServices/CoreServices.h"
+#  include "IOKit/ps/IOPowerSources.h"
+#  include "IOKit/ps/IOPSKeys.h"
+#endif
 
 namespace Utilities {
 
@@ -107,6 +127,24 @@ QString Ago(int seconds_since_epoch, const QLocale& locale) {
     return tr("%1 days ago").arg(days_ago);
 
   return then.date().toString(locale.dateFormat());
+}
+
+QString PrettyFutureDate(const QDate& date) {
+  const QDate now = QDate::currentDate();
+  const int delta_days = now.daysTo(date);
+
+  if (delta_days < 0)
+    return QString();
+  if (delta_days == 0)
+    return tr("Today");
+  if (delta_days == 1)
+    return tr("Tomorrow");
+  if (delta_days <= 7)
+    return tr("In %1 days").arg(delta_days);
+  if (delta_days <= 14)
+    return tr("Next week");
+
+  return tr("In %1 weeks").arg(delta_days / 7);
 }
 
 QString PrettySize(quint64 bytes) {
@@ -255,11 +293,28 @@ QString GetConfigPath(ConfigPath config) {
     }
     break;
 
+    case Path_CacheRoot: {
+      #if defined(Q_OS_UNIX) && !defined(Q_OS_DARWIN)
+        char* xdg = getenv("XDG_CACHE_HOME");
+        if (!xdg || !*xdg) {
+          return QString("%1/.cache/%2").arg(QDir::homePath(), QCoreApplication::organizationName());
+        } else {
+          return QString("%1/%2").arg(xdg, QCoreApplication::organizationName());
+        }
+      #else
+        return GetConfigPath(Path_Root);
+      #endif
+    }
+    break;
+
     case Path_AlbumCovers:
       return GetConfigPath(Path_Root) + "/albumcovers";
 
     case Path_NetworkCache:
-      return GetConfigPath(Path_Root) + "/networkcache";
+      return GetConfigPath(Path_CacheRoot) + "/networkcache";
+
+    case Path_MoodbarCache:
+      return GetConfigPath(Path_CacheRoot) + "/moodbarcache";
 
     case Path_GstreamerRegistry:
       return GetConfigPath(Path_Root) +
@@ -281,18 +336,27 @@ QString GetConfigPath(ConfigPath config) {
   }
 }
 
-void OpenInFileBrowser(const QStringList& filenames) {
+#ifdef Q_OS_DARWIN
+qint32 GetMacVersion() {
+  SInt32 minor_version;
+  Gestalt(gestaltSystemVersionMinor, &minor_version);
+  return minor_version;
+}
+#endif  // Q_OS_DARWIN
+
+void OpenInFileBrowser(const QList<QUrl>& urls) {
   QSet<QString> dirs;
 
-  foreach (const QString& filename, filenames) {
-    // Ignore things that look like URLs
-    if (filename.contains("://"))
+  foreach (const QUrl& url, urls) {
+    if (url.scheme() != "file") {
+      continue;
+    }
+    QString path = url.toLocalFile();
+
+    if (!QFile::exists(path))
       continue;
 
-    if (!QFile::exists(filename))
-      continue;
-
-    const QString directory = QFileInfo(filename).dir().path();
+    const QString directory = QFileInfo(path).dir().path();
 
     if (dirs.contains(directory))
       continue;
@@ -318,6 +382,11 @@ QByteArray Hmac(const QByteArray& key, const QByteArray& data, HashFunction meth
                                     QCryptographicHash::hash(inner_padding + data,
                                                              QCryptographicHash::Md5),
                                     QCryptographicHash::Md5);
+  } else if (Sha1_Algo == method) {
+    return QCryptographicHash::hash(outer_padding +
+                                    QCryptographicHash::hash(inner_padding + data,
+                                                             QCryptographicHash::Sha1),
+                                    QCryptographicHash::Sha1);
   } else { // Sha256_Algo, currently default
     return Sha256(outer_padding + Sha256(inner_padding + data));
   }
@@ -329,6 +398,10 @@ QByteArray HmacSha256(const QByteArray& key, const QByteArray& data) {
 
 QByteArray HmacMd5(const QByteArray& key, const QByteArray& data) {
   return Hmac(key, data, Md5_Algo);
+}
+
+QByteArray HmacSha1(const QByteArray& key, const QByteArray& data) {
+  return Hmac(key, data, Sha1_Algo);
 }
 
 QByteArray Sha256(const QByteArray& data) {
@@ -346,6 +419,152 @@ QByteArray Sha256(const QByteArray& data) {
 QString PrettySize(const QSize& size) {
   return QString::number(size.width()) + "x" +
          QString::number(size.height());
+}
+
+void ForwardMouseEvent(const QMouseEvent* e, QWidget* target) {
+  QMouseEvent c(e->type(), target->mapFromGlobal(e->globalPos()),
+                e->globalPos(), e->button(), e->buttons(), e->modifiers());
+
+  QApplication::sendEvent(target, &c);
+}
+
+bool IsMouseEventInWidget(const QMouseEvent* e, const QWidget* widget) {
+  return widget->rect().contains(widget->mapFromGlobal(e->globalPos()));
+}
+
+quint16 PickUnusedPort() {
+  forever {
+    const quint16 port = 49152 + qrand() % 16384;
+
+    QTcpServer server;
+    if (server.listen(QHostAddress::Any, port)) {
+      return port;
+    }
+  }
+}
+
+void ConsumeCurrentElement(QXmlStreamReader* reader) {
+  int level = 1;
+  while (level != 0 && !reader->atEnd()) {
+    switch (reader->readNext()) {
+      case QXmlStreamReader::StartElement: ++level; break;
+      case QXmlStreamReader::EndElement:   --level; break;
+      default: break;
+    }
+  }
+}
+
+bool ParseUntilElement(QXmlStreamReader* reader, const QString& name) {
+  while (!reader->atEnd()) {
+    QXmlStreamReader::TokenType type = reader->readNext();
+    switch (type) {
+      case QXmlStreamReader::StartElement:
+        if (reader->name() == name) {
+          return true;
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  return false;
+}
+
+QDateTime ParseRFC822DateTime(const QString& text) {
+  // This sucks but we need it because some podcasts don't quite follow the
+  // spec properly - they might have 1-digit hour numbers for example.
+
+  QRegExp re("([a-zA-Z]{3}),? (\\d{1,2}) ([a-zA-Z]{3}) (\\d{4}) (\\d{1,2}):(\\d{1,2}):(\\d{1,2})");
+  if (re.indexIn(text) == -1)
+    return QDateTime();
+
+  return QDateTime(
+    QDate::fromString(QString("%1 %2 %3 %4").arg(re.cap(1), re.cap(3), re.cap(2), re.cap(4)), Qt::TextDate),
+    QTime(re.cap(5).toInt(), re.cap(6).toInt(), re.cap(7).toInt()));
+}
+
+const char* EnumToString(const QMetaObject& meta, const char* name, int value) {
+  int index = meta.indexOfEnumerator(name);
+  if (index == -1)
+    return "[UnknownEnum]";
+  QMetaEnum metaenum = meta.enumerator(index);
+  const char* result = metaenum.valueToKey(value);
+  if (result == 0)
+    return "[UnknownEnumValue]";
+  return result;
+}
+
+QStringList Prepend(const QString& text, const QStringList& list) {
+  QStringList ret(list);
+  for (int i=0 ; i<ret.count() ; ++i)
+    ret[i].prepend(text);
+  return ret;
+}
+
+QStringList Updateify(const QStringList& list) {
+  QStringList ret(list);
+  for (int i=0 ; i<ret.count() ; ++i)
+    ret[i].prepend(ret[i] + " = :");
+  return ret;
+}
+
+QString DecodeHtmlEntities(const QString& text) {
+  QString copy(text);
+  copy.replace("&amp;", "&");
+  copy.replace("&quot;", "\"");
+  copy.replace("&apos;", "'");
+  copy.replace("&lt;", "<");
+  copy.replace("&gt;", ">");
+  return copy;
+}
+
+int SetThreadIOPriority(IoPriority priority) {
+#ifdef Q_OS_LINUX
+  return syscall(SYS_ioprio_set, IOPRIO_WHO_PROCESS, GetThreadId(),
+                 4 | priority << IOPRIO_CLASS_SHIFT);
+#elif defined(Q_OS_DARWIN)
+  return setpriority(PRIO_DARWIN_THREAD, 0,
+                     priority == IOPRIO_CLASS_IDLE ? PRIO_DARWIN_BG : 0);
+#else
+  return 0;
+#endif
+}
+
+int GetThreadId() {
+#ifdef Q_OS_LINUX
+  return syscall(SYS_gettid);
+#else
+  return 0;
+#endif
+}
+
+bool IsLaptop() {
+#ifdef Q_OS_WIN
+  SYSTEM_POWER_STATUS status;
+  if (!GetSystemPowerStatus(&status)) {
+    return false;
+  }
+
+  return !(status.BatteryFlag & 128); // 128 = no system battery
+#elif defined(Q_OS_LINUX)
+  return !QDir("/proc/acpi/battery").entryList(QDir::Dirs | QDir::NoDotAndDotDot).isEmpty();
+#elif defined(Q_OS_MAC)
+  ScopedCFTypeRef<CFTypeRef> power_sources(IOPSCopyPowerSourcesInfo());
+  ScopedCFTypeRef<CFArrayRef> power_source_list(
+      IOPSCopyPowerSourcesList(power_sources.get()));
+  for (CFIndex i = 0; i < CFArrayGetCount(power_source_list.get()); ++i) {
+    CFTypeRef ps = CFArrayGetValueAtIndex(power_source_list.get(), i);
+    CFDictionaryRef description = IOPSGetPowerSourceDescription(
+        power_sources.get(), ps);
+
+    if (CFDictionaryContainsKey(description, CFSTR(kIOPSBatteryHealthKey))) {
+      return true;
+    }
+  }
+  return false;
+#else
+  return false;
+#endif
 }
 
 }  // namespace Utilities

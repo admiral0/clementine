@@ -19,31 +19,23 @@
 #define LIBRARYSEARCHPROVIDER_H
 
 #include "searchprovider.h"
-#include "core/backgroundthread.h"
 
-class AlbumCoverLoader;
 class LibraryBackendInterface;
 
 
 class LibrarySearchProvider : public BlockingSearchProvider {
-  Q_OBJECT
-
 public:
   LibrarySearchProvider(LibraryBackendInterface* backend, const QString& name,
-                        const QString& id, const QIcon& icon, QObject* parent = 0);
+                        const QString& id, const QIcon& icon,
+                        bool enabled_by_default,
+                        Application* app, QObject* parent = 0);
 
   ResultList Search(int id, const QString& query);
-  void LoadArtAsync(int id, const Result& result);
-  void LoadTracksAsync(int id, const Result& result);
-
-private slots:
-  void AlbumArtLoaded(quint64 id, const QImage& image);
+  MimeData* LoadTracks(const ResultList& results);
+  QStringList GetSuggestions(int count);
 
 private:
   LibraryBackendInterface* backend_;
-
-  BackgroundThread<AlbumCoverLoader>* cover_loader_;
-  QMap<quint64, int> cover_loader_tasks_;
 };
 
 #endif // LIBRARYSEARCHPROVIDER_H

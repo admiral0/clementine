@@ -19,6 +19,9 @@
 #include "macdevicelister.h"
 #include "mtpconnection.h"
 #include "core/logging.h"
+#include "core/scoped_cftyperef.h"
+#include "core/scoped_nsautorelease_pool.h"
+#include "core/scoped_nsobject.h"
 
 #include <CoreFoundation/CFRunLoop.h>
 #include <DiskArbitration/DiskArbitration.h>
@@ -29,7 +32,6 @@
 #include <IOKit/storage/IOCDMedia.h>
 
 #import <AppKit/NSWorkspace.h>
-#import <Foundation/NSAutoreleasePool.h>
 #import <Foundation/NSDictionary.h>
 #import <Foundation/NSNotification.h>
 #import <Foundation/NSPathUtilities.h>
@@ -57,6 +59,29 @@
 #ifndef kUSBProductString
 #define kUSBProductString "USB Product Name"
 #endif
+
+// io_object_t, io_service_t, io_iterator_t etc. are all typedef'd to unsigned int,
+// hence the lack of templating here.
+class ScopedIOObject {
+ public:
+  explicit ScopedIOObject(io_object_t object = 0)
+      : object_(object) {
+  }
+
+  ~ScopedIOObject() {
+    if (object_)
+      IOObjectRelease(object_);
+  }
+
+  io_object_t get() const {
+    return object_;
+  }
+
+ private:
+  io_object_t object_;
+
+  Q_DISABLE_COPY(ScopedIOObject);
+};
 
 // Helpful MTP & USB links:
 // Apple USB device interface guide:
@@ -88,7 +113,7 @@ MacDeviceLister::~MacDeviceLister() {
 }
 
 void MacDeviceLister::Init() {
-  [[NSAutoreleasePool alloc] init];
+  ScopedNSAutoreleasePool pool;
 
   // Populate MTP Device list.
   if (sMTPDeviceList.empty()) {
@@ -175,6 +200,7 @@ void MacDeviceLister::ShutDown() {
 // IOKit helpers.
 namespace {
 
+// Caller is responsible for calling CFRelease().
 CFTypeRef GetUSBRegistryEntry(io_object_t device, CFStringRef key) {
   io_iterator_t it;
   if (IORegistryEntryGetParentIterator(device, kIOServicePlane, &it) == KERN_SUCCESS) {
@@ -204,29 +230,12 @@ CFTypeRef GetUSBRegistryEntry(io_object_t device, CFStringRef key) {
 }
 
 QString GetUSBRegistryEntryString(io_object_t device, CFStringRef key) {
-  CFStringRef registry_string = (CFStringRef)GetUSBRegistryEntry(device, key);
+  ScopedCFTypeRef<CFStringRef> registry_string((CFStringRef)GetUSBRegistryEntry(device, key));
   if (registry_string) {
-    QString ret = QString::fromUtf8([(NSString*)registry_string UTF8String]);
-    CFRelease(registry_string);
-    return ret;
+    return QString::fromUtf8([(NSString*)registry_string.get() UTF8String]);
   }
 
-  return NULL;
-}
-
-quint64 GetUSBRegistryEntryInt64(io_object_t device, CFStringRef key) {
-  CFNumberRef registry_num = (CFNumberRef)GetUSBRegistryEntry(device, key);
-  if (registry_num) {
-    qint64 ret = -1;
-    Boolean result = CFNumberGetValue(registry_num, kCFNumberLongLongType, &ret);
-    if (!result || ret < 0) {
-      return 0;
-    } else {
-      return ret;
-    }
-  }
-
-  return 0;
+  return QString();
 }
 
 NSObject* GetPropertyForDevice(io_object_t device, CFStringRef key) {
@@ -238,9 +247,11 @@ NSObject* GetPropertyForDevice(io_object_t device, CFStringRef key) {
     return nil;
   }
 
-  NSDictionary* dict = (NSDictionary*)properties;
+  scoped_nsobject<NSDictionary> dict((NSDictionary*)properties);  // Takes ownership.
   NSObject* prop = [dict objectForKey:(NSString*)key];
   if (prop) {
+    // The dictionary goes out of scope so we should retain this object.
+    [prop retain];
     return prop;
   }
 
@@ -253,18 +264,33 @@ NSObject* GetPropertyForDevice(io_object_t device, CFStringRef key) {
   return nil;
 }
 
+int GetUSBDeviceClass(io_object_t device) {
+  ScopedCFTypeRef<CFTypeRef> interface_class(IORegistryEntrySearchCFProperty(
+      device,
+      kIOServicePlane,
+      CFSTR(kUSBInterfaceClass),
+      kCFAllocatorDefault,
+      kIORegistryIterateRecursively));
+  NSNumber* number = (NSNumber*)interface_class.get();
+  if (number) {
+    int ret = [number unsignedShortValue];
+    return ret;
+  }
+  return 0;
+}
+
 QString GetIconForDevice(io_object_t device) {
-  NSDictionary* media_icon = (NSDictionary*)GetPropertyForDevice(device, CFSTR("IOMediaIcon"));
+  scoped_nsobject<NSDictionary> media_icon((NSDictionary*)GetPropertyForDevice(device, CFSTR("IOMediaIcon")));
   if (media_icon) {
     NSString* bundle = (NSString*)[media_icon objectForKey:@"CFBundleIdentifier"];
     NSString* file = (NSString*)[media_icon objectForKey:@"IOBundleResourceFile"];
 
-    NSURL* bundle_url = (NSURL*)KextManagerCreateURLForBundleIdentifier(
-        kCFAllocatorDefault, (CFStringRef)bundle);
+    scoped_nsobject<NSURL> bundle_url((NSURL*)KextManagerCreateURLForBundleIdentifier(
+        kCFAllocatorDefault, (CFStringRef)bundle));
 
     QString path = QString::fromUtf8([[bundle_url path] UTF8String]);
     path += "/Contents/Resources/";
-    path += [file UTF8String];
+    path += QString::fromUtf8([file UTF8String]);
     return path;
   }
 
@@ -280,22 +306,18 @@ QString GetSerialForDevice(io_object_t device) {
 }
 
 QString GetSerialForMTPDevice(io_object_t device) {
-  return QString(
-      QString("MTP/") + [(NSString*)GetPropertyForDevice(device, CFSTR(kUSBSerialNumberString)) UTF8String]);
+  scoped_nsobject<NSString> serial((NSString*)
+      GetPropertyForDevice(device, CFSTR(kUSBSerialNumberString)));
+  return QString(QString("MTP/") + QString::fromUtf8([serial UTF8String]));
 }
 
 QString FindDeviceProperty(const QString& bsd_name, CFStringRef property) {
-  DASessionRef session = DASessionCreate(kCFAllocatorDefault);
-  DADiskRef disk = DADiskCreateFromBSDName(
-      kCFAllocatorDefault, session, bsd_name.toAscii().constData());
+  ScopedCFTypeRef<DASessionRef> session(DASessionCreate(kCFAllocatorDefault));
+  ScopedCFTypeRef<DADiskRef> disk(DADiskCreateFromBSDName(
+      kCFAllocatorDefault, session.get(), bsd_name.toAscii().constData()));
 
-  io_object_t device = DADiskCopyIOMedia(disk);
-  QString ret = GetUSBRegistryEntryString(device, property);
-  IOObjectRelease(device);
-
-  CFRelease(disk);
-  CFRelease(session);
-
+  ScopedIOObject device(DADiskCopyIOMedia(disk.get()));
+  QString ret = GetUSBRegistryEntryString(device.get(), property);
   return ret;
 }
 
@@ -336,7 +358,7 @@ quint64 MacDeviceLister::GetCapacity(const QUrl& url) {
 void MacDeviceLister::DiskAddedCallback(DADiskRef disk, void* context) {
   MacDeviceLister* me = reinterpret_cast<MacDeviceLister*>(context);
 
-  NSDictionary* properties = (NSDictionary*)DADiskCopyDescription(disk);
+  scoped_nsobject<NSDictionary> properties((NSDictionary*)DADiskCopyDescription(disk));
 
   NSString* kind = [properties objectForKey:(NSString*)kDADiskDescriptionMediaKindKey];
 #ifdef HAVE_AUDIOCD
@@ -353,20 +375,20 @@ void MacDeviceLister::DiskAddedCallback(DADiskRef disk, void* context) {
       [[properties objectForKey:(NSString*)kDADiskDescriptionVolumePathKey] copy];
 
   if (volume_path) {
-    io_object_t device = DADiskCopyIOMedia(disk);
-    CFStringRef class_name = IOObjectCopyClass(device);
-    if (class_name && CFStringCompare(class_name, CFSTR(kIOMediaClass), 0) == kCFCompareEqualTo) {
-      QString vendor = GetUSBRegistryEntryString(device, CFSTR(kUSBVendorString));
-      QString product = GetUSBRegistryEntryString(device, CFSTR(kUSBProductString));
+    ScopedIOObject device(DADiskCopyIOMedia(disk));
+    ScopedCFTypeRef<CFStringRef> class_name(IOObjectCopyClass(device.get()));
+    if (class_name && CFStringCompare(class_name.get(), CFSTR(kIOMediaClass), 0) == kCFCompareEqualTo) {
+      QString vendor = GetUSBRegistryEntryString(device.get(), CFSTR(kUSBVendorString));
+      QString product = GetUSBRegistryEntryString(device.get(), CFSTR(kUSBProductString));
 
-      CFMutableDictionaryRef properties;
+      CFMutableDictionaryRef cf_properties;
       kern_return_t ret = IORegistryEntryCreateCFProperties(
-          device, &properties, kCFAllocatorDefault, 0);
+          device.get(), &cf_properties, kCFAllocatorDefault, 0);
 
       if (ret == KERN_SUCCESS) {
-        NSDictionary* dict = (NSDictionary*)properties;
+        scoped_nsobject<NSDictionary> dict((NSDictionary*)cf_properties);  // Takes ownership.
         if ([[dict objectForKey:@"Removable"] intValue] == 1) {
-          QString serial = GetSerialForDevice(device);
+          QString serial = GetSerialForDevice(device.get());
           if (!serial.isEmpty()) {
             me->current_devices_[serial] = QString(DADiskGetBSDName(disk));
             emit me->DeviceAdded(serial);
@@ -374,10 +396,6 @@ void MacDeviceLister::DiskAddedCallback(DADiskRef disk, void* context) {
         }
       }
     }
-
-    if (class_name)
-      CFRelease(class_name);
-    IOObjectRelease(device);
   }
 }
 
@@ -449,17 +467,19 @@ void MacDeviceLister::USBDeviceAddedCallback(void* refcon, io_iterator_t it) {
 
   io_object_t object;
   while ((object = IOIteratorNext(it))) {
-    CFStringRef class_name = IOObjectCopyClass(object);
-    BOOST_SCOPE_EXIT((class_name)(object)) {
-      CFRelease(class_name);
+    ScopedCFTypeRef<CFStringRef> class_name(IOObjectCopyClass(object));
+    BOOST_SCOPE_EXIT((object)) {
       IOObjectRelease(object);
     } BOOST_SCOPE_EXIT_END
 
-    if (CFStringCompare(class_name, CFSTR(kIOUSBDeviceClassName), 0) == kCFCompareEqualTo) {
+    if (CFStringCompare(class_name.get(), CFSTR(kIOUSBDeviceClassName), 0) == kCFCompareEqualTo) {
       NSString* vendor = (NSString*)GetPropertyForDevice(object, CFSTR(kUSBVendorString));
       NSString* product = (NSString*)GetPropertyForDevice(object, CFSTR(kUSBProductString));
       NSNumber* vendor_id = (NSNumber*)GetPropertyForDevice(object, CFSTR(kUSBVendorID));
       NSNumber* product_id = (NSNumber*)GetPropertyForDevice(object, CFSTR(kUSBProductID));
+      int interface_class = GetUSBDeviceClass(object);
+      qLog(Debug) << "Interface class:" << interface_class;
+
       QString serial = GetSerialForMTPDevice(object);
 
       MTPDevice device;
@@ -472,11 +492,14 @@ void MacDeviceLister::USBDeviceAddedCallback(void* refcon, io_iterator_t it) {
       device.bus = -1;
       device.address = -1;
 
-      if (device.vendor_id == 0x5ac || // I think we can safely skip Apple products.
+      if (device.vendor_id == kAppleVendorID || // I think we can safely skip Apple products.
           // Blacklist ilok2 as this probe may be breaking it.
           (device.vendor_id == 0x088e && device.product_id == 0x5036) ||
           // Blacklist eLicenser
-          (device.vendor_id == 0x0819 && device.product_id == 0x0101)) {
+          (device.vendor_id == 0x0819 && device.product_id == 0x0101) ||
+          // Skip HID devices and hubs.
+          interface_class == kUSBHIDInterfaceClass ||
+          interface_class == kUSBHubClass) {
         continue;
       }
 
@@ -492,7 +515,6 @@ void MacDeviceLister::USBDeviceAddedCallback(void* refcon, io_iterator_t it) {
       // First check the libmtp device list.
       QSet<MTPDevice>::const_iterator it = sMTPDeviceList.find(device);
       if (it != sMTPDeviceList.end()) {
-        qDebug() << "Found in table";
         // Fill in quirks flags from libmtp.
         device.quirks = it->quirks;
         me->FoundMTPDevice(device, GetSerialForMTPDevice(object));
@@ -589,13 +611,12 @@ void MacDeviceLister::USBDeviceRemovedCallback(void* refcon, io_iterator_t it) {
   MacDeviceLister* me = reinterpret_cast<MacDeviceLister*>(refcon);
   io_object_t object;
   while ((object = IOIteratorNext(it))) {
-    CFStringRef class_name = IOObjectCopyClass(object);
-    BOOST_SCOPE_EXIT((class_name)(object)) {
-      CFRelease(class_name);
+    ScopedCFTypeRef<CFStringRef> class_name(IOObjectCopyClass(object));
+    BOOST_SCOPE_EXIT((object)) {
       IOObjectRelease(object);
     } BOOST_SCOPE_EXIT_END
 
-    if (CFStringCompare(class_name, CFSTR(kIOUSBDeviceClassName), 0) == kCFCompareEqualTo) {
+    if (CFStringCompare(class_name.get(), CFSTR(kIOUSBDeviceClassName), 0) == kCFCompareEqualTo) {
       NSString* vendor = (NSString*)GetPropertyForDevice(object, CFSTR(kUSBVendorString));
       NSString* product = (NSString*)GetPropertyForDevice(object, CFSTR(kUSBProductString));
       NSNumber* vendor_id = (NSNumber*)GetPropertyForDevice(object, CFSTR(kUSBVendorID));
@@ -607,7 +628,7 @@ void MacDeviceLister::USBDeviceRemovedCallback(void* refcon, io_iterator_t it) {
       device.product = QString::fromUtf8([product UTF8String]);
       device.vendor_id = [vendor_id unsignedShortValue];
       device.product_id = [product_id unsignedShortValue];
-  
+
       me->RemovedMTPDevice(serial);
     }
   }
@@ -616,13 +637,13 @@ void MacDeviceLister::USBDeviceRemovedCallback(void* refcon, io_iterator_t it) {
 void MacDeviceLister::RemovedMTPDevice(const QString& serial) {
   int count = mtp_devices_.remove(serial);
   if (count) {
-    qDebug() << "MTP device removed:" << serial;
+    qLog(Debug) << "MTP device removed:" << serial;
     emit DeviceRemoved(serial);
   }
 }
 
 void MacDeviceLister::FoundMTPDevice(const MTPDevice& device, const QString& serial) {
-  qDebug() << "New MTP device detected!" << device.bus << device.address;
+  qLog(Debug) << "New MTP device detected!" << device.bus << device.address;
   mtp_devices_[serial] = device;
   QList<QUrl> urls = MakeDeviceUrls(serial);
   MTPDevice* d = &mtp_devices_[serial];
@@ -650,29 +671,22 @@ QString MacDeviceLister::MakeFriendlyName(const QString& serial) {
   }
 
   QString bsd_name = IsCDDevice(serial) ? *cd_devices_.find(serial) : current_devices_[serial];
-  DASessionRef session = DASessionCreate(kCFAllocatorDefault);
-  DADiskRef disk = DADiskCreateFromBSDName(
-      kCFAllocatorDefault, session, bsd_name.toAscii().constData());
+  ScopedCFTypeRef<DASessionRef> session(DASessionCreate(kCFAllocatorDefault));
+  ScopedCFTypeRef<DADiskRef> disk(DADiskCreateFromBSDName(
+      kCFAllocatorDefault, session.get(), bsd_name.toAscii().constData()));
 
   if (IsCDDevice(serial)) {
-    NSDictionary* properties = (NSDictionary*)DADiskCopyDescription(disk);
-    NSLog(@"%@", properties);
+    scoped_nsobject<NSDictionary> properties((NSDictionary*)DADiskCopyDescription(disk.get()));
+    NSString* device_name = (NSString*)[properties.get() objectForKey:
+        (NSString*)kDADiskDescriptionMediaNameKey];
 
-    NSString* device_name = (NSString*)[properties objectForKey:(NSString*)kDADiskDescriptionMediaNameKey];
-
-    CFRelease(disk);
-    CFRelease(session);
     return QString::fromUtf8([device_name UTF8String]);
   }
 
-  io_object_t device = DADiskCopyIOMedia(disk);
+  ScopedIOObject device(DADiskCopyIOMedia(disk));
 
-  QString vendor = GetUSBRegistryEntryString(device, CFSTR(kUSBVendorString));
-  QString product = GetUSBRegistryEntryString(device, CFSTR(kUSBProductString));
-  IOObjectRelease(device);
-
-  CFRelease(disk);
-  CFRelease(session);
+  QString vendor = GetUSBRegistryEntryString(device.get(), CFSTR(kUSBVendorString));
+  QString product = GetUSBRegistryEntryString(device.get(), CFSTR(kUSBProductString));
 
   if (vendor.isEmpty()) {
     return product;
@@ -695,23 +709,20 @@ QList<QUrl> MacDeviceLister::MakeDeviceUrls(const QString& serial) {
   }
 
   if (IsCDDevice(serial)) {
-    return QList<QUrl>() << QString("cdda:///dev/r" + serial);
+    return QList<QUrl>() << QUrl(QString("cdda:///dev/r" + serial));
   }
 
   QString bsd_name = current_devices_[serial];
-  DASessionRef session = DASessionCreate(kCFAllocatorDefault);
-  DADiskRef disk = DADiskCreateFromBSDName(
-      kCFAllocatorDefault, session, bsd_name.toAscii().constData());
+  ScopedCFTypeRef<DASessionRef> session(DASessionCreate(kCFAllocatorDefault));
+  ScopedCFTypeRef<DADiskRef> disk(DADiskCreateFromBSDName(
+      kCFAllocatorDefault, session.get(), bsd_name.toAscii().constData()));
 
-  NSDictionary* properties = (NSDictionary*)DADiskCopyDescription(disk);
-  NSURL* volume_path = 
-      [[properties objectForKey:(NSString*)kDADiskDescriptionVolumePathKey] copy];
+  scoped_nsobject<NSDictionary> properties((NSDictionary*)DADiskCopyDescription(disk.get()));
+  scoped_nsobject<NSURL> volume_path(
+      [[properties objectForKey:(NSString*)kDADiskDescriptionVolumePathKey] copy]);
 
-  QString path = [[volume_path path] UTF8String];
+  QString path = QString::fromUtf8([[volume_path path] UTF8String]);
   QUrl ret = MakeUrlFromLocalPath(path);
-
-  CFRelease(disk);
-  CFRelease(session);
 
   return QList<QUrl>() << ret;
 }
@@ -730,22 +741,18 @@ QVariantList MacDeviceLister::DeviceIcons(const QString& serial) {
   }
 
   QString bsd_name = current_devices_[serial];
-  DASessionRef session = DASessionCreate(kCFAllocatorDefault);
-  DADiskRef disk = DADiskCreateFromBSDName(
-      kCFAllocatorDefault, session, bsd_name.toAscii().constData());
+  ScopedCFTypeRef<DASessionRef> session(DASessionCreate(kCFAllocatorDefault));
+  ScopedCFTypeRef<DADiskRef> disk(DADiskCreateFromBSDName(
+      kCFAllocatorDefault, session.get(), bsd_name.toAscii().constData()));
 
-  io_object_t device = DADiskCopyIOMedia(disk);
-  QString icon = GetIconForDevice(device);
+  ScopedIOObject device(DADiskCopyIOMedia(disk.get()));
+  QString icon = GetIconForDevice(device.get());
 
-  NSDictionary* properties = (NSDictionary*)DADiskCopyDescription(disk);
-  NSURL* volume_path = 
-      [[properties objectForKey:(NSString*)kDADiskDescriptionVolumePathKey] copy];
+  scoped_nsobject<NSDictionary> properties((NSDictionary*)DADiskCopyDescription(disk));
+  scoped_nsobject<NSURL> volume_path(
+      [[properties objectForKey:(NSString*)kDADiskDescriptionVolumePathKey] copy]);
 
   QString path = QString::fromUtf8([[volume_path path] UTF8String]);
-
-  IOObjectRelease(device);
-  CFRelease(disk);
-  CFRelease(session);
 
   QVariantList ret;
   ret << GuessIconForPath(path);
@@ -776,9 +783,9 @@ quint64 MacDeviceLister::DeviceCapacity(const QString& serial){
     return mtp_devices_[serial].capacity;
   }
   QString bsd_name = current_devices_[serial];
-  DASessionRef session = DASessionCreate(kCFAllocatorDefault);
-  DADiskRef disk = DADiskCreateFromBSDName(
-      kCFAllocatorDefault, session, bsd_name.toAscii().constData());
+  ScopedCFTypeRef<DASessionRef> session(DASessionCreate(kCFAllocatorDefault));
+  ScopedCFTypeRef<DADiskRef> disk(DADiskCreateFromBSDName(
+      kCFAllocatorDefault, session.get(), bsd_name.toAscii().constData()));
 
   io_object_t device = DADiskCopyIOMedia(disk);
 
@@ -787,9 +794,6 @@ quint64 MacDeviceLister::DeviceCapacity(const QString& serial){
   quint64 ret = [capacity unsignedLongLongValue];
 
   IOObjectRelease(device);
-
-  CFRelease(disk);
-  CFRelease(session);
 
   return ret;
 }
@@ -800,30 +804,20 @@ quint64 MacDeviceLister::DeviceFreeSpace(const QString& serial){
     return mtp_devices_[serial].free_space;
   }
   QString bsd_name = current_devices_[serial];
-  DASessionRef session = DASessionCreate(kCFAllocatorDefault);
-  DADiskRef disk = DADiskCreateFromBSDName(
-      kCFAllocatorDefault, session, bsd_name.toAscii().constData());
+  ScopedCFTypeRef<DASessionRef> session(DASessionCreate(kCFAllocatorDefault));
+  ScopedCFTypeRef<DADiskRef> disk(DADiskCreateFromBSDName(
+      kCFAllocatorDefault, session.get(), bsd_name.toAscii().constData()));
 
-  NSDictionary* properties = (NSDictionary*)DADiskCopyDescription(disk);
-  NSURL* volume_path =
-      [[properties objectForKey:(NSString*)kDADiskDescriptionVolumePathKey] copy];
+  scoped_nsobject<NSDictionary> properties((NSDictionary*)DADiskCopyDescription(disk));
+  scoped_nsobject<NSURL> volume_path(
+      [[properties objectForKey:(NSString*)kDADiskDescriptionVolumePathKey] copy]);
 
-  FSRef ref;
-  OSStatus err = FSPathMakeRef(
-      (const UInt8*)[[volume_path path] fileSystemRepresentation], &ref, NULL);
-  if (err == noErr) {
-    FSCatalogInfo catalog;
-    err = FSGetCatalogInfo(&ref, kFSCatInfoVolume, &catalog, NULL, NULL, NULL);
-    if (err == noErr) {
-      FSVolumeRefNum volume_ref = catalog.volume;
-      FSVolumeInfo info;
-      err = FSGetVolumeInfo(
-          volume_ref, 0, NULL, kFSVolInfoSizes, &info, NULL, NULL);
-      UInt64 free_bytes = info.freeBytes;
-      return free_bytes;
-    }
+  NSNumber* value = nil;
+  NSError* error = nil;
+  if ([volume_path getResourceValue: &value
+      forKey: NSURLVolumeAvailableCapacityKey error: &error] && value) {
+    return [value unsignedLongLongValue];
   }
-
   return 0;
 }
 
@@ -837,12 +831,10 @@ void MacDeviceLister::UnmountDevice(const QString& serial) {
   if (IsMTPSerial(serial)) return;
 
   QString bsd_name = current_devices_[serial];
-  DADiskRef disk = DADiskCreateFromBSDName(
-      kCFAllocatorDefault, loop_session_, bsd_name.toAscii().constData());
+  ScopedCFTypeRef<DADiskRef> disk(DADiskCreateFromBSDName(
+      kCFAllocatorDefault, loop_session_, bsd_name.toAscii().constData()));
 
   DADiskUnmount(disk, kDADiskUnmountOptionDefault, &DiskUnmountCallback, this);
-
-  CFRelease(disk);
 }
 
 void MacDeviceLister::DiskUnmountCallback(

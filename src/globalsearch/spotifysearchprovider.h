@@ -19,7 +19,7 @@
 #define SPOTIFYSEARCHPROVIDER_H
 
 #include "searchprovider.h"
-#include "spotifyblob/common/spotifymessages.pb.h"
+#include "spotifymessages.pb.h"
 
 class SpotifyServer;
 class SpotifyService;
@@ -29,26 +29,28 @@ class SpotifySearchProvider : public SearchProvider {
   Q_OBJECT
 
 public:
-  SpotifySearchProvider(QObject* parent = 0);
+  SpotifySearchProvider(Application* app, QObject* parent = 0);
 
   void SearchAsync(int id, const QString& query);
   void LoadArtAsync(int id, const Result& result);
-  void LoadTracksAsync(int id, const Result& result);
+  QStringList GetSuggestions(int count);
+
+  bool IsLoggedIn();
+  void ShowConfig();
 
 private slots:
   void ServerDestroyed();
-  void SearchFinishedSlot(const spotify_pb::SearchResponse& response);
+  void SearchFinishedSlot(const pb::spotify::SearchResponse& response);
   void ArtLoadedSlot(const QString& id, const QImage& image);
-
-  void AlbumBrowseResponse(const spotify_pb::BrowseAlbumResponse& response);
+  void SuggestionsLoaded(const pb::spotify::LoadPlaylistResponse& response);
+  void SuggestionsLoaded(const pb::spotify::BrowseToplistResponse& response);
 
 private:
-  struct PendingState {
-    int orig_id_;
-    QStringList tokens_;
-  };
-
   SpotifyServer* server();
+
+  void LoadSuggestions();
+  void AddSuggestionFromTrack(const pb::spotify::Track& track);
+  void AddSuggestionFromAlbum(const pb::spotify::Album& album);
 
 private:
   SpotifyServer* server_;
@@ -57,6 +59,8 @@ private:
   QMap<QString, PendingState> queries_;
   QMap<QString, int> pending_art_;
   QMap<QString, int> pending_tracks_;
+
+  QSet<QString> suggestions_;
 };
 
 #endif // SPOTIFYSEARCHPROVIDER_H

@@ -39,7 +39,7 @@ class QueryWizardPlugin : public WizardPlugin {
   Q_OBJECT
 
 public:
-  QueryWizardPlugin(LibraryBackend* library, QObject* parent);
+  QueryWizardPlugin(Application* app, LibraryBackend* library, QObject* parent);
   ~QueryWizardPlugin();
 
   QString type() const { return "Query"; }
@@ -61,6 +61,8 @@ private slots:
   void UpdateSortPreview();
   void UpdateSortOrder();
 
+  void MoveTermListToBottom(int min, int max);
+
 private:
   class SearchPage;
   class SortPage;
@@ -69,6 +71,8 @@ private:
 
   SearchPage* search_page_;
   boost::scoped_ptr<Ui_SmartPlaylistQuerySortPage> sort_ui_;
+
+  int previous_scrollarea_max_;
 };
 
 } // namespace smart_playlists

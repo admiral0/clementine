@@ -21,6 +21,7 @@
 #include "ui_transcodedialog.h"
 #include "ui_transcodelogdialog.h"
 #include "ui/mainwindow.h"
+#include "widgets/fileview.h"
 
 #include <QPushButton>
 #include <QFileDialog>
@@ -55,6 +56,9 @@ TranscodeDialog::TranscodeDialog(QWidget *parent)
   ui_->files->header()->setResizeMode(QHeaderView::ResizeToContents);
 
   log_ui_->setupUi(log_dialog_);
+  QPushButton* clear_button =
+      log_ui_->buttonBox->addButton(tr("Clear"), QDialogButtonBox::ResetRole);
+  connect(clear_button, SIGNAL(clicked()),log_ui_->log, SLOT(clear()));
 
   // Get presets
   QList<TranscoderPreset> presets = Transcoder::GetAllPresets();
@@ -208,8 +212,10 @@ void TranscodeDialog::AllJobsComplete() {
 void TranscodeDialog::Add() {
   QStringList filenames = QFileDialog::getOpenFileNames(
       this, tr("Add files to transcode"), last_add_dir_,
-      QString("%1;;%2").arg(tr(MainWindow::kMusicFilterSpec),
-                            tr(MainWindow::kAllFilesFilterSpec)));
+      QString("%1 (%2);;%3").arg(
+          tr("Music"),
+          FileView::kFileFilter,
+          tr(MainWindow::kAllFilesFilterSpec)));
 
   if (filenames.isEmpty())
     return;

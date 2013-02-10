@@ -17,53 +17,98 @@
 
 #include "librarysearchprovider.h"
 #include "globalsearch.h"
+#include "urlsearchprovider.h"
+#include "core/application.h"
 #include "core/logging.h"
+#include "covers/albumcoverloader.h"
 
+#include <QSettings>
 #include <QStringBuilder>
+#include <QTimerEvent>
 #include <QUrl>
 
+#include <algorithm>
+
 const int GlobalSearch::kDelayedSearchTimeoutMs = 200;
+const char* GlobalSearch::kSettingsGroup = "GlobalSearch";
+const int GlobalSearch::kMaxResultsPerEmission = 500;
 
 
-GlobalSearch::GlobalSearch(QObject* parent)
+GlobalSearch::GlobalSearch(Application* app, QObject* parent)
   : QObject(parent),
-    next_id_(1)
+    app_(app),
+    next_id_(1),
+    url_provider_(new UrlSearchProvider(app, this))
 {
+  cover_loader_options_.desired_height_ = SearchProvider::kArtHeight;
+  cover_loader_options_.pad_output_image_ = true;
+  cover_loader_options_.scale_output_image_ = true;
+
+  connect(app_->album_cover_loader(),
+          SIGNAL(ImageLoaded(quint64,QImage)),
+          SLOT(AlbumArtLoaded(quint64,QImage)));
+
+  ConnectProvider(url_provider_);
 }
 
-void GlobalSearch::AddProvider(SearchProvider* provider) {
-  Q_ASSERT(!provider->name().isEmpty());
-
+void GlobalSearch::ConnectProvider(SearchProvider* provider) {
   connect(provider, SIGNAL(ResultsAvailable(int,SearchProvider::ResultList)),
           SLOT(ResultsAvailableSlot(int,SearchProvider::ResultList)));
   connect(provider, SIGNAL(SearchFinished(int)),
           SLOT(SearchFinishedSlot(int)));
   connect(provider, SIGNAL(ArtLoaded(int,QImage)),
           SLOT(ArtLoadedSlot(int,QImage)));
-  connect(provider, SIGNAL(TracksLoaded(int,MimeData*)),
-          SIGNAL(TracksLoaded(int,MimeData*)));
   connect(provider, SIGNAL(destroyed(QObject*)),
           SLOT(ProviderDestroyedSlot(QObject*)));
+}
 
-  providers_ << provider;
+void GlobalSearch::AddProvider(SearchProvider* provider) {
+  Q_ASSERT(!provider->name().isEmpty());
+
+  bool enabled = provider->is_enabled_by_default();
+
+  // Check if there is saved enabled/disabled state for this provider.
+  QSettings s;
+  s.beginGroup(kSettingsGroup);
+  QVariant enabled_variant = s.value("enabled_" + provider->id());
+  if (enabled_variant.isValid()) {
+    enabled = enabled_variant.toBool();
+  }
+
+  // Add data
+  ProviderData data;
+  data.enabled_ = enabled;
+  providers_[provider] = data;
+
+  ConnectProvider(provider);
+  emit ProviderAdded(provider);
 }
 
 int GlobalSearch::SearchAsync(const QString& query) {
   const int id = next_id_ ++;
+  pending_search_providers_[id] = 0;
 
   int timer_id = -1;
 
-  pending_search_providers_[id] = providers_.count();
-  foreach (SearchProvider* provider, providers_) {
-    if (provider->wants_delayed_queries()) {
-      if (timer_id == -1) {
-        timer_id = startTimer(kDelayedSearchTimeoutMs);
-        delayed_searches_[timer_id].id_ = id;
-        delayed_searches_[timer_id].query_ = query;
+  if (url_provider_->LooksLikeUrl(query)) {
+    url_provider_->SearchAsync(id, query);
+  } else {
+    foreach (SearchProvider* provider, providers_.keys()) {
+      if (!is_provider_usable(provider))
+        continue;
+
+      pending_search_providers_[id] ++;
+
+      if (provider->wants_delayed_queries()) {
+        if (timer_id == -1) {
+          timer_id = startTimer(kDelayedSearchTimeoutMs);
+          delayed_searches_[timer_id].id_ = id;
+          delayed_searches_[timer_id].query_ = query;
+        }
+        delayed_searches_[timer_id].providers_ << provider;
+      } else {
+        provider->SearchAsync(id, query);
       }
-      delayed_searches_[timer_id].providers_ << provider;
-    } else {
-      provider->SearchAsync(id, query);
     }
   }
 
@@ -95,14 +140,23 @@ void GlobalSearch::timerEvent(QTimerEvent* e) {
 }
 
 QString GlobalSearch::PixmapCacheKey(const SearchProvider::Result& result) const {
-  return QString::number(qulonglong(result.provider_))
-       % "," % QString::number(int(result.type_))
+  return "globalsearch:"
+       % QString::number(qulonglong(result.provider_))
        % "," % result.metadata_.url().toString();
 }
 
 void GlobalSearch::ResultsAvailableSlot(int id, SearchProvider::ResultList results) {
   if (results.isEmpty())
     return;
+
+  // Limit the number of results that are used from each emission.
+  // Just a sanity check to stop some providers (Jamendo) returning thousands
+  // of results.
+  if (results.count() > kMaxResultsPerEmission) {
+    SearchProvider::ResultList::iterator begin = results.begin();
+    std::advance(begin, kMaxResultsPerEmission);
+    results.erase(begin, results.end());
+  }
 
   // Load cached pixmaps into the results
   for (SearchProvider::ResultList::iterator it = results.begin() ; it != results.end() ; ++it) {
@@ -131,8 +185,8 @@ void GlobalSearch::ProviderDestroyedSlot(QObject* object) {
   if (!providers_.contains(provider))
     return;
 
-  providers_.removeAll(provider);
-  emit ProviderDestroyed(provider);
+  providers_.remove(provider);
+  emit ProviderRemoved(provider);
 
   // We have to abort any pending searches since we can't tell whether they
   // were on this provider.
@@ -142,19 +196,36 @@ void GlobalSearch::ProviderDestroyedSlot(QObject* object) {
   pending_search_providers_.clear();
 }
 
+QList<SearchProvider*> GlobalSearch::providers() const {
+  return providers_.keys();
+}
+
 int GlobalSearch::LoadArtAsync(const SearchProvider::Result& result) {
   const int id = next_id_ ++;
 
   pending_art_searches_[id] = result.pixmap_cache_key_;
 
-  if (result.provider_->wants_serialised_art()) {
+  if (providers_.contains(result.provider_) &&
+      !is_provider_usable(result.provider_)) {
+    emit ArtLoaded(id, QPixmap());
+    return id;
+  }
+
+  if (result.provider_->art_is_in_song_metadata()) {
+    quint64 loader_id = app_->album_cover_loader()->LoadImageAsync(
+          cover_loader_options_, result.metadata_);
+    cover_loader_tasks_[loader_id] = id;
+  } else if (providers_.contains(result.provider_) &&
+             result.provider_->wants_serialised_art()) {
     QueuedArt request;
     request.id_ = id;
     request.result_ = result;
 
-    queued_art_[result.provider_].append(request);
+    QList<QueuedArt>* queued_art = &providers_[result.provider_].queued_art_;
 
-    if (queued_art_[result.provider_].count() == 1) {
+    queued_art->append(request);
+
+    if (queued_art->count() == 1) {
       TakeNextQueuedArt(result.provider_);
     }
   } else {
@@ -165,15 +236,28 @@ int GlobalSearch::LoadArtAsync(const SearchProvider::Result& result) {
 }
 
 void GlobalSearch::TakeNextQueuedArt(SearchProvider* provider) {
-  if (queued_art_[provider].isEmpty())
+  if (!providers_.contains(provider) ||
+      providers_[provider].queued_art_.isEmpty())
     return;
 
-  const QueuedArt& data = queued_art_[provider].first();
+  const QueuedArt& data =  providers_[provider].queued_art_.first();
   provider->LoadArtAsync(data.id_, data.result_);
 }
 
 void GlobalSearch::ArtLoadedSlot(int id, const QImage& image) {
   SearchProvider* provider = static_cast<SearchProvider*>(sender());
+  HandleLoadedArt(id, image, provider);
+}
+
+void GlobalSearch::AlbumArtLoaded(quint64 id, const QImage& image) {
+  if (!cover_loader_tasks_.contains(id))
+    return;
+  int orig_id = cover_loader_tasks_.take(id);
+
+  HandleLoadedArt(orig_id, image, NULL);
+}
+
+void GlobalSearch::HandleLoadedArt(int id, const QImage& image, SearchProvider* provider) {
   const QString key = pending_art_searches_.take(id);
 
   QPixmap pixmap = QPixmap::fromImage(image);
@@ -181,8 +265,10 @@ void GlobalSearch::ArtLoadedSlot(int id, const QImage& image) {
 
   emit ArtLoaded(id, pixmap);
 
-  if (!queued_art_[provider].isEmpty()) {
-    queued_art_[provider].removeFirst();
+  if (provider &&
+      providers_.contains(provider) &&
+      !providers_[provider].queued_art_.isEmpty()) {
+     providers_[provider].queued_art_.removeFirst();
     TakeNextQueuedArt(provider);
   }
 }
@@ -192,11 +278,106 @@ bool GlobalSearch::FindCachedPixmap(const SearchProvider::Result& result,
   return pixmap_cache_.find(result.pixmap_cache_key_, pixmap);
 }
 
-int GlobalSearch::LoadTracksAsync(const SearchProvider::Result& result) {
-  const int id = next_id_ ++;
+MimeData* GlobalSearch::LoadTracks(const SearchProvider::ResultList& results) {
+  // Different providers might create MimeData in different ways, so it's not
+  // possible to combine different providers.  Just take the results from a
+  // single provider.
+  if (results.isEmpty()) {
+    return NULL;
+  }
 
-  result.provider_->LoadTracksAsync(id, result);
+  SearchProvider* first_provider = results[0].provider_;
+  SearchProvider::ResultList results_copy;
+  foreach (const SearchProvider::Result& result, results) {
+    if (result.provider_ == first_provider) {
+      results_copy << result;
+    }
+  }
 
-  return id;
+  return first_provider->LoadTracks(results);
 }
 
+bool GlobalSearch::SetProviderEnabled(const SearchProvider* const_provider,
+                                      bool enabled) {
+  SearchProvider* provider = const_cast<SearchProvider*>(const_provider);
+  if (!providers_.contains(provider))
+    return true;
+
+  if (providers_[provider].enabled_ != enabled) {
+    // If we try to enable this provider but it is not logged in, don't change
+    // state, and show configuration menu, if any
+    if (enabled && !provider->IsLoggedIn()) {
+      provider->ShowConfig();
+      return false;
+    } else {
+      providers_[provider].enabled_ = enabled;
+      emit ProviderToggled(provider, enabled);
+      SaveProvidersSettings();
+      return true;
+    }
+  }
+  return true;
+}
+
+bool GlobalSearch::is_provider_enabled(const SearchProvider* const_provider) const {
+  SearchProvider* provider = const_cast<SearchProvider*>(const_provider);
+
+  if (!providers_.contains(provider))
+    return false;
+  return providers_[provider].enabled_;
+}
+
+bool GlobalSearch::is_provider_usable(SearchProvider* provider) const {
+  return is_provider_enabled(provider) && provider->IsLoggedIn();
+}
+
+void GlobalSearch::ReloadSettings() {
+  QSettings s;
+  s.beginGroup(kSettingsGroup);
+
+  foreach (SearchProvider* provider, providers_.keys()) {
+    QVariant value = s.value("enabled_" + provider->id());
+    if (!value.isValid())
+      continue;
+    const bool enabled = value.toBool();
+
+    if (enabled != providers_[provider].enabled_) {
+      providers_[provider].enabled_ = enabled;
+      emit ProviderToggled(provider, enabled);
+    }
+  }
+}
+
+void GlobalSearch::SaveProvidersSettings() {
+  QSettings s;
+  s.beginGroup(kSettingsGroup);
+  foreach (SearchProvider* provider, providers_.keys()) {
+    s.setValue("enabled_" + provider->id(), providers_[provider].enabled_);
+  }
+}
+
+QStringList GlobalSearch::GetSuggestions(int count) {
+  QStringList ret;
+
+  // Get count suggestions from each provider
+  foreach (SearchProvider* provider, providers_.keys()) {
+    if (is_provider_enabled(provider) && provider->can_give_suggestions()) {
+      foreach (QString suggestion, provider->GetSuggestions(count)) {
+        suggestion = suggestion.trimmed().toLower();
+
+        if (!suggestion.isEmpty()) {
+          ret << suggestion;
+        }
+      }
+    }
+  }
+
+  // Randomize the suggestions
+  std::random_shuffle(ret.begin(), ret.end());
+
+  // Only return the first count
+  while (ret.length() > count) {
+    ret.removeLast();
+  }
+  return ret;
+}

@@ -19,13 +19,14 @@
 #include "edittagdialog.h"
 #include "trackselectiondialog.h"
 #include "ui_edittagdialog.h"
+#include "core/application.h"
 #include "core/logging.h"
+#include "core/tagreaderclient.h"
 #include "core/utilities.h"
 #include "covers/albumcoverloader.h"
 #include "covers/coverproviders.h"
 #include "library/library.h"
 #include "library/librarybackend.h"
-#include "musicbrainz/fingerprinter.h"
 #include "playlist/playlistdelegates.h"
 #include "ui/albumcoverchoicecontroller.h"
 #include "ui/coverfromurldialog.h"
@@ -42,26 +43,29 @@
 #include <QtConcurrentRun>
 #include <QtDebug>
 
-const char* EditTagDialog::kHintText = QT_TR_NOOP("(different across multiple songs)");
+#include <limits>
 
-EditTagDialog::EditTagDialog(CoverProviders* cover_providers, QWidget* parent)
+const char* EditTagDialog::kHintText = QT_TR_NOOP("(different across multiple songs)");
+const char* EditTagDialog::kSettingsGroup = "EditTagDialog";
+
+EditTagDialog::EditTagDialog(Application* app, QWidget* parent)
   : QDialog(parent),
     ui_(new Ui_EditTagDialog),
-    cover_providers_(cover_providers),
+    app_(app),
     album_cover_choice_controller_(new AlbumCoverChoiceController(this)),
-    backend_(NULL),
     loading_(false),
     ignore_edits_(false),
     tag_fetcher_(new TagFetcher(this)),
-    cover_loader_(new BackgroundThreadImplementation<AlbumCoverLoader, AlbumCoverLoader>(this)),
     cover_art_id_(0),
     cover_art_is_set_(false),
     results_dialog_(new TrackSelectionDialog(this))
 {
-  cover_loader_->Start(true);
-  cover_loader_->Worker()->SetDefaultOutputImage(QImage(":nocover.png"));
-  connect(cover_loader_->Worker().get(), SIGNAL(ImageLoaded(quint64,QImage,QImage)),
+  cover_options_.default_output_image_ =
+      AlbumCoverLoader::ScaleAndPad(cover_options_, QImage(":nocover.png"));
+
+  connect(app_->album_cover_loader(), SIGNAL(ImageLoaded(quint64,QImage,QImage)),
           SLOT(ArtLoaded(quint64,QImage,QImage)));
+
   connect(tag_fetcher_, SIGNAL(ResultAvailable(Song, SongList)),
           results_dialog_, SLOT(FetchTagFinished(Song, SongList)),
           Qt::QueuedConnection);
@@ -71,7 +75,7 @@ EditTagDialog::EditTagDialog(CoverProviders* cover_providers, QWidget* parent)
           SLOT(FetchTagSongChosen(Song, Song)));
   connect(results_dialog_, SIGNAL(finished(int)), tag_fetcher_, SLOT(Cancel()));
 
-  album_cover_choice_controller_->SetCoverProviders(cover_providers);
+  album_cover_choice_controller_->SetApplication(app_);
 
   ui_->setupUi(this);
   ui_->splitter->setSizes(QList<int>() << 200 << width() - 200);
@@ -166,6 +170,22 @@ EditTagDialog::EditTagDialog(CoverProviders* cover_providers, QWidget* parent)
   new QShortcut(QKeySequence::Forward, next_button_, SLOT(click()));
   new QShortcut(QKeySequence::MoveToPreviousPage, previous_button_, SLOT(click()));
   new QShortcut(QKeySequence::MoveToNextPage, next_button_, SLOT(click()));
+
+  // Show the shortcuts as tooltips
+  previous_button_->setToolTip(QString("%1 (%2 / %3)").arg(
+      previous_button_->text(),
+      QKeySequence(QKeySequence::Back).toString(QKeySequence::NativeText),
+      QKeySequence(QKeySequence::MoveToPreviousPage).toString(QKeySequence::NativeText)));
+  next_button_->setToolTip(QString("%1 (%2 / %3)").arg(
+      next_button_->text(),
+      QKeySequence(QKeySequence::Forward).toString(QKeySequence::NativeText),
+      QKeySequence(QKeySequence::MoveToNextPage).toString(QKeySequence::NativeText)));
+
+  new TagCompleter(app_->library_backend(), Playlist::Column_Artist, ui_->artist);
+  new TagCompleter(app_->library_backend(), Playlist::Column_Album, ui_->album);
+  new TagCompleter(app_->library_backend(), Playlist::Column_AlbumArtist, ui_->albumartist);
+  new TagCompleter(app_->library_backend(), Playlist::Column_Genre, ui_->genre);
+  new TagCompleter(app_->library_backend(), Playlist::Column_Composer, ui_->composer);
 }
 
 EditTagDialog::~EditTagDialog() {
@@ -194,10 +214,12 @@ QList<EditTagDialog::Data> EditTagDialog::LoadData(const SongList& songs) const 
     if (song.IsEditable()) {
       // Try reloading the tags from file
       Song copy(song);
-      copy.InitFromFile(copy.url().toLocalFile(), copy.directory_id());
+      TagReaderClient::Instance()->ReadFileBlocking(copy.url().toLocalFile(), &copy);
 
-      if (copy.is_valid())
+      if (copy.is_valid()) {
+        copy.MergeUserSetData(song);
         ret << Data(copy);
+      }
     }
   }
 
@@ -230,8 +252,18 @@ void EditTagDialog::SetSongsFinished() {
     return;
 
   data_ = watcher->result();
-  if (data_.count() == 0)
+  if (data_.count() == 0) {
+    // If there were no valid songs, disable everything
+    ui_->song_list->setEnabled(false);
+    ui_->tab_widget->setEnabled(false);
+
+    // Show a summary with empty information
+    UpdateSummaryTab(Song());
+    ui_->tab_widget->setCurrentWidget(ui_->summary_tab);
+
+    SetSongListVisibility(false);
     return;
+  }
 
   // Add the filenames to the list
   foreach (const Data& data, data_) {
@@ -243,23 +275,13 @@ void EditTagDialog::SetSongsFinished() {
   ui_->song_list->selectAll();
 
   // Hide the list if there's only one song in it
-  const bool multiple = data_.count() != 1;
-  ui_->song_list->setVisible(multiple);
-  previous_button_->setEnabled(multiple);
-  next_button_->setEnabled(multiple);
-
-  ui_->tab_widget->setCurrentWidget(multiple ? ui_->tags_tab : ui_->summary_tab);
+  SetSongListVisibility(data_.count() != 1);
 }
 
-void EditTagDialog::SetTagCompleter(LibraryBackend* backend) {
-  backend_ = backend;
-  album_cover_choice_controller_->SetLibrary(backend);
-
-  new TagCompleter(backend, Playlist::Column_Artist, ui_->artist);
-  new TagCompleter(backend, Playlist::Column_Album, ui_->album);
-  new TagCompleter(backend, Playlist::Column_AlbumArtist, ui_->albumartist);
-  new TagCompleter(backend, Playlist::Column_Genre, ui_->genre);
-  new TagCompleter(backend, Playlist::Column_Composer, ui_->composer);
+void EditTagDialog::SetSongListVisibility(bool visible) {
+  ui_->song_list->setVisible(visible);
+  previous_button_->setEnabled(visible);
+  next_button_->setEnabled(visible);
 }
 
 QVariant EditTagDialog::Data::value(const Song& song, const QString& id) {
@@ -391,8 +413,17 @@ static void SetText(QLabel* label, int value, const QString& suffix, const QStri
   label->setText(value <= 0 ? def : (QString::number(value) + " " + suffix));
 }
 
+static void SetDate(QLabel* label, uint time) {
+  if (time == std::numeric_limits<uint>::max()) { // -1
+    label->setText(QObject::tr("Unknown"));
+  } else {
+    label->setText(QDateTime::fromTime_t(time).toString(
+        QLocale::system().dateTimeFormat(QLocale::LongFormat)));
+  }
+}
+
 void EditTagDialog::UpdateSummaryTab(const Song& song) {
-  cover_art_id_ = cover_loader_->Worker()->LoadImageAsync(song);
+  cover_art_id_ = app_->album_cover_loader()->LoadImageAsync(cover_options_, song);
 
   QString summary = "<b>" + Qt::escape(song.PrettyTitleWithArtist()) + "</b><br/>";
 
@@ -405,7 +436,7 @@ void EditTagDialog::UpdateSummaryTab(const Song& song) {
   } else if (song.has_embedded_cover()) {
     summary += Qt::escape(tr("Cover art from embedded image"));
   } else if (!song.art_automatic().isEmpty()) {
-    summary += Qt::escape(tr("Cover art loaded automatically from %1").arg(song.art_manual()));
+    summary += Qt::escape(tr("Cover art loaded automatically from %1").arg(song.art_automatic()));
   } else {
     summary += Qt::escape(tr("Cover art not set"));
     art_is_set = false;
@@ -421,11 +452,15 @@ void EditTagDialog::UpdateSummaryTab(const Song& song) {
   SetText(ui_->bpm, song.bpm(), tr("bpm"));
   SetText(ui_->samplerate, song.samplerate(), "Hz");
   SetText(ui_->bitrate, song.bitrate(), tr("kbps"));
-  ui_->mtime->setText(QDateTime::fromTime_t(song.mtime()).toString(
-        QLocale::system().dateTimeFormat(QLocale::LongFormat)));
-  ui_->ctime->setText(QDateTime::fromTime_t(song.ctime()).toString(
-        QLocale::system().dateTimeFormat(QLocale::LongFormat)));
-  ui_->filesize->setText(Utilities::PrettySize(song.filesize()));
+  SetDate(ui_->mtime, song.mtime());
+  SetDate(ui_->ctime, song.ctime());
+
+  if (song.filesize() == -1) {
+    ui_->filesize->setText(tr("Unknown"));
+  } else {
+    ui_->filesize->setText(Utilities::PrettySize(song.filesize()));
+  }
+
   ui_->filetype->setText(song.TextForFiletype());
 
   if (song.url().scheme() == "file")
@@ -433,7 +468,8 @@ void EditTagDialog::UpdateSummaryTab(const Song& song) {
   else
     ui_->filename->setText(song.url().toString());
 
-  album_cover_choice_controller_->search_for_cover_action()->setEnabled(cover_providers_->HasAnyProviders());
+  album_cover_choice_controller_->search_for_cover_action()->setEnabled(
+        app_->cover_providers()->HasAnyProviders());
 }
 
 void EditTagDialog::UpdateStatisticsTab(const Song& song) {
@@ -587,11 +623,19 @@ void EditTagDialog::UpdateCoverOf(const Song& selected, const QModelIndexList& s
 }
 
 void EditTagDialog::NextSong() {
+  if (ui_->song_list->count() == 0) {
+    return;
+  }
+
   int row = (ui_->song_list->currentRow() + 1) % ui_->song_list->count();
   ui_->song_list->setCurrentRow(row);
 }
 
 void EditTagDialog::PreviousSong() {
+  if (ui_->song_list->count() == 0) {
+    return;
+  }
+
   int row = (ui_->song_list->currentRow() - 1 + ui_->song_list->count()) % ui_->song_list->count();
   ui_->song_list->setCurrentRow(row);
 }
@@ -608,7 +652,8 @@ void EditTagDialog::SaveData(const QList<Data>& data) {
     if (ref.current_.IsMetadataEqual(ref.original_))
       continue;
 
-    if (!ref.current_.Save()) {
+    if (!TagReaderClient::Instance()->SaveFileBlocking(
+          ref.current_.url().toLocalFile(), ref.current_)) {
       emit Error(tr("An error occurred writing metadata to '%1'").arg(ref.current_.url().toLocalFile()));
     }
   }
@@ -677,7 +722,21 @@ void EditTagDialog::showEvent(QShowEvent* e) {
   // Set the dialog's height to the smallest possible
   resize(width(), sizeHint().height());
 
+  // Restore the tab that was current last time.
+  QSettings s;
+  s.beginGroup(kSettingsGroup);
+  ui_->tab_widget->setCurrentIndex(s.value("current_tab").toInt());
+
   QDialog::showEvent(e);
+}
+
+void EditTagDialog::hideEvent(QHideEvent* e) {
+  // Save the current tab
+  QSettings s;
+  s.beginGroup(kSettingsGroup);
+  s.setValue("current_tab", ui_->tab_widget->currentIndex());
+
+  QDialog::hideEvent(e);
 }
 
 void EditTagDialog::SongRated(float rating) {
@@ -689,7 +748,7 @@ void EditTagDialog::SongRated(float rating) {
     return;
 
   song->set_rating(rating);
-  backend_->UpdateSongRatingAsync(song->id(), rating);
+  app_->library_backend()->UpdateSongRatingAsync(song->id(), rating);
 }
 
 void EditTagDialog::ResetPlayCounts() {
@@ -710,16 +769,11 @@ void EditTagDialog::ResetPlayCounts() {
   song->set_skipcount(0);
   song->set_lastplayed(-1);
   song->set_score(0);
-  backend_->ResetStatisticsAsync(song->id());
+  app_->library_backend()->ResetStatisticsAsync(song->id());
   UpdateStatisticsTab(*song);
 }
 
 void EditTagDialog::FetchTag() {
-  if (!Fingerprinter::GstreamerHasOfa()) {
-    QMessageBox::warning(this, tr("Error"), tr("Your gstreamer installation is missing the 'ofa' plugin.  This is required for automatic tag fetching.  Try installing the 'gstreamer-plugins-bad' package."));
-    return;
-  }
-
   const QModelIndexList sel = ui_->song_list->selectionModel()->selectedIndexes();
 
   SongList songs;
@@ -758,11 +812,13 @@ void EditTagDialog::FetchTagSongChosen(const Song& original_song, const Song& ne
       ui_->artist->set_text(new_metadata.artist());
       ui_->album->set_text(new_metadata.album());
       ui_->track->setValue(new_metadata.track());
+      ui_->year->setValue(new_metadata.year());
     } else {
       data->current_.set_title(new_metadata.title());
       data->current_.set_artist(new_metadata.artist());
       data->current_.set_album(new_metadata.album());
       data->current_.set_track(new_metadata.track());
+      data->current_.set_year(new_metadata.year());
     }
 
     break;

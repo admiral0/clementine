@@ -20,7 +20,10 @@
 
 #include "ui/settingspage.h"
 
+class DigitallyImportedClient;
 class Ui_DigitallyImportedSettingsPage;
+
+class QNetworkReply;
 
 class DigitallyImportedSettingsPage : public SettingsPage {
   Q_OBJECT
@@ -32,8 +35,20 @@ public:
   void Load();
   void Save();
 
+private slots:
+  void Login();
+  void Logout();
+
+  void LoginFinished(QNetworkReply* reply);
+
+private:
+  void UpdateLoginState(const QString& listen_hash, const QString& name,
+                        const QDateTime& expires);
+
 private:
   Ui_DigitallyImportedSettingsPage* ui_;
+
+  DigitallyImportedClient* client_;
 };
 
 #endif // DIGITALLYIMPORTEDSETTINGSPAGE_H

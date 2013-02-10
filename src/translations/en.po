@@ -11,12 +11,12 @@ msgstr ""
 "PO-Revision-Date: 2010-12-25 04:49+0000\n"
 "Last-Translator: David Sansome <me@davidsansome.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: \n"
-"X-Launchpad-Export-Date: 2011-04-10 05:05+0000\n"
-"X-Generator: Launchpad (build 12735)\n"
+"X-Launchpad-Export-Date: 2011-06-27 04:53+0000\n"
+"X-Generator: Launchpad (build 13168)\n"
 
 msgid " kbps"
 msgstr ""
@@ -175,7 +175,7 @@ msgid ""
 "that section will be hidden if the token is empty.</p>"
 msgstr ""
 
-msgid "A GrooveShark Anywhere account is required."
+msgid "A Grooveshark Anywhere account is required."
 msgstr ""
 
 msgid "A Spotify Premium account is required."
@@ -708,7 +708,7 @@ msgstr ""
 msgid "Composer"
 msgstr ""
 
-msgid "Configure GrooveShark..."
+msgid "Configure Grooveshark..."
 msgstr ""
 
 msgid "Configure Last.fm..."
@@ -812,58 +812,58 @@ msgid "Cross-fade when changing tracks manually"
 msgstr ""
 
 msgid "Ctrl+Alt+V"
-msgstr ""
+msgstr "Ctrl+Alt+V"
 
 msgid "Ctrl+B"
-msgstr ""
+msgstr "Ctrl+B"
 
 msgid "Ctrl+Down"
-msgstr ""
+msgstr "Ctrl+Down"
 
 msgid "Ctrl+E"
-msgstr ""
+msgstr "Ctrl+E"
 
 msgid "Ctrl+H"
-msgstr ""
+msgstr "Ctrl+H"
 
 msgid "Ctrl+J"
-msgstr ""
+msgstr "Ctrl+J"
 
 msgid "Ctrl+K"
-msgstr ""
+msgstr "Ctrl+K"
 
 msgid "Ctrl+L"
-msgstr ""
+msgstr "Ctrl+L"
 
 msgid "Ctrl+M"
-msgstr ""
+msgstr "Ctrl+M"
 
 msgid "Ctrl+N"
-msgstr ""
+msgstr "Ctrl+N"
 
 msgid "Ctrl+O"
-msgstr ""
+msgstr "Ctrl+O"
 
 msgid "Ctrl+P"
-msgstr ""
+msgstr "Ctrl+P"
 
 msgid "Ctrl+Q"
-msgstr ""
+msgstr "Ctrl+Q"
 
 msgid "Ctrl+S"
-msgstr ""
+msgstr "Ctrl+S"
 
 msgid "Ctrl+Shift+A"
-msgstr ""
+msgstr "Ctrl+Shift+A"
 
 msgid "Ctrl+Shift+O"
-msgstr ""
+msgstr "Ctrl+Shift+O"
 
 msgid "Ctrl+T"
-msgstr ""
+msgstr "Ctrl+T"
 
 msgid "Ctrl+Up"
-msgstr ""
+msgstr "Ctrl+Up"
 
 msgid "Custom"
 msgstr ""
@@ -991,6 +991,9 @@ msgstr ""
 msgid "Display options"
 msgstr ""
 
+msgid "Display the global search popup"
+msgstr ""
+
 msgid "Display the on-screen-display"
 msgstr ""
 
@@ -1109,14 +1112,14 @@ msgstr ""
 msgid "Encoding mode"
 msgstr ""
 
+msgid "Enter a URL to download a cover from the Internet:"
+msgstr ""
+
 msgid "Enter a new name for this playlist"
 msgstr ""
 
 msgid ""
 "Enter an <b>artist</b> or <b>tag</b> to start listening to Last.fm radio."
-msgstr ""
-
-msgid "Enter an URL to download a cover from the Internet:"
 msgstr ""
 
 msgid "Enter search terms here"
@@ -1172,7 +1175,7 @@ msgstr ""
 msgid "Except between tracks on the same album or in the same CUE sheet"
 msgstr ""
 
-msgid "Extras"
+msgid "&Extras"
 msgstr ""
 
 msgid "F1"
@@ -1355,10 +1358,10 @@ msgstr ""
 msgid "Grey out non existent songs in my playlists"
 msgstr ""
 
-msgid "GrooveShark"
+msgid "Grooveshark"
 msgstr ""
 
-msgid "GrooveShark login error"
+msgid "Grooveshark login error"
 msgstr ""
 
 msgid "Group Library by..."
@@ -1458,9 +1461,6 @@ msgstr ""
 msgid "Include all songs"
 msgstr ""
 
-msgid "Include:"
-msgstr ""
-
 msgid "Increase the volume by 4%"
 msgstr ""
 
@@ -1509,8 +1509,7 @@ msgstr ""
 msgid "Invalid username and/or password"
 msgstr ""
 
-#, qt-format
-msgid "It seems user %1 doesn't have a GrooveShark Anywhere account"
+msgid "Jamendo"
 msgstr ""
 
 msgid "Jamendo Most Listened Tracks"
@@ -1816,7 +1815,7 @@ msgstr ""
 msgid "Move up"
 msgstr ""
 
-msgid "Music"
+msgid "&Music"
 msgstr ""
 
 msgid "Music (*.mp3 *.ogg *.flac *.mpc *.m4a *.aac *.wma *.mp4 *.spx *.wav)"
@@ -2112,7 +2111,7 @@ msgstr ""
 msgid "Player options"
 msgstr ""
 
-msgid "Playlist"
+msgid "&Playlist"
 msgstr ""
 
 msgid "Playlist finished"
@@ -2251,6 +2250,9 @@ msgstr ""
 msgid "Refresh channels"
 msgstr ""
 
+msgid "Refresh friends list"
+msgstr ""
+
 msgid "Refresh station list"
 msgstr ""
 
@@ -2299,13 +2301,16 @@ msgstr ""
 msgid "Repeat album"
 msgstr ""
 
-msgid "Repeat mode"
+msgid "&Repeat mode"
 msgstr ""
 
 msgid "Repeat playlist"
 msgstr ""
 
 msgid "Repeat track"
+msgstr ""
+
+msgid "Replace and play now"
 msgstr ""
 
 msgid "Replace current playlist"
@@ -2389,10 +2394,10 @@ msgstr ""
 msgid "Search"
 msgstr ""
 
-msgid "Search GrooveShark"
+msgid "Search Grooveshark"
 msgstr ""
 
-msgid "Search GrooveShark (opens a new tab)"
+msgid "Search Grooveshark (opens a new tab)"
 msgstr ""
 
 msgid "Search Icecast stations"
@@ -2542,6 +2547,10 @@ msgstr ""
 msgid "Show only untagged"
 msgstr ""
 
+#, qt-format
+msgid "Show results from %1"
+msgstr ""
+
 msgid "Show the \"love\" and \"ban\" buttons"
 msgstr ""
 
@@ -2563,7 +2572,7 @@ msgstr ""
 msgid "Shuffle by album"
 msgstr ""
 
-msgid "Shuffle mode"
+msgid "&Shuffle mode"
 msgstr ""
 
 msgid "Shuffle playlist"
@@ -2662,7 +2671,7 @@ msgstr ""
 msgid "Start transcoding"
 msgstr ""
 
-msgid "Start typing in the search box above to find music on GrooveShark."
+msgid "Start typing in the search box above to find music on Grooveshark."
 msgstr ""
 
 msgid "Start typing in the search box above to find music on Spotify."
@@ -2996,6 +3005,10 @@ msgstr ""
 msgid "Used"
 msgstr ""
 
+#, qt-format
+msgid "User %1 doesn't have a Grooveshark Anywhere account"
+msgstr ""
+
 msgid "Username"
 msgstr ""
 
@@ -3164,7 +3177,7 @@ msgid ""
 "wiki</a> for more information.\n"
 msgstr ""
 
-msgid "You do not have a GrooveShark Anywhere account."
+msgid "You do not have a Grooveshark Anywhere account."
 msgstr ""
 
 msgid "You do not have a Spotify Premium account."

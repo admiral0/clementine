@@ -17,6 +17,7 @@
 
 #include "config.h"
 #include "player.h"
+#include "core/application.h"
 #include "core/logging.h"
 #include "core/urlhandler.h"
 #include "engines/enginebase.h"
@@ -38,11 +39,11 @@
 using boost::shared_ptr;
 
 
-Player::Player(PlaylistManagerInterface* playlists, QObject* parent)
+Player::Player(Application* app, QObject* parent)
   : PlayerInterface(parent),
-    playlists_(playlists),
+    app_(app),
     lastfm_(NULL),
-    engine_(new GstEngine),
+    engine_(new GstEngine(app_->task_manager())),
     stream_change_type_(Engine::First),
     last_state_(Engine::Empty),
     volume_before_mute_(50)
@@ -88,22 +89,30 @@ void Player::HandleLoadResult(const UrlHandler::LoadResult& result) {
                 << "said no more tracks";
 
     loading_async_ = QUrl();
-    NextItem(Engine::Auto);
+    NextItem(stream_change_type_);
     break;
 
   case UrlHandler::LoadResult::TrackAvailable: {
     // Might've been an async load, so check we're still on the same item
-    int current_index = playlists_->active()->current_row();
+    int current_index = app_->playlist_manager()->active()->current_row();
     if (current_index == -1)
       return;
 
-    shared_ptr<PlaylistItem> item = playlists_->active()->item_at(current_index);
+    shared_ptr<PlaylistItem> item = app_->playlist_manager()->active()->item_at(current_index);
     if (!item || item->Url() != result.original_url_)
       return;
 
     qLog(Debug) << "URL handler for" << result.original_url_
                 << "returned" << result.media_url_;
 
+    // If there was no length info in song's metadata, use the one provided by
+    // URL handler, if there is one
+    if (item->Metadata().length_nanosec() <= 0 && result.length_nanosec_ != -1) {
+      Song song = item->Metadata();
+      song.set_length_nanosec(result.length_nanosec_);
+      item->SetTemporaryMetadata(song);
+      app_->playlist_manager()->active()->InformOfCurrentSongChange();
+    }
     engine_->Play(result.media_url_, stream_change_type_,
                   item->Metadata().has_cue(),
                   item->Metadata().beginning_nanosec(),
@@ -129,14 +138,11 @@ void Player::Next() {
 }
 
 void Player::NextInternal(Engine::TrackChangeFlags change) {
-  if (playlists_->active()->stop_after_current()) {
-    playlists_->active()->StopAfter(-1);
-    Stop();
+  if (HandleStopAfter())
     return;
-  }
 
-  if (playlists_->active()->current_item()) {
-    const QUrl url = playlists_->active()->current_item()->Url();
+  if (app_->playlist_manager()->active()->current_item()) {
+    const QUrl url = app_->playlist_manager()->active()->current_item()->Url();
 
     if (url_handlers_.contains(url.scheme())) {
       // The next track is already being loaded
@@ -153,9 +159,12 @@ void Player::NextInternal(Engine::TrackChangeFlags change) {
 }
 
 void Player::NextItem(Engine::TrackChangeFlags change) {
-  int i = playlists_->active()->next_row();
+  // Manual track changes override "Repeat track"
+  const bool ignore_repeat_track = change & Engine::Manual;
+
+  int i = app_->playlist_manager()->active()->next_row(ignore_repeat_track);
   if (i == -1) {
-    playlists_->active()->set_current_row(i);
+    app_->playlist_manager()->active()->set_current_row(i);
     emit PlaylistFinished();
     Stop();
     return;
@@ -164,20 +173,34 @@ void Player::NextItem(Engine::TrackChangeFlags change) {
   PlayAt(i, change, false);
 }
 
-void Player::TrackEnded() {
-  if (playlists_->active()->stop_after_current()) {
-    playlists_->active()->StopAfter(-1);
+bool Player::HandleStopAfter() {
+  if (app_->playlist_manager()->active()->stop_after_current()) {
+    app_->playlist_manager()->active()->StopAfter(-1);
+
+    // Find what the next track would've been, and mark that one as current
+    // so it plays next time the user presses Play.
+    const int next_row = app_->playlist_manager()->active()->next_row();
+    if (next_row != -1) {
+      app_->playlist_manager()->active()->set_current_row(next_row);
+    }
+
     Stop();
-    return;
+    return true;
   }
+  return false;
+}
+
+void Player::TrackEnded() {
+  if (HandleStopAfter())
+    return;
 
   if (current_item_ && current_item_->IsLocalLibraryItem() &&
       current_item_->Metadata().id() != -1 &&
-      !playlists_->active()->have_incremented_playcount() &&
-      playlists_->active()->get_lastfm_status() != Playlist::LastFM_Seeked) {
+      !app_->playlist_manager()->active()->have_incremented_playcount() &&
+      app_->playlist_manager()->active()->get_lastfm_status() != Playlist::LastFM_Seeked) {
     // The track finished before its scrobble point (30 seconds), so increment
     // the play count now.
-    playlists_->library_backend()->IncrementPlayCountAsync(
+    app_->playlist_manager()->library_backend()->IncrementPlayCountAsync(
         current_item_->Metadata().id());
   }
 
@@ -204,12 +227,12 @@ void Player::PlayPause() {
 
   case Engine::Empty:
   case Engine::Idle: {
-    playlists_->SetActivePlaylist(playlists_->current_id());
-    if (playlists_->active()->rowCount() == 0)
+    app_->playlist_manager()->SetActivePlaylist(app_->playlist_manager()->current_id());
+    if (app_->playlist_manager()->active()->rowCount() == 0)
       break;
 
-             int i = playlists_->active()->current_row();
-    if (i == -1) i = playlists_->active()->last_played_row();
+             int i = app_->playlist_manager()->active()->current_row();
+    if (i == -1) i = app_->playlist_manager()->active()->last_played_row();
     if (i == -1) i = 0;
 
     PlayAt(i, Engine::First, true);
@@ -220,19 +243,25 @@ void Player::PlayPause() {
 
 void Player::Stop() {
   engine_->Stop();
-  playlists_->active()->set_current_row(-1);
+  app_->playlist_manager()->active()->set_current_row(-1);
   current_item_.reset();
 }
 
 void Player::Previous() {
-  int i = playlists_->active()->previous_row();
-  playlists_->active()->set_current_row(i);
+  PreviousItem(Engine::Manual);  
+}
+
+void Player::PreviousItem(Engine::TrackChangeFlags change) {
+  const bool ignore_repeat_track = change & Engine::Manual;
+
+  int i = app_->playlist_manager()->active()->previous_row(ignore_repeat_track);
+  app_->playlist_manager()->active()->set_current_row(i);
   if (i == -1) {
     Stop();
     return;
   }
 
-  PlayAt(i, Engine::Manual, false);
+  PlayAt(i, change, false);
 }
 
 void Player::EngineStateChanged(Engine::State state) {
@@ -265,18 +294,29 @@ int Player::GetVolume() const {
 void Player::PlayAt(int index, Engine::TrackChangeFlags change, bool reshuffle) {
   if (change == Engine::Manual && engine_->position_nanosec() != engine_->length_nanosec()) {
     emit TrackSkipped(current_item_);
+    const QUrl& url = current_item_->Url();
+    if (url_handlers_.contains(url.scheme())) {
+      url_handlers_[url.scheme()]->TrackSkipped();
+    }
   }
 
-  if (current_item_ && current_item_->Metadata().IsOnSameAlbum(
-        playlists_->active()->item_at(index)->Metadata())) {
+  if (current_item_ &&
+      app_->playlist_manager()->active()->has_item_at(index) &&
+      current_item_->Metadata().IsOnSameAlbum(
+        app_->playlist_manager()->active()->item_at(index)->Metadata())) {
     change |= Engine::SameAlbum;
   }
 
   if (reshuffle)
-    playlists_->active()->set_current_row(-1);
-  playlists_->active()->set_current_row(index);
+    app_->playlist_manager()->active()->ReshuffleIndices();
+  app_->playlist_manager()->active()->set_current_row(index);
 
-  current_item_ = playlists_->active()->current_item();
+  if (app_->playlist_manager()->active()->current_row() == -1) {
+    // Maybe index didn't exist in the playlist.
+    return;
+  }
+
+  current_item_ = app_->playlist_manager()->active()->current_item();
   const QUrl url = current_item_->Url();
 
   if (url_handlers_.contains(url.scheme())) {
@@ -311,14 +351,22 @@ void Player::CurrentMetadataChanged(const Song& metadata) {
 }
 
 void Player::SeekTo(int seconds) {
-  qint64 nanosec = qBound(0ll, qint64(seconds) * kNsecPerSec,
-                          engine_->length_nanosec());
+  const qint64 length_nanosec = engine_->length_nanosec();
+  
+  // If the length is 0 then either there is no song playing, or the song isn't
+  // seekable.
+  if (length_nanosec <= 0) {
+    return;
+  }
+  
+  const qint64 nanosec = qBound(0ll, qint64(seconds) * kNsecPerSec,
+                                length_nanosec);
   engine_->Seek(nanosec);
 
   // If we seek the track we don't want to submit it to last.fm
   qLog(Info) << "Track seeked to" << nanosec << "ns - not scrobbling";
-  if (playlists_->active()->get_lastfm_status() == Playlist::LastFM_New) {
-    playlists_->active()->set_lastfm_status(Playlist::LastFM_Seeked);
+  if (app_->playlist_manager()->active()->get_lastfm_status() == Playlist::LastFM_New) {
+    app_->playlist_manager()->active()->set_lastfm_status(Playlist::LastFM_Seeked);
   }
 
   emit Seeked(nanosec / 1000);
@@ -333,7 +381,7 @@ void Player::SeekBackward() {
 }
 
 void Player::EngineMetadataReceived(const Engine::SimpleMetaBundle& bundle) {
-  PlaylistItemPtr item = playlists_->active()->current_item();
+  PlaylistItemPtr item = app_->playlist_manager()->active()->current_item();
   if (!item)
     return;
 
@@ -361,13 +409,13 @@ void Player::EngineMetadataReceived(const Engine::SimpleMetaBundle& bundle) {
   if (song.title().isEmpty() && song.artist().isEmpty())
     return;
 
-  playlists_->active()->SetStreamMetadata(item->Url(), song);
+  app_->playlist_manager()->active()->SetStreamMetadata(item->Url(), song);
 }
 
 PlaylistItemPtr Player::GetItemAt(int pos) const {
-  if (pos < 0 || pos >= playlists_->active()->rowCount())
+  if (pos < 0 || pos >= app_->playlist_manager()->active()->rowCount())
     return PlaylistItemPtr();
-  return playlists_->active()->item_at(pos);
+  return app_->playlist_manager()->active()->item_at(pos);
 }
 
 void Player::Mute() {
@@ -414,17 +462,19 @@ void Player::TrackAboutToEnd() {
   // behaviour to queue up a subsequent track.  We don't want to preload (and
   // scrobble) the next item in the playlist if it's just going to be stopped
   // again immediately after.
-  if (playlists_->active()->current_item()) {
-    const QUrl url = playlists_->active()->current_item()->Url();
-    if (url_handlers_.contains(url.scheme()))
+  if (app_->playlist_manager()->active()->current_item()) {
+    const QUrl url = app_->playlist_manager()->active()->current_item()->Url();
+    if (url_handlers_.contains(url.scheme())) {
+      url_handlers_[url.scheme()]->TrackAboutToEnd();
       return;
+    }
   }
 
-  const bool has_next_row = playlists_->active()->next_row() != -1;
+  const bool has_next_row = app_->playlist_manager()->active()->next_row() != -1;
   PlaylistItemPtr next_item;
 
   if (has_next_row) {
-    next_item = playlists_->active()->item_at(playlists_->active()->next_row());
+    next_item = app_->playlist_manager()->active()->item_at(app_->playlist_manager()->active()->next_row());
   }
 
   if (engine_->is_autocrossfade_enabled()) {
@@ -517,6 +567,14 @@ void Player::UnregisterUrlHandler(UrlHandler* handler) {
   disconnect(handler, SIGNAL(destroyed(QObject*)), this, SLOT(UrlHandlerDestroyed(QObject*)));
   disconnect(handler, SIGNAL(AsyncLoadComplete(UrlHandler::LoadResult)),
              this, SLOT(HandleLoadResult(UrlHandler::LoadResult)));
+}
+
+const UrlHandler* Player::HandlerForUrl(const QUrl& url) const {
+  QMap<QString, UrlHandler*>::const_iterator it = url_handlers_.constFind(url.scheme());
+  if (it == url_handlers_.constEnd()) {
+    return NULL;
+  }
+  return *it;
 }
 
 void Player::UrlHandlerDestroyed(QObject* object) {

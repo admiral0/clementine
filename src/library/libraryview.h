@@ -26,10 +26,9 @@
 
 #include <boost/scoped_ptr.hpp>
 
-class DeviceManager;
-class LibraryModel;
+class Application;
+class LibraryFilterWidget;
 class OrganiseDialog;
-class TaskManager;
 
 class QMimeData;
 
@@ -61,10 +60,8 @@ class LibraryView : public AutoExpandingTreeView {
   // this will return all of it's songs.
   SongList GetSelectedSongs() const;
 
-  void SetCoverProviders(CoverProviders* cover_providers);
-  void SetTaskManager(TaskManager* task_manager);
-  void SetLibrary(LibraryModel* library);
-  void SetDeviceManager(DeviceManager* device_manager);
+  void SetApplication(Application* app);
+  void SetFilter(LibraryFilterWidget* filter);
 
   // QTreeView
   void keyboardSearch(const QString &search);
@@ -75,6 +72,9 @@ class LibraryView : public AutoExpandingTreeView {
   void ReloadSettings();
 
   void FilterReturnPressed();
+
+  void SaveFocus();
+  void RestoreFocus();
 
  signals:
   void ShowConfigDialog();
@@ -110,12 +110,12 @@ class LibraryView : public AutoExpandingTreeView {
  private:
   void RecheckIsEmpty();
   void ShowInVarious(bool on);
+  bool RestoreLevelFocus(const QModelIndex& parent = QModelIndex());
+  void SaveContainerPath(const QModelIndex& child);
 
  private:
-  CoverProviders* cover_providers_;
-  LibraryModel* library_;
-  DeviceManager* devices_;
-  TaskManager* task_manager_;
+  Application* app_;
+  LibraryFilterWidget* filter_;
 
   int total_song_count_;
 
@@ -144,6 +144,11 @@ class LibraryView : public AutoExpandingTreeView {
   boost::scoped_ptr<EditTagDialog> edit_tag_dialog_;
 
   bool is_in_keyboard_search_;
+
+  // Save focus
+  Song last_selected_song_;
+  QString last_selected_container_;
+  QSet<QString> last_selected_path_;
 };
 
 #endif // LIBRARYVIEW_H

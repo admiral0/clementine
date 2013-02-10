@@ -23,14 +23,15 @@
 class LastFMService;
 
 class LastFMSearchProvider : public SimpleSearchProvider {
-  Q_OBJECT
-
 public:
-  LastFMSearchProvider(LastFMService* service, QObject* parent);
+  LastFMSearchProvider(LastFMService* service, Application* app, QObject* parent);
 
   void LoadArtAsync(int id, const Result& result);
 
-private slots:
+  bool IsLoggedIn();
+  void ShowConfig();
+
+protected:
   void RecreateItems();
 
 private:

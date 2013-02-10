@@ -16,19 +16,26 @@
 */
 
 #include "spotifysearchprovider.h"
+
+#include <ctime>
+
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/uniform_int.hpp>
+
 #include "core/logging.h"
 #include "internet/internetmodel.h"
 #include "internet/spotifyserver.h"
 #include "internet/spotifyservice.h"
 #include "playlist/songmimedata.h"
-#include "spotifyblob/common/spotifymessagehandler.h"
 
-SpotifySearchProvider::SpotifySearchProvider(QObject* parent)
-  : SearchProvider(parent),
+SpotifySearchProvider::SpotifySearchProvider(Application* app, QObject* parent)
+  : SearchProvider(app, parent),
     server_(NULL),
     service_(NULL)
 {
-  Init("Spotify", "spotify", QIcon(":icons/svg/spotify.svg"), true, true);
+  Init("Spotify", "spotify", QIcon(":icons/32x32/spotify.png"),
+       WantsDelayedQueries | WantsSerialisedArtQueries | ArtIsProbablyRemote |
+       CanShowConfig | CanGiveSuggestions);
 }
 
 SpotifyServer* SpotifySearchProvider::server() {
@@ -42,15 +49,17 @@ SpotifyServer* SpotifySearchProvider::server() {
     return NULL;
 
   server_ = service_->server();
-  connect(server_, SIGNAL(SearchResults(spotify_pb::SearchResponse)),
-          SLOT(SearchFinishedSlot(spotify_pb::SearchResponse)));
+  connect(server_, SIGNAL(SearchResults(pb::spotify::SearchResponse)),
+          SLOT(SearchFinishedSlot(pb::spotify::SearchResponse)));
   connect(server_, SIGNAL(ImageLoaded(QString,QImage)),
           SLOT(ArtLoadedSlot(QString,QImage)));
-  connect(server_, SIGNAL(AlbumBrowseResults(spotify_pb::BrowseAlbumResponse)),
-          SLOT(AlbumBrowseResponse(spotify_pb::BrowseAlbumResponse)));
   connect(server_, SIGNAL(destroyed()), SLOT(ServerDestroyed()));
+  connect(server_, SIGNAL(StarredLoaded(pb::spotify::LoadPlaylistResponse)),
+          SLOT(SuggestionsLoaded(pb::spotify::LoadPlaylistResponse)));
+  connect(server_, SIGNAL(ToplistBrowseResults(pb::spotify::BrowseToplistResponse)),
+          SLOT(SuggestionsLoaded(pb::spotify::BrowseToplistResponse)));
 
-  return service_->server();
+  return server_;
 }
 
 void SpotifySearchProvider::ServerDestroyed() {
@@ -73,7 +82,7 @@ void SpotifySearchProvider::SearchAsync(int id, const QString& query) {
   queries_[query_string] = state;
 }
 
-void SpotifySearchProvider::SearchFinishedSlot(const spotify_pb::SearchResponse& response) {
+void SpotifySearchProvider::SearchFinishedSlot(const pb::spotify::SearchResponse& response) {
   QString query_string = QString::fromUtf8(response.request().query().c_str());
   QMap<QString, PendingState>::iterator it = queries_.find(query_string);
   if (it == queries_.end())
@@ -84,34 +93,26 @@ void SpotifySearchProvider::SearchFinishedSlot(const spotify_pb::SearchResponse&
 
   ResultList ret;
   for (int i=0; i < response.result_size() ; ++i) {
-    const spotify_pb::Track& track = response.result(i);
+    const pb::spotify::Track& track = response.result(i);
 
     Result result(this);
-    result.type_ = Result::Type_Track;
     SpotifyService::SongFromProtobuf(track, &result.metadata_);
-    result.match_quality_ = MatchQuality(state.tokens_, result.metadata_.title());
 
     ret << result;
   }
 
   for (int i=0 ; i<response.album_size() ; ++i) {
-    const spotify_pb::Album& album = response.album(i);
-
-    Result result(this);
-    result.type_ = Result::Type_Album;
-    SpotifyService::SongFromProtobuf(album.metadata(), &result.metadata_);
-    result.match_quality_ =
-        qMin(MatchQuality(state.tokens_, result.metadata_.album()),
-             MatchQuality(state.tokens_, result.metadata_.artist()));
-    result.album_size_ = album.metadata().track();
+    const pb::spotify::Album& album = response.album(i);
 
     for (int j=0; j < album.track_size() ; ++j) {
-      Song track_song;
-      SpotifyService::SongFromProtobuf(album.track(j), &track_song);
-      result.album_songs_ << track_song;
-    }
+      Result result(this);
+      SpotifyService::SongFromProtobuf(album.track(j), &result.metadata_);
 
-    ret << result;
+      // Just use the album index as an id.
+      result.metadata_.set_album_id(i);
+
+      ret << result;
+    }
   }
 
   emit ResultsAvailable(state.orig_id_, ret);
@@ -144,52 +145,84 @@ void SpotifySearchProvider::ArtLoadedSlot(const QString& id, const QImage& image
   emit ArtLoaded(orig_id, ScaleAndPad(image));
 }
 
-void SpotifySearchProvider::LoadTracksAsync(int id, const Result& result) {
-  switch (result.type_) {
-  case Result::Type_Track: {
-    SongMimeData* mime_data = new SongMimeData;
-    mime_data->songs = SongList() << result.metadata_;
-    emit TracksLoaded(id, mime_data);
-    break;
+bool SpotifySearchProvider::IsLoggedIn() {
+  if (server()) {
+    return service_->IsLoggedIn();
   }
+  return false;
+}
 
-  case Result::Type_Album: {
-    SpotifyServer* s = server();
-    if (!s) {
-      emit TracksLoaded(id, NULL);
-      return;
+void SpotifySearchProvider::ShowConfig() {
+  if (service_) {
+    return service_->ShowConfig();
+  }
+}
+
+void SpotifySearchProvider::AddSuggestionFromTrack(
+    const pb::spotify::Track& track) {
+  if (!track.title().empty()) {
+    suggestions_.insert(QString::fromUtf8(track.title().c_str()));
+  }
+  for (int j = 0; j < track.artist_size(); ++j) {
+    if (!track.artist(j).empty()) {
+      suggestions_.insert(QString::fromUtf8(track.artist(j).c_str()));
     }
-
-    QString uri = result.metadata_.url().toString();
-
-    pending_tracks_[uri] = id;
-    s->AlbumBrowse(uri);
-    break;
   }
-
-  default:
-    break;
+  if (!track.album().empty()) {
+    suggestions_.insert(QString::fromUtf8(track.album().c_str()));
   }
 }
 
-void SpotifySearchProvider::AlbumBrowseResponse(const spotify_pb::BrowseAlbumResponse& response) {
-  QString uri = QStringFromStdString(response.uri());
-  QMap<QString, int>::iterator it = pending_tracks_.find(uri);
-  if (it == pending_tracks_.end())
+void SpotifySearchProvider::AddSuggestionFromAlbum(
+    const pb::spotify::Album& album) {
+  AddSuggestionFromTrack(album.metadata());
+  for (int i = 0; i < album.track_size(); ++i) {
+    AddSuggestionFromTrack(album.track(i));
+  }
+}
+
+void SpotifySearchProvider::SuggestionsLoaded(
+    const pb::spotify::LoadPlaylistResponse& playlist) {
+  for (int i = 0; i < playlist.track_size(); ++i) {
+    AddSuggestionFromTrack(playlist.track(i));
+  }
+}
+
+void SpotifySearchProvider::SuggestionsLoaded(
+    const pb::spotify::BrowseToplistResponse& response) {
+  for (int i = 0; i < response.track_size(); ++i) {
+    AddSuggestionFromTrack(response.track(i));
+  }
+  for (int i = 0; i < response.album_size(); ++i) {
+    AddSuggestionFromAlbum(response.album(i));
+  }
+}
+
+void SpotifySearchProvider::LoadSuggestions() {
+  if (!server()) {
     return;
-
-  const int orig_id = it.value();
-  pending_tracks_.erase(it);
-
-  SongMimeData* mime_data = new SongMimeData;
-
-  for (int i=0 ; i<response.track_size() ; ++i) {
-    Song song;
-    SpotifyService::SongFromProtobuf(response.track(i), &song);
-    mime_data->songs << song;
   }
-
-  emit TracksLoaded(orig_id, mime_data);
+  server()->LoadStarred();
+  server()->LoadToplist();
 }
 
+QStringList SpotifySearchProvider::GetSuggestions(int count) {
+  if (suggestions_.empty()) {
+    LoadSuggestions();
+    return QStringList();
+  }
 
+  QStringList all_suggestions = suggestions_.toList();
+
+  boost::mt19937 gen(std::time(0));
+  boost::uniform_int<> random(0, all_suggestions.size() - 1);
+
+  QSet<QString> candidates;
+
+  const int max = qMin(count, all_suggestions.size());
+  while (candidates.size() < max) {
+    const int index = random(gen);
+    candidates.insert(all_suggestions[index]);
+  }
+  return candidates.toList();
+}

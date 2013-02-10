@@ -25,15 +25,17 @@
 #include "libraryquery.h"
 #include "librarywatcher.h"
 #include "sqlrow.h"
-#include "core/backgroundthread.h"
 #include "core/simpletreemodel.h"
 #include "core/song.h"
+#include "covers/albumcoverloaderoptions.h"
 #include "engines/engine_fwd.h"
 #include "playlist/playlistmanager.h"
 #include "smartplaylists/generator_fwd.h"
 
 #include <boost/scoped_ptr.hpp>
 
+class Application;
+class AlbumCoverLoader;
 class LibraryDirectoryModel;
 class LibraryBackend;
 namespace smart_playlists { class Search; }
@@ -45,7 +47,7 @@ class LibraryModel : public SimpleTreeModel<LibraryItem> {
   Q_ENUMS(GroupBy);
 
  public:
-  LibraryModel(LibraryBackend* backend, TaskManager* task_manager,
+  LibraryModel(LibraryBackend* backend, Application* app,
                QObject* parent = 0);
   ~LibraryModel();
 
@@ -53,6 +55,7 @@ class LibraryModel : public SimpleTreeModel<LibraryItem> {
   static const char* kSmartPlaylistsSettingsGroup;
   static const char* kSmartPlaylistsArray;
   static const int kSmartPlaylistsVersion;
+  static const int kPrettyCoverSize;
 
   enum Role {
     Role_Type = Qt::UserRole + 1,
@@ -96,6 +99,16 @@ class LibraryModel : public SimpleTreeModel<LibraryItem> {
              second == other.second &&
              third == other.third;
     }
+    bool operator !=(const Grouping& other) const {
+      return ! (*this == other);
+    }
+  };
+
+  struct QueryResult {
+    QueryResult() : create_va(false) {}
+
+    SqlRowList rows;
+    bool create_va;
   };
 
   LibraryBackend* backend() const { return backend_; }
@@ -133,9 +146,18 @@ class LibraryModel : public SimpleTreeModel<LibraryItem> {
 
   // Whether or not to use album cover art, if it exists, in the library view
   void set_pretty_covers(bool use_pretty_covers);
+  bool use_pretty_covers() const { return use_pretty_covers_; }
 
-  //Whether or not to show letters heading in the library view
+  // Whether or not to show letters heading in the library view
   void set_show_dividers(bool show_dividers);
+
+  // Utility functions for manipulating text
+  static QString TextOrUnknown(const QString& text);
+  static QString PrettyYearAlbum(int year, const QString& album);
+  static QString SortText(QString text);
+  static QString SortTextForArtist(QString artist);
+  static QString SortTextForYear(int year);
+  static QString SortTextForSong(const Song& song);
 
  signals:
   void TotalSongCountUpdated(int count);
@@ -165,12 +187,16 @@ class LibraryModel : public SimpleTreeModel<LibraryItem> {
   // Called after ResetAsync
   void ResetAsyncQueryFinished();
 
+  void AlbumArtLoaded(quint64 id, const QImage& image);
+
  private:
   // Provides some optimisations for loading the list of items in the root.
   // This gets called a lot when filtering the playlist, so it's nice to be
   // able to do it in a background thread.
-  SqlRowList RunRootQuery(const QueryOptions& query_options,
-                          const Grouping& group_by);
+  QueryResult RunQuery(LibraryItem* parent);
+  void PostQuery(LibraryItem* parent, const QueryResult& result, bool signal);
+
+  bool HasCompilations(const LibraryQuery& query);
 
   void BeginReset();
 
@@ -205,26 +231,18 @@ class LibraryModel : public SimpleTreeModel<LibraryItem> {
   void FinishItem(GroupBy type, bool signal, bool create_divider,
                   LibraryItem* parent, LibraryItem* item);
 
-  // Functions for manipulating text
-  QString TextOrUnknown(const QString& text) const;
-  QString PrettyYearAlbum(int year, const QString& album) const;
-
-  QString SortText(QString text) const;
-  QString SortTextForArtist(QString artist) const;
-  QString SortTextForYear(int year) const;
-  QString SortTextForSong(const Song& song) const;
-
   QString DividerKey(GroupBy type, LibraryItem* item) const;
   QString DividerDisplayText(GroupBy type, const QString& key) const;
 
   // Helpers
-  QVariant AlbumIcon(const QModelIndex& index, int role) const;
+  QString AlbumIconPixmapCacheKey(const QModelIndex& index) const;
+  QVariant AlbumIcon(const QModelIndex& index);
   QVariant data(const LibraryItem* item, int role) const;
   bool CompareItems(const LibraryItem* a, const LibraryItem* b) const;
 
  private:
   LibraryBackend* backend_;
-  TaskManager* task_manager_;
+  Application* app_;
   LibraryDirectoryModel* dir_model_;
   bool show_smart_playlists_;
   DefaultGenerators default_smart_playlists_;
@@ -244,9 +262,6 @@ class LibraryModel : public SimpleTreeModel<LibraryItem> {
   // Keyed on a letter, a year, a century, etc.
   QMap<QString, LibraryItem*> divider_nodes_;
 
-  // Only applies if the first level is "artist"
-  LibraryItem* compilation_artist_node_;
-
   // Only applies if smart playlists are set to on
   LibraryItem* smart_playlist_node_;
 
@@ -254,16 +269,20 @@ class LibraryModel : public SimpleTreeModel<LibraryItem> {
   QIcon album_icon_;
   // used as a generic icon to show when no cover art is found,
   // fixed to the same size as the artwork (32x32)
-  QImage no_cover_icon_pretty_;
-  QIcon no_cover_icon_;
+  QPixmap no_cover_icon_;
   QIcon playlists_dir_icon_;
   QIcon playlist_icon_;
 
   int init_task_id_;
   
-  QSize pretty_cover_size_;
   bool use_pretty_covers_;
   bool show_dividers_;
+
+  AlbumCoverLoaderOptions cover_loader_options_;
+
+  typedef QPair<LibraryItem*, QString> ItemAndCacheKey;
+  QMap<quint64, ItemAndCacheKey> pending_art_;
+  QSet<QString> pending_cache_keys_;
 };
 
 Q_DECLARE_METATYPE(LibraryModel::Grouping);

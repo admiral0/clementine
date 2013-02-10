@@ -19,11 +19,13 @@
 #include "organise.h"
 #include "taskmanager.h"
 #include "core/logging.h"
+#include "core/tagreaderclient.h"
 
 #include <QDir>
 #include <QFileInfo>
 #include <QTimer>
 #include <QThread>
+#include <QUrl>
 
 #include <boost/bind.hpp>
 
@@ -136,7 +138,7 @@ void Organise::ProcessSomeFiles() {
 
     // Read metadata from the file
     Song song;
-    song.InitFromFile(task.filename_, -1);
+    TagReaderClient::Instance()->ReadFileBlocking(task.filename_, &song);
     if (!song.is_valid())
       continue;
 

@@ -15,10 +15,10 @@
    along with Clementine.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include <QMutexLocker>
 
 #include "core/logging.h"
+#include "core/timeconstants.h"
 #include "library/librarybackend.h"
 #include "library/librarymodel.h"
 
@@ -26,8 +26,9 @@
 
 CddaDevice::CddaDevice(const QUrl& url, DeviceLister* lister,
     const QString& unique_id, DeviceManager* manager,
+    Application* app,
     int database_id, bool first_time)
-      : ConnectedDevice(url, lister, unique_id, manager, database_id, first_time),
+      : ConnectedDevice(url, lister, unique_id, manager, app, database_id, first_time),
         cdda_(NULL),
         cdio_(NULL)
 {
@@ -126,7 +127,6 @@ void CddaDevice::Init() {
   gst_object_unref(GST_OBJECT(pipe));
   gst_object_unref(GST_OBJECT(msg));
   gst_tag_list_free(tags);
-
 }
 
 void CddaDevice::AudioCDTagsLoaded(const QString& artist, const QString& album,
@@ -144,14 +144,16 @@ void CddaDevice::AudioCDTagsLoaded(const QString& artist, const QString& album,
     song.set_album(album);
     song.set_title(ret.title_);
     song.set_length_nanosec(ret.duration_msec_ * kNsecPerMsec);
-    song.set_id(track_number);
     song.set_track(track_number);
+    song.set_year(ret.year_);
+    song.set_id(track_number);
     // We need to set url: that's how playlist will find the correct item to update
     song.set_url(QUrl(QString("cdda://%1/%2").arg(unique_id()).arg(track_number++)));
     songs << song;
   }
   connect(this, SIGNAL(SongsDiscovered(const SongList&)), model_, SLOT(SongsDiscovered(const SongList&)));
   emit SongsDiscovered(songs);
+  song_count_ = songs.size();
 }
 
 void CddaDevice::Refresh() {

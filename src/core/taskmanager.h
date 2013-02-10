@@ -36,13 +36,33 @@ public:
     bool blocks_library_scans;
   };
 
+  class ScopedTask {
+   public:
+    ScopedTask(const int task_id, TaskManager* task_manager)
+        : task_id_(task_id),
+          task_manager_(task_manager) {
+    }
+
+    ~ScopedTask() {
+      task_manager_->SetTaskFinished(task_id_);
+    }
+
+   private:
+    const int task_id_;
+    TaskManager* task_manager_;
+
+    Q_DISABLE_COPY(ScopedTask);
+  };
+
   // Everything here is thread safe
   QList<Task> GetTasks();
 
   int StartTask(const QString& name);
   void SetTaskBlocksLibraryScans(int id);
   void SetTaskProgress(int id, int progress, int max = 0);
+  void IncreaseTaskProgress(int id, int progress, int max = 0);
   void SetTaskFinished(int id);
+  int GetTaskProgress(int id);
 
 signals:
   void TasksChanged();
@@ -54,6 +74,8 @@ private:
   QMutex mutex_;
   QMap<int, Task> tasks_;
   int next_task_id_;
+
+  Q_DISABLE_COPY(TaskManager);
 };
 
 #endif // TASKMANAGER_H

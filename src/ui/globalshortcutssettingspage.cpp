@@ -19,6 +19,8 @@
 #include "globalshortcutssettingspage.h"
 #include "ui_globalshortcutssettingspage.h"
 #include "core/globalshortcuts.h"
+#include "core/logging.h"
+#include "core/utilities.h"
 #include "ui/iconloader.h"
 #include "ui/settingsdialog.h"
 
@@ -56,7 +58,8 @@ GlobalShortcutsSettingsPage::~GlobalShortcutsSettingsPage() {
 
 bool GlobalShortcutsSettingsPage::IsEnabled() const {
 #ifdef Q_OS_MAC
-  if (QSysInfo::MacintoshVersion != QSysInfo::MV_SNOWLEOPARD) {
+  qLog(Debug) << Utilities::GetMacVersion();
+  if (Utilities::GetMacVersion() < 6) {  // Leopard and earlier.
     return false;
   }
 #endif
@@ -166,8 +169,11 @@ void GlobalShortcutsSettingsPage::ChangeClicked() {
 
 void GlobalShortcutsSettingsPage::OpenGnomeKeybindingProperties() {
   if (!QProcess::startDetached("gnome-keybinding-properties")) {
-    QMessageBox::warning(this, "Error",
-        tr("The \"%1\" command could not be started.")
-        .arg("gnome-keybinding-properties"));
+    if (!QProcess::startDetached("gnome-control-center",
+                                 QStringList() << "keyboard")) {
+      QMessageBox::warning(this, "Error",
+          tr("The \"%1\" command could not be started.")
+          .arg("gnome-keybinding-properties"));
+    }
   }
 }

@@ -19,7 +19,9 @@
 #include "magnatuneservice.h"
 #include "internetmodel.h"
 #include "ui_magnatunedownloaddialog.h"
+#include "core/logging.h"
 #include "core/network.h"
+#include "core/utilities.h"
 #include "widgets/progressitemdelegate.h"
 
 #include <QCloseEvent>
@@ -117,7 +119,7 @@ void MagnatuneDownloadDialog::DownloadNext() {
   QString sku = item->data(0, Qt::UserRole).toString();
   item->setData(1, Qt::DisplayRole, tr("Starting..."));
 
-  QUrl url = QString(MagnatuneService::kDownloadUrl);
+  QUrl url(MagnatuneService::kDownloadUrl);
   url.setUserName(service_->username());
   url.setPassword(service_->password());
   url.addQueryItem("id", MagnatuneService::kPartnerId);
@@ -175,50 +177,35 @@ void MagnatuneDownloadDialog::MetadataFinished() {
   }
 
   // Munge the URL a bit
-  QString url_text = re.cap(1);
-  url_text.replace("&amp;", "&");
+  QString url_text = Utilities::DecodeHtmlEntities(re.cap(1));
 
   QUrl url = QUrl(url_text);
   url.setUserName(service_->username());
   url.setPassword(service_->password());
+
+  qLog(Debug) << "Downloading" << url;
 
   // Start the actual download
   current_reply_ = network_->get(QNetworkRequest(url));
 
   connect(current_reply_, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(Error(QNetworkReply::NetworkError)));
   connect(current_reply_, SIGNAL(finished()), SLOT(DownloadFinished()));
-  // No DownloadProgress connection because the first one is a redirect
-}
-
-void MagnatuneDownloadDialog::DownloadFinished() {
-  QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
-  reply->deleteLater();
+  connect(current_reply_, SIGNAL(downloadProgress(qint64,qint64)), SLOT(DownloadProgress(qint64,qint64)));
+  connect(current_reply_, SIGNAL(readyRead()), SLOT(DownloadReadyRead()));
 
   // Close any open file
   download_file_.reset();
 
-  QUrl redirect = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
-  if (redirect.isValid()) {
-    // Open the output file
-    QString output_filename = GetOutputFilename();
-    download_file_.reset(new QFile(output_filename));
-    if (!download_file_->open(QIODevice::WriteOnly)) {
-      ShowError(tr("Couldn't open output file %1").arg(output_filename));
-      return;
-    }
-
-    // Round and round we go
-    redirect.setUserName(service_->username());
-    redirect.setPassword(service_->password());
-
-    current_reply_ = network_->get(QNetworkRequest(redirect));
-
-    connect(current_reply_, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(Error(QNetworkReply::NetworkError)));
-    connect(current_reply_, SIGNAL(finished()), SLOT(DownloadFinished()));
-    connect(current_reply_, SIGNAL(downloadProgress(qint64,qint64)), SLOT(DownloadProgress(qint64,qint64)));
-    connect(current_reply_, SIGNAL(readyRead()), SLOT(DownloadReadyRead()));
-    return;
+  // Open the output file
+  QString output_filename = GetOutputFilename();
+  download_file_.reset(new QFile(output_filename));
+  if (!download_file_->open(QIODevice::WriteOnly)) {
+    ShowError(tr("Couldn't open output file %1").arg(output_filename));
   }
+}
+
+void MagnatuneDownloadDialog::DownloadFinished() {
+  current_reply_->deleteLater();
 
   next_row_ ++;
   DownloadNext();

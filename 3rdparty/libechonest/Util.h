@@ -17,6 +17,9 @@
 #ifndef ECHONEST_UTIL_H
 #define ECHONEST_UTIL_H
 
+#include "echonest_export.h"
+
+#include <QDebug>
 #include <QVector>
 #include <QUrl>
 
@@ -27,7 +30,7 @@
 namespace Echonest
 {
     namespace Analysis
-    {    
+    {
         enum AnalysisStatus {
             Unknown = 0,
             Pending = 1,
@@ -35,7 +38,29 @@ namespace Echonest
             Error = 4
         };
     }
-    
+
+    namespace CatalogTypes
+    {
+        enum Type {
+            Artist = 0,
+            Song = 1
+        };
+
+        enum Action {
+            Delete,
+            Update,
+            Play,
+            Skip
+        };
+
+        enum TicketStatus {
+            Unknown = 0,
+            Pending = 1,
+            Complete = 2,
+            Error = 4
+        };
+    }
+
     typedef struct
     {
         qreal confidence;
@@ -59,22 +84,49 @@ namespace Echonest
         qreal start;
         QVector< qreal > timbre;
     } Segment;
-    
-    
+
+
     typedef QVector< Bar > BarList;
     typedef QVector< Beat > BeatList;
     typedef QVector< Section > SectionList;
     typedef QVector< Tatum > TatumList;
     typedef QVector< Segment > SegmentList;
-    
+
     typedef struct {
         QUrl url;
         QString attribution;
         QString type;
     } License;
-    
+
+    typedef struct {
+        QString catalog;
+        QString foreign_id;
+    } ForeignId;
+
+    typedef struct {
+        qreal latitude;
+        qreal longitude;
+        QString location;
+    } ArtistLocation;
+
+    typedef QVector< ForeignId > ForeignIds;
+
+    QByteArray escapeSpacesAndPluses( const QString& in );
+
     Analysis::AnalysisStatus statusToEnum( const QString& status );
     QString statusToString( Analysis::AnalysisStatus status );
+
+    QByteArray catalogTypeToLiteral( CatalogTypes::Type );
+    CatalogTypes::Type literalToCatalogType( const QByteArray& type );
+
+    QByteArray catalogStatusToLiteral( CatalogTypes::TicketStatus );
+    CatalogTypes::TicketStatus literalToCatalogStatus( const QByteArray& type );
+
+    QByteArray catalogUpdateActionToLiteral( CatalogTypes::Action );
+    CatalogTypes::Action literalToCatalogUpdateAction( const QByteArray& type );
+
+    ECHONEST_EXPORT QDebug operator<<(QDebug d, const ForeignId& id);
+    ECHONEST_EXPORT QDebug operator<<(QDebug d, const ArtistLocation& id);
 }
 
 #endif

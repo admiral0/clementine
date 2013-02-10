@@ -15,19 +15,28 @@
    along with Clementine.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "digitallyimportedservice.h"
+#include "internetmodel.h"
+
+#include <QMimeData>
+#include <QtDebug>
+
+#include "digitallyimportedservicebase.h"
+#include "groovesharkservice.h"
 #include "icecastservice.h"
 #include "jamendoservice.h"
 #include "magnatuneservice.h"
 #include "internetmimedata.h"
-#include "internetmodel.h"
 #include "internetservice.h"
 #include "savedradio.h"
-#include "skyfmservice.h"
 #include "somafmservice.h"
 #include "groovesharkservice.h"
+#include "soundcloudservice.h"
+#include "subsonicservice.h"
+#include "core/closure.h"
 #include "core/logging.h"
 #include "core/mergedproxymodel.h"
+#include "podcasts/podcastservice.h"
+#include "smartplaylists/generatormimedata.h"
 
 #ifdef HAVE_LIBLASTFM
   #include "lastfmservice.h"
@@ -35,23 +44,29 @@
 #ifdef HAVE_SPOTIFY
   #include "spotifyservice.h"
 #endif
+#ifdef HAVE_GOOGLE_DRIVE
+  #include "googledriveservice.h"
+#endif
+#ifdef HAVE_UBUNTU_ONE
+  #include "ubuntuoneservice.h"
+#endif
+#ifdef HAVE_DROPBOX
+  #include "dropboxservice.h"
+#endif
+#ifdef HAVE_SKYDRIVE
+  #include "skydriveservice.h"
+#endif
 
-#include <QMimeData>
-#include <QtDebug>
+using smart_playlists::Generator;
+using smart_playlists::GeneratorMimeData;
+using smart_playlists::GeneratorPtr;
 
 QMap<QString, InternetService*>* InternetModel::sServices = NULL;
 
-InternetModel::InternetModel(BackgroundThread<Database>* db_thread,
-                       TaskManager* task_manager, PlayerInterface* player,
-                       CoverProviders* cover_providers,
-                       GlobalSearch* global_search, QObject* parent)
+InternetModel::InternetModel(Application* app, QObject* parent)
   : QStandardItemModel(parent),
-    db_thread_(db_thread),
-    merged_model_(new MergedProxyModel(this)),
-    task_manager_(task_manager),
-    player_(player),
-    cover_providers_(cover_providers),
-    global_search_(global_search)
+    app_(app),
+    merged_model_(new MergedProxyModel(this))
 {
   if (!sServices) {
     sServices = new QMap<QString, InternetService*>;
@@ -60,20 +75,37 @@ InternetModel::InternetModel(BackgroundThread<Database>* db_thread,
 
   merged_model_->setSourceModel(this);
 
-  AddService(new DigitallyImportedService(this));
-  AddService(new IcecastService(this));
-  AddService(new JamendoService(this));
+  AddService(new DigitallyImportedService(app, this));
+  AddService(new IcecastService(app, this));
+  AddService(new JamendoService(app, this));
 #ifdef HAVE_LIBLASTFM
-  AddService(new LastFMService(this));
+  AddService(new LastFMService(app, this));
 #endif
-  AddService(new MagnatuneService(this));
-  AddService(new SavedRadio(this));
-  AddService(new SkyFmService(this));
-  AddService(new SomaFMService(this));
+#ifdef HAVE_GOOGLE_DRIVE
+  AddService(new GoogleDriveService(app, this));
+#endif
+  AddService(new GroovesharkService(app, this));
+  AddService(new JazzRadioService(app, this));
+  AddService(new MagnatuneService(app, this));
+  AddService(new PodcastService(app, this));
+  AddService(new RockRadioService(app, this));
+  AddService(new SavedRadio(app, this));
+  AddService(new SkyFmService(app, this));
+  AddService(new SomaFMService(app, this));
+  AddService(new SoundCloudService(app, this));
 #ifdef HAVE_SPOTIFY
-  AddService(new SpotifyService(this));
+  AddService(new SpotifyService(app, this));
 #endif
-  AddService(new GrooveSharkService(this));
+  AddService(new SubsonicService(app, this));
+#ifdef HAVE_UBUNTU_ONE
+  AddService(new UbuntuOneService(app, this));
+#endif
+#ifdef HAVE_DROPBOX
+  AddService(new DropboxService(app, this));
+#endif
+#ifdef HAVE_SKYDRIVE
+  AddService(new SkydriveService(app, this));
+#endif
 }
 
 void InternetModel::AddService(InternetService *service) {
@@ -92,8 +124,8 @@ void InternetModel::AddService(InternetService *service) {
 
   connect(service, SIGNAL(StreamError(QString)), SIGNAL(StreamError(QString)));
   connect(service, SIGNAL(StreamMetadataFound(QUrl,Song)), SIGNAL(StreamMetadataFound(QUrl,Song)));
-  connect(service, SIGNAL(OpenSettingsAtPage(SettingsDialog::Page)), SIGNAL(OpenSettingsAtPage(SettingsDialog::Page)));
   connect(service, SIGNAL(AddToPlaylistSignal(QMimeData*)), SIGNAL(AddToPlaylist(QMimeData*)));
+  connect(service, SIGNAL(ScrollToIndex(QModelIndex)), SIGNAL(ScrollToIndex(QModelIndex)));
   connect(service, SIGNAL(destroyed()), SLOT(ServiceDeleted()));
 
   service->ReloadSettings();
@@ -148,13 +180,13 @@ InternetService* InternetModel::ServiceForIndex(const QModelIndex& index) const 
 }
 
 Qt::ItemFlags InternetModel::flags(const QModelIndex& index) const {
-  if (IsPlayable(index))
-    return Qt::ItemIsSelectable |
-           Qt::ItemIsEnabled |
-           Qt::ItemIsDragEnabled;
-
-  return Qt::ItemIsSelectable |
-         Qt::ItemIsEnabled;
+  Qt::ItemFlags flags = Qt::ItemIsSelectable |
+                        Qt::ItemIsEnabled |
+                        Qt::ItemIsDropEnabled;
+  if (IsPlayable(index)) {
+    flags |= Qt::ItemIsDragEnabled;
+  }
+  return flags;
 }
 
 bool InternetModel::hasChildren(const QModelIndex& parent) const {
@@ -182,7 +214,8 @@ bool InternetModel::IsPlayable(const QModelIndex& index) const {
     return false;
 
   PlayBehaviour pb = PlayBehaviour(behaviour.toInt());
-  return (pb == PlayBehaviour_SingleItem || PlayBehaviour_UseSongLoader);
+  return (pb == PlayBehaviour_MultipleItems || pb == PlayBehaviour_SingleItem ||
+          pb == PlayBehaviour_UseSongLoader);
 }
 
 QStringList InternetModel::mimeTypes() const {
@@ -198,7 +231,20 @@ QMimeData* InternetModel::mimeData(const QModelIndexList& indexes) const {
     return NULL;
   }
 
+  if (indexes.count() == 1 &&
+      indexes[0].data(Role_Type).toInt() == Type_SmartPlaylist) {
+    GeneratorPtr generator =
+        InternetModel::ServiceForIndex(indexes[0])->CreateGenerator(itemFromIndex(indexes[0]));
+    if (!generator)
+      return NULL;
+    GeneratorMimeData* data = new GeneratorMimeData(generator);
+    data->setData(LibraryModel::kSmartPlaylistsMimeType, QByteArray());
+    data->name_for_new_playlist_ = this->data(indexes.first()).toString();
+    return data;
+  }
+
   QList<QUrl> urls;
+  QModelIndexList new_indexes;
 
   QModelIndex last_valid_index;
   foreach (const QModelIndex& index, indexes) {
@@ -206,7 +252,20 @@ QMimeData* InternetModel::mimeData(const QModelIndexList& indexes) const {
       continue;
 
     last_valid_index = index;
-    urls << index.data(Role_Url).toUrl();
+    if (index.data(Role_PlayBehaviour).toInt() == PlayBehaviour_MultipleItems) {
+      // Get children
+      int row = 0;
+      int column = 0;
+      QModelIndex child = index.child(row, column);
+      while (child.isValid()) {
+        new_indexes << child;
+        urls << child.data(Role_Url).toUrl();
+        child = index.child(++row, column);
+      }
+    } else {
+      new_indexes = indexes;
+      urls << index.data(Role_Url).toUrl();
+    }
   }
 
   if (urls.isEmpty())
@@ -214,17 +273,36 @@ QMimeData* InternetModel::mimeData(const QModelIndexList& indexes) const {
 
   InternetMimeData* data = new InternetMimeData(this);
   data->setUrls(urls);
-  data->indexes = indexes;
+  data->indexes = new_indexes;
   data->name_for_new_playlist_ = InternetModel::ServiceForIndex(last_valid_index)->name();
 
   return data;
 }
 
-void InternetModel::ShowContextMenu(const QModelIndex& merged_model_index,
-                                 const QPoint& global_pos) {
-  InternetService* service = ServiceForIndex(merged_model_index);
+bool InternetModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) {
+  if (action == Qt::IgnoreAction) {
+    return false;
+  }
+  if (parent.data(Role_CanBeModified).toBool()) {
+    InternetModel::ServiceForIndex(parent)->DropMimeData(data, parent);
+  }
+
+  return true;
+}
+
+void InternetModel::ShowContextMenu(const QModelIndexList& selected_merged_model_indexes,
+                                    const QModelIndex& current_merged_model_index,
+                                    const QPoint& global_pos) {
+  current_index_ = merged_model_->mapToSource(current_merged_model_index);
+
+  selected_indexes_.clear();
+  foreach (const QModelIndex& index, selected_merged_model_indexes) {
+    selected_indexes_ << merged_model_->mapToSource(index);
+  }
+
+  InternetService* service = ServiceForIndex(current_merged_model_index);
   if (service)
-    service->ShowContextMenu(merged_model_->mapToSource(merged_model_index), global_pos);
+    service->ShowContextMenu(global_pos);
 }
 
 void InternetModel::ReloadSettings() {

@@ -19,7 +19,9 @@
 #include "internetmodel.h"
 #include "internetservice.h"
 #include "ui_internetviewcontainer.h"
+#include "core/application.h"
 #include "core/mergedproxymodel.h"
+#include "globalsearch/globalsearch.h"
 
 #include <QMetaMethod>
 #include <QTimeLine>
@@ -30,7 +32,7 @@ const int InternetViewContainer::kAnimationDuration = 500;
 InternetViewContainer::InternetViewContainer(QWidget *parent)
   : QWidget(parent),
     ui_(new Ui_InternetViewContainer),
-    model_(NULL),
+    app_(NULL),
     current_service_(NULL),
     current_header_(NULL)
 {
@@ -49,10 +51,10 @@ InternetView* InternetViewContainer::tree() const {
   return ui_->tree;
 }
 
-void InternetViewContainer::SetModel(InternetModel* model) {
-  model_ = model;
+void InternetViewContainer::SetApplication(Application* app) {
+  app_ = app;
 
-  ui_->tree->setModel(model->merged_model());
+  ui_->tree->setModel(app_->internet_model()->merged_model());
 
   connect(ui_->tree->selectionModel(),
           SIGNAL(currentChanged(QModelIndex,QModelIndex)),
@@ -91,7 +93,8 @@ void InternetViewContainer::CurrentIndexChanged(const QModelIndex& index) {
 }
 
 void InternetViewContainer::Collapsed(const QModelIndex& index) {
-  if (model_->merged_model()->mapToSource(index).model() == model_) {
+  if (app_->internet_model()->merged_model()->mapToSource(index).model() == app_->internet_model()
+      && index.data(InternetModel::Role_Type) == InternetModel::Type_Service)  {
     SetHeaderVisible(current_header_, false);
     current_service_ = NULL;
     current_header_ = NULL;
@@ -140,4 +143,10 @@ void InternetViewContainer::SetHeaderHeight(int height) {
 
   if (header)
     header->setMaximumHeight(height);
+}
+
+void InternetViewContainer::ScrollToIndex(const QModelIndex& index) {
+  tree()->scrollTo(index, QTreeView::PositionAtCenter);
+  tree()->setCurrentIndex(index);
+  tree()->expand(index);
 }

@@ -21,59 +21,79 @@
 #include <QXmlStreamReader>
 
 #include "internetservice.h"
+#include "core/cachedlist.h"
 
 class SomaFMUrlHandler;
 
 class QNetworkAccessManager;
+class QNetworkReply;
 class QMenu;
 
 class SomaFMService : public InternetService {
   Q_OBJECT
 
- public:
-  SomaFMService(InternetModel* parent);
+public:
+  SomaFMService(Application* app, InternetModel* parent);
   ~SomaFMService();
 
   enum ItemType {
     Type_Stream = 2000,
   };
 
+  struct Stream {
+    QString title_;
+    QString dj_;
+    QUrl url_;
+
+    Song ToSong() const;
+  };
+  typedef QList<Stream> StreamList;
+
   static const char* kServiceName;
+  static const char* kSettingsGroup;
   static const char* kChannelListUrl;
   static const char* kHomepage;
+  static const int kStreamsCacheDurationSecs;
 
   QStandardItem* CreateRootItem();
   void LazyPopulate(QStandardItem* item);
-
-  void ShowContextMenu(const QModelIndex& index, const QPoint& global_pos);
+  void ShowContextMenu(const QPoint& global_pos);
 
   PlaylistItem::Options playlistitem_options() const;
-
   QNetworkAccessManager* network() const { return network_; }
 
- protected:
-  QModelIndex GetCurrentIndex();
+  void ReloadSettings();
 
- private slots:
-  void RefreshChannels();
-  void RefreshChannelsFinished();
+  bool IsStreamListStale() const { return streams_.IsStale(); }
+  StreamList Streams();
+
+signals:
+  void StreamsChanged();
+
+private slots:
+  void ForceRefreshStreams();
+  void RefreshStreams();
+  void RefreshStreamsFinished(QNetworkReply* reply, int task_id);
 
   void Homepage();
 
- private:
-  void ReadChannel(QXmlStreamReader& reader);
-  void ConsumeElement(QXmlStreamReader& reader);
+private:
+  void ReadChannel(QXmlStreamReader& reader, StreamList* ret);
+  void PopulateStreams();
 
- private:
+private:
   SomaFMUrlHandler* url_handler_;
 
   QStandardItem* root_;
   QMenu* context_menu_;
-  QStandardItem* context_item_;
-
-  int get_channels_task_id_;
 
   QNetworkAccessManager* network_;
+
+  CachedList<Stream> streams_;
 };
+
+QDataStream& operator<<(QDataStream& out, const SomaFMService::Stream& stream);
+QDataStream& operator>>(QDataStream& in, SomaFMService::Stream& stream);
+Q_DECLARE_METATYPE(SomaFMService::Stream)
 
 #endif // SOMAFMSERVICE_H

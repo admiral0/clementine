@@ -27,36 +27,3 @@
 XMLParser::XMLParser(LibraryBackendInterface* library, QObject* parent)
     : ParserBase(library, parent) {
 }
-
-bool XMLParser::ParseUntilElement(QXmlStreamReader* reader, const QString& name) const {
-  while (!reader->atEnd()) {
-    QXmlStreamReader::TokenType type = reader->readNext();
-    switch (type) {
-      case QXmlStreamReader::StartElement:
-        if (reader->name() == name) {
-          return true;
-        }
-        break;
-      default:
-        break;
-    }
-  }
-  return false;
-}
-
-void XMLParser::IgnoreElement(QXmlStreamReader* reader) const {
-  int level = 1;
-  while (level != 0 && !reader->atEnd()) {
-    QXmlStreamReader::TokenType type = reader->readNext();
-    switch (type) {
-      case QXmlStreamReader::StartElement:
-        ++level;
-        break;
-      case QXmlStreamReader::EndElement:
-        --level;
-        break;
-      default:
-        break;
-    }
-  }
-}

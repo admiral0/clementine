@@ -29,7 +29,7 @@ IcecastBackend::IcecastBackend(QObject* parent)
 {
 }
 
-void IcecastBackend::Init(boost::shared_ptr<Database> db) {
+void IcecastBackend::Init(Database* db) {
   db_ = db;
 }
 
@@ -45,7 +45,7 @@ QStringList IcecastBackend::GetGenresAlphabetical(const QString& filter) {
 
   QSqlQuery q(sql, db);
   if (!filter.isEmpty()) {
-    q.bindValue(":filter", "%" + filter + "%");
+    q.bindValue(":filter", QString("%" + filter + "%"));
   }
 
   q.exec();
@@ -70,7 +70,7 @@ QStringList IcecastBackend::GetGenresByPopularity(const QString& filter) {
                         " ORDER BY count DESC").arg(kTableName, where);
   QSqlQuery q(sql, db);
   if (!filter.isEmpty()) {
-    q.bindValue(":filter", "%" + filter + "%");
+    q.bindValue(":filter", QString("%" + filter + "%"));
   }
 
   q.exec();
@@ -118,7 +118,7 @@ IcecastBackend::StationList IcecastBackend::GetStations(const QString& filter,
   while (q.next()) {
     Station station;
     station.name       = q.value(0).toString();
-    station.url        = q.value(1).toString();
+    station.url        = QUrl(q.value(1).toString());
     station.mime_type  = q.value(2).toString();
     station.bitrate    = q.value(3).toInt();
     station.channels   = q.value(4).toInt();

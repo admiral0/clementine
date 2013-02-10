@@ -16,8 +16,17 @@
 */
 
 #include "digitallyimportedservicebase.h"
+
+#include <QDesktopServices>
+#include <QMenu>
+#include <QNetworkReply>
+#include <QSettings>
+
+#include "digitallyimportedclient.h"
 #include "digitallyimportedurlhandler.h"
 #include "internetmodel.h"
+#include "core/application.h"
+#include "core/closure.h"
 #include "core/logging.h"
 #include "core/network.h"
 #include "core/player.h"
@@ -26,44 +35,51 @@
 #include "globalsearch/globalsearch.h"
 #include "ui/iconloader.h"
 
-#include <QDesktopServices>
-#include <QMenu>
-#include <QNetworkReply>
-#include <QSettings>
-
 const char* DigitallyImportedServiceBase::kSettingsGroup = "digitally_imported";
 const int DigitallyImportedServiceBase::kStreamsCacheDurationSecs =
     60 * 60 * 24 * 14; // 2 weeks
 
 
 DigitallyImportedServiceBase::DigitallyImportedServiceBase(
-  const QString& name, const QString& description, const QUrl& homepage_url,
-  const QString& homepage_name, const QUrl& stream_list_url,
-  const QString& url_scheme, const QString& icon_path,
-  InternetModel* model, QObject* parent)
-  : InternetService(name, model, parent),
-    network_(new NetworkAccessManager(this)),
-    url_handler_(new DigitallyImportedUrlHandler(this)),
-    audio_type_(0),
-    task_id_(-1),
+      const QString& name,
+      const QString& description,
+      const QUrl& homepage_url,
+      const QIcon& icon,
+      const QString& api_service_name,
+      Application* app, InternetModel* model, QObject* parent)
+  : InternetService(name, app, model, parent),
     homepage_url_(homepage_url),
-    homepage_name_(homepage_name),
-    stream_list_url_(stream_list_url),
-    icon_path_(icon_path),
-    icon_(icon_path),
+    icon_(icon),
     service_description_(description),
-    url_scheme_(url_scheme),
+    api_service_name_(api_service_name),
+    network_(new NetworkAccessManager(this)),
+    url_handler_(new DigitallyImportedUrlHandler(app, this)),
+    basic_audio_type_(1),
+    premium_audio_type_(2),
     root_(NULL),
-    context_menu_(NULL),
-    context_item_(NULL)
+    saved_channels_(kSettingsGroup, api_service_name, kStreamsCacheDurationSecs),
+    api_client_(new DigitallyImportedClient(api_service_name, this))
 {
-  model->player()->RegisterUrlHandler(url_handler_);
+  ReloadSettings();
 
-  model->global_search()->AddProvider(new DigitallyImportedSearchProvider(this, this));
+  model->app()->player()->RegisterUrlHandler(url_handler_);
+  model->app()->global_search()->AddProvider(
+        new DigitallyImportedSearchProvider(this, app_, this));
+
+  basic_playlists_
+      << "http://%1/public3/%2.pls"
+      << "http://%1/public1/%2.pls"
+      << "http://%1/public5/%2.asx";
+
+  premium_playlists_
+      << "http://%1/premium_high/%2.pls?hash=%3"
+      << "http://%1/premium_medium/%2.pls?hash=%3"
+      << "http://%1/premium/%2.pls?hash=%3"
+      << "http://%1/premium_wma_low/%2.asx?hash=%3"
+      << "http://%1/premium_wma/%2.asx?hash=%3";
 }
 
 DigitallyImportedServiceBase::~DigitallyImportedServiceBase() {
-  delete context_menu_;
 }
 
 QStandardItem* DigitallyImportedServiceBase::CreateRootItem() {
@@ -79,7 +95,7 @@ void DigitallyImportedServiceBase::LazyPopulate(QStandardItem* parent) {
 }
 
 void DigitallyImportedServiceBase::RefreshStreams() {
-  if (IsStreamListStale()) {
+  if (IsChannelListStale()) {
     ForceRefreshStreams();
     return;
   }
@@ -88,62 +104,28 @@ void DigitallyImportedServiceBase::RefreshStreams() {
 }
 
 void DigitallyImportedServiceBase::ForceRefreshStreams() {
-  if (task_id_ != -1) {
-    return;
-  }
-
-  qLog(Info) << "Getting stream list from" << stream_list_url_;
-
-  // Get the list of streams
-  QNetworkReply* reply = network_->get(QNetworkRequest(stream_list_url_));
-  connect(reply, SIGNAL(finished()), SLOT(RefreshStreamsFinished()));
-
   // Start a task to tell the user we're busy
-  task_id_ = model()->task_manager()->StartTask(tr("Getting streams"));
+  int task_id = app_->task_manager()->StartTask(tr("Getting streams"));
+
+  QNetworkReply* reply = api_client_->GetChannelList();
+  NewClosure(reply, SIGNAL(finished()),
+             this, SLOT(RefreshStreamsFinished(QNetworkReply*,int)),
+             reply, task_id);
 }
 
-void DigitallyImportedServiceBase::RefreshStreamsFinished() {
-  QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
-  if (!reply) {
-    return;
-  }
-
-  model()->task_manager()->SetTaskFinished(task_id_);
+void DigitallyImportedServiceBase::RefreshStreamsFinished(QNetworkReply* reply, int task_id) {
+  app_->task_manager()->SetTaskFinished(task_id);
   reply->deleteLater();
 
-  const QString data = QString::fromUtf8(reply->readAll());
+  // Parse the list and sort by name
+  DigitallyImportedClient::ChannelList channels = api_client_->ParseChannelList(reply);
+  qSort(channels);
 
-  // Poor man's JSON parser that's good enough for the stream lists and means
-  // we don't have to pull in QJSON as a dependency.
-  const QRegExp re("\\{"
-                   "\"id\":(\\d+),"
-                   "\"key\":\"([^\"]+)\","
-                   "\"name\":\"([^\"]+)\","
-                   "\"description\":\"([^\"]+)\"");
+  saved_channels_.Update(channels);
 
-  saved_streams_.clear();
-
-  int pos = 0;
-  while (pos >= 0) {
-    pos = re.indexIn(data, pos);
-    if (pos == -1) {
-      break;
-    }
-    pos += re.matchedLength();
-
-    Stream stream;
-    stream.id_          = re.cap(1).toInt();
-    stream.key_         = re.cap(2).replace("\\/", "/");
-    stream.name_        = re.cap(3).replace("\\/", "/");
-    stream.description_ = re.cap(4).replace("\\/", "/");
-    saved_streams_ << stream;
-  }
-
-  // Sort by name
-  qSort(saved_streams_);
-
-  SaveStreams(saved_streams_);
-  PopulateStreams();
+  // Only update the item's children if it's already been populated
+  if (!root_->data(InternetModel::Role_CanLazyLoad).toBool())
+    PopulateStreams();
 
   emit StreamsChanged();
 }
@@ -153,19 +135,25 @@ void DigitallyImportedServiceBase::PopulateStreams() {
     root_->removeRows(0, root_->rowCount());
 
   // Add each stream to the model
-  foreach (const Stream& stream, saved_streams_) {
+  foreach (const DigitallyImportedClient::Channel& channel, saved_channels_) {
     Song song;
-    song.set_title(stream.name_);
-    song.set_artist(service_description_);
-    song.set_url(QUrl(url_scheme_ + "://" + stream.key_));
+    SongFromChannel(channel, &song);
 
     QStandardItem* item = new QStandardItem(QIcon(":/last.fm/icon_radio.png"),
-                                            stream.name_);
-    item->setData(stream.description_, Qt::ToolTipRole);
+                                            song.title());
+    item->setData(channel.description_, Qt::ToolTipRole);
     item->setData(InternetModel::PlayBehaviour_SingleItem, InternetModel::Role_PlayBehaviour);
     item->setData(QVariant::fromValue(song), InternetModel::Role_SongMetadata);
     root_->appendRow(item);
   }
+}
+
+void DigitallyImportedServiceBase::SongFromChannel(
+    const DigitallyImportedClient::Channel& channel, Song* song) const {
+  song->set_title(channel.name_);
+  song->set_artist(service_description_ + " - " + channel.director_);
+  song->set_url(QUrl(api_service_name_ + "://" + channel.key_));
+  song->set_art_automatic(channel.art_url_.toString());
 }
 
 void DigitallyImportedServiceBase::Homepage() {
@@ -176,20 +164,19 @@ void DigitallyImportedServiceBase::ReloadSettings() {
   QSettings s;
   s.beginGroup(kSettingsGroup);
 
-  audio_type_ = s.value("audio_type", 0).toInt();
+  basic_audio_type_ = s.value("basic_audio_type", 1).toInt();
+  premium_audio_type_ = s.value("premium_audio_type", 2).toInt();
   username_ = s.value("username").toString();
-  password_ = s.value("password").toString();
-  last_refreshed_streams_ = s.value("last_refreshed_" + url_scheme_).toDateTime();
-  saved_streams_ = LoadStreams();
+  listen_hash_ = s.value("listen_hash").toString();
+  saved_channels_.Load();
 }
 
-void DigitallyImportedServiceBase::ShowContextMenu(
-    const QModelIndex& index, const QPoint& global_pos) {
+void DigitallyImportedServiceBase::ShowContextMenu(const QPoint& global_pos) {
   if (!context_menu_) {
-    context_menu_ = new QMenu;
+    context_menu_.reset(new QMenu);
     context_menu_->addActions(GetPlaylistActions());
     context_menu_->addAction(IconLoader::Load("download"),
-                             tr("Open %1 in browser").arg(homepage_name_),
+                             tr("Open %1 in browser").arg(homepage_url_.host()),
                              this, SLOT(Homepage()));
     context_menu_->addAction(IconLoader::Load("view-refresh"),
                              tr("Refresh streams"),
@@ -200,105 +187,99 @@ void DigitallyImportedServiceBase::ShowContextMenu(
                              this, SLOT(ShowSettingsDialog()));
   }
 
-  context_item_ = model()->itemFromIndex(index);
   context_menu_->popup(global_pos);
 }
 
-QModelIndex DigitallyImportedServiceBase::GetCurrentIndex() {
-  return context_item_->index();
-}
-
-bool DigitallyImportedServiceBase::is_valid_stream_selected() const {
-  return audio_type_ >= 0 && audio_type_ < playlists_.count();
-}
-
 bool DigitallyImportedServiceBase::is_premium_account() const {
-  return !username_.isEmpty() && !password_.isEmpty();
+  return !listen_hash_.isEmpty();
 }
 
-bool DigitallyImportedServiceBase::is_premium_stream_selected() const {
-  if (!is_valid_stream_selected()) {
-    return false;
-  }
-
-  return playlists_[audio_type_].premium_;
-}
-
-void DigitallyImportedServiceBase::LoadPlaylistFinished() {
-  QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
-  if (!reply) {
-    return;
-  }
+void DigitallyImportedServiceBase::LoadPlaylistFinished(QNetworkReply* reply) {
   reply->deleteLater();
 
   if (reply->header(QNetworkRequest::ContentTypeHeader).toString() == "text/html") {
     url_handler_->CancelTask();
 
-    if (is_premium_stream_selected()) {
-      emit StreamError(tr("Invalid di.fm username or password"));
-    } else {
-      emit StreamError(tr("Error loading di.fm playlist"));
-    }
+    emit StreamError(tr("Error loading di.fm playlist"));
   } else {
     url_handler_->LoadPlaylistFinished(reply);
   }
 }
 
 void DigitallyImportedServiceBase::ShowSettingsDialog() {
-  emit OpenSettingsAtPage(SettingsDialog::Page_DigitallyImported);
+  app_->OpenSettingsDialogAtPage(SettingsDialog::Page_DigitallyImported);
 }
 
-DigitallyImportedServiceBase::StreamList DigitallyImportedServiceBase::LoadStreams() const {
-  StreamList ret;
-
-  QSettings s;
-  s.beginGroup(kSettingsGroup);
-
-  int count = s.beginReadArray(url_scheme_);
-  for (int i=0 ; i<count ; ++i) {
-    s.setArrayIndex(i);
-
-    Stream stream;
-    stream.id_ = s.value("id").toInt();
-    stream.key_ = s.value("key").toString();
-    stream.name_ = s.value("name").toString();
-    stream.description_ = s.value("description").toString();
-    ret << stream;
-  }
-  s.endArray();
-
-  return ret;
-}
-
-void DigitallyImportedServiceBase::SaveStreams(const StreamList& streams) {
-  QSettings s;
-  s.beginGroup(kSettingsGroup);
-
-  s.beginWriteArray(url_scheme_, streams.count());
-  for (int i=0 ; i<streams.count() ; ++i) {
-    const Stream& stream = streams[i];
-    s.setArrayIndex(i);
-    s.setValue("id", stream.id_);
-    s.setValue("key", stream.key_);
-    s.setValue("name", stream.name_);
-    s.setValue("description", stream.description_);
-  }
-  s.endArray();
-
-  last_refreshed_streams_ = QDateTime::currentDateTime();
-  s.setValue("last_refreshed_" + url_scheme_, last_refreshed_streams_);
-}
-
-bool DigitallyImportedServiceBase::IsStreamListStale() const {
-  return last_refreshed_streams_.isNull() ||
-         last_refreshed_streams_.secsTo(QDateTime::currentDateTime()) >
-            kStreamsCacheDurationSecs;
-}
-
-DigitallyImportedServiceBase::StreamList DigitallyImportedServiceBase::Streams() {
-  if (IsStreamListStale()) {
+DigitallyImportedClient::ChannelList DigitallyImportedServiceBase::Channels() {
+  if (IsChannelListStale()) {
     metaObject()->invokeMethod(this, "ForceRefreshStreams", Qt::QueuedConnection);
   }
 
-  return saved_streams_;
+  return saved_channels_;
+}
+
+void DigitallyImportedServiceBase::LoadStation(const QString& key) {
+  QUrl playlist_url;
+
+  // Replace "www." with "listen." in the hostname.
+  const QString host = "listen." + homepage_url_.host().remove("www.");
+
+  if (is_premium_account()) {
+    playlist_url = QUrl(premium_playlists_[premium_audio_type_].arg(
+                          host, key, listen_hash_));
+  } else {
+    playlist_url = QUrl(basic_playlists_[basic_audio_type_].arg(
+                          host, key));
+  }
+
+  qLog(Debug) << "Getting playlist URL" << playlist_url;
+
+  QNetworkReply* reply = network_->get(QNetworkRequest(playlist_url));
+  NewClosure(reply, SIGNAL(finished()), this,
+             SLOT(LoadPlaylistFinished(QNetworkReply*)), reply);
+}
+
+
+DigitallyImportedService::DigitallyImportedService(
+      Application* app, InternetModel* model, QObject* parent)
+  : DigitallyImportedServiceBase("DigitallyImported",
+                                 "Digitally Imported",
+                                 QUrl("http://www.di.fm"),
+                                 QIcon(":/providers/digitallyimported.png"),
+                                 "di",
+                                 app, model, parent)
+{
+}
+
+SkyFmService::SkyFmService(
+      Application* app, InternetModel* model, QObject* parent)
+  : DigitallyImportedServiceBase("SKY.fm",
+                                 "SKY.fm",
+                                 QUrl("http://www.sky.fm"),
+                                 QIcon(":/providers/skyfm.png"),
+                                 "sky",
+                                 app, model, parent)
+{
+}
+
+JazzRadioService::JazzRadioService(
+      Application* app, InternetModel* model, QObject* parent)
+  : DigitallyImportedServiceBase("JazzRadio",
+                                 "JAZZRADIO.com",
+                                 QUrl("http://www.jazzradio.com"),
+                                 QIcon(":/providers/jazzradio.png"),
+                                 "jazzradio",
+                                 app, model, parent)
+{
+}
+
+RockRadioService::RockRadioService(
+      Application* app, InternetModel* model, QObject* parent)
+  : DigitallyImportedServiceBase("RockRadio",
+                                 "ROCKRADIO.com",
+                                 QUrl("http://www.rockradio.com"),
+                                 QIcon(":/providers/rockradio.png"),
+                                 "rockradio",
+                                 app, model, parent)
+{
 }

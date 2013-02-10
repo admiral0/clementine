@@ -1,12 +1,12 @@
 Name:           clementine
-Version:        @CLEMENTINE_VERSION_RPM@
-Release:        1.@RPM_DISTRO@
+Version:        @CLEMENTINE_VERSION_RPM_V@
+Release:        @CLEMENTINE_VERSION_RPM_R@.@RPM_DISTRO@
 Summary:        A music player and library organiser
 
 Group:          Applications/Multimedia
 License:        GPLv3
 URL:            http://www.clementine-player.org/
-Source0:        %{name}-%{version}.tar.gz
+Source0:        %{name}-@CLEMENTINE_VERSION_SPARKLE@.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  desktop-file-utils liblastfm-devel taglib-devel gettext
@@ -14,9 +14,9 @@ BuildRequires:  qt4-devel boost-devel gcc-c++ glew-devel libgpod-devel
 BuildRequires:  cmake gstreamer-devel gstreamer-plugins-base-devel
 BuildRequires:  libimobiledevice-devel libplist-devel usbmuxd-devel
 BuildRequires:  libmtp-devel protobuf-devel protobuf-compiler libcdio-devel
-BuildRequires:  qjson-devel
+BuildRequires:  qjson-devel qca2-devel fftw-devel sparsehash-devel
 
-Requires:       libgpod protobuf-lite libcdio qjson
+Requires:       libgpod protobuf-lite libcdio qjson qca-ossl
 
 # GStreamer codec dependencies
 Requires:       gstreamer-plugins-ugly
@@ -55,12 +55,12 @@ Features include:
   * Queue manager
 
 %prep
-%setup -q
+%setup -q -n %{name}-@CLEMENTINE_VERSION_SPARKLE@
 
 
 %build
 cd bin
-%{cmake} .. -DUSE_INSTALL_PREFIX=OFF
+%{cmake} .. -DUSE_INSTALL_PREFIX=OFF -DBUNDLE_PROJECTM_PRESETS=ON
 make %{?_smp_mflags}
 
 %install
@@ -77,11 +77,16 @@ make clean
 %defattr(-,root,root,-)
 %doc
 %{_bindir}/clementine
+%{_bindir}/clementine-tagreader
 %{_datadir}/applications/clementine.desktop
+%{_datadir}/clementine/projectm-presets
+%{_datadir}/kde4/services/clementine-itms.protocol
+%{_datadir}/kde4/services/clementine-itpc.protocol
+%{_datadir}/kde4/services/clementine-feed.protocol
+%{_datadir}/kde4/services/clementine-zune.protocol
 %{_datadir}/icons/hicolor/64x64/apps/application-x-clementine.png
 %{_datadir}/icons/hicolor/scalable/apps/application-x-clementine.svg
-%{_datadir}/clementine/projectm-presets
 
 %changelog
-* @RPM_DATE@ David Sansome <me@davidsansome.com> - @CLEMENTINE_VERSION_RPM@
+* @RPM_DATE@ David Sansome <me@davidsansome.com> - @CLEMENTINE_VERSION_RPM_V@
 - Version @CLEMENTINE_VERSION_DISPLAY@

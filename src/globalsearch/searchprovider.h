@@ -24,6 +24,8 @@
 
 #include "core/song.h"
 
+class Application;
+class InternetService;
 class MimeData;
 
 
@@ -31,56 +33,89 @@ class SearchProvider : public QObject {
   Q_OBJECT
 
 public:
-  SearchProvider(QObject* parent = 0);
+  SearchProvider(Application* app, QObject* parent = 0);
 
   static const int kArtHeight;
 
   struct Result {
     Result(SearchProvider* provider = 0)
-      : provider_(provider), album_size_(0) {}
-
-    // The order of types here is the order they'll appear in the UI.
-    enum Type {
-      Type_Track = 0,
-      Type_Stream,
-      Type_Album
-    };
-
-    enum MatchQuality {
-      // A token in the search string matched at the beginning of the song
-      // metadata.
-      Quality_AtStart = 0,
-
-      // A token matched somewhere else.
-      Quality_Middle,
-
-      Quality_None
-    };
+      : provider_(provider), group_automatically_(true) {}
 
     // This must be set by the provider using the constructor.
     SearchProvider* provider_;
 
-    // These must be set explicitly by the provider.
-    Type type_;
+    // If this is set to true, the view will group this result into
+    // artist/album categories as appropriate.
+    bool group_automatically_;
+
+    // Must be set by the provider.
     Song metadata_;
-    MatchQuality match_quality_;
 
-    // How many songs in the album - valid only if type == Type_Album.
-    int album_size_;
-
-    // Songs in the album - valid only if type == Type_Album.  This is only
-    // used for display in the tooltip, so it's fine not to provide it.
-    SongList album_songs_;
-
+    // This is set and used by the GlobalSearch engine itself.
     QString pixmap_cache_key_;
   };
   typedef QList<Result> ResultList;
 
+  enum Hint {
+    NoHints = 0x00,
+
+    // Indicates that queries to this provider mean making requests to a third
+    // party.  To be polite, queries should be buffered by a few milliseconds
+    // instead of executing them each time the user types a character.
+    WantsDelayedQueries = 0x01,
+
+    // Indicates that this provider wants to be given art queries one after the
+    // other (serially), instead of all at once (in parallel).
+    WantsSerialisedArtQueries = 0x02,
+
+    // Indicates that album cover art is probably going to be loaded remotely.
+    // If a third-party application is making art requests over dbus and has
+    // to get all the art it can before showing results to the user, it might
+    // not load art from this provider.
+    ArtIsProbablyRemote = 0x04,
+
+    // Indicates the art URL (or filename) for each result is stored in the
+    // normal place in the song metadata.  LoadArtAsync will never be called and
+    // WantsSerialisedArtQueries and ArtIsProbablyRemote will be ignored if
+    // they are set as well.  The GlobalSearch engine will load the art itself.
+    ArtIsInSongMetadata = 0x08,
+
+    // Indicates this provider has a config dialog that can be shown by calling
+    // ShowConfig.  If this is not set then the button will be greyed out
+    // in the GUI.
+    CanShowConfig = 0x10,
+
+    // This provider can provide some example search strings to display in the
+    // UI.
+    CanGiveSuggestions = 0x20,
+
+    // Normally providers get enabled unless the user chooses otherwise.
+    // Setting this flag indicates that this provider is disabled by default
+    // instead.
+    DisabledByDefault = 0x40,
+
+    // The default implementation of LoadTracksAsync normally creates a
+    // SongMimeData containing the entire metadata for each result being loaded.
+    // Setting this flag will cause a plain MimeData to be created containing
+    // only the URLs of the results.
+    MimeDataContainsUrlsOnly = 0x80
+  };
+  Q_DECLARE_FLAGS(Hints, Hint)
+
   const QString& name() const { return name_; }
   const QString& id() const { return id_; }
   const QIcon& icon() const { return icon_; }
-  const bool wants_delayed_queries() const { return delay_searches_; }
-  const bool wants_serialised_art() const { return serialised_art_; }
+
+  Hints hints() const { return hints_; }
+  bool wants_delayed_queries() const { return hints() & WantsDelayedQueries; }
+  bool wants_serialised_art() const { return hints() & WantsSerialisedArtQueries; }
+  bool art_is_probably_remote() const { return hints() & ArtIsProbablyRemote; }
+  bool art_is_in_song_metadata() const { return hints() & ArtIsInSongMetadata; }
+  bool can_show_config() const { return hints() & CanShowConfig; }
+  bool can_give_suggestions() const { return hints() & CanGiveSuggestions; }
+  bool is_disabled_by_default() const { return hints() & DisabledByDefault; }
+  bool is_enabled_by_default() const { return !is_disabled_by_default(); }
+  bool mime_data_contains_urls_only() const { return hints() & MimeDataContainsUrlsOnly; }
 
   // Starts a search.  Must emit ResultsAvailable zero or more times and then
   // SearchFinished exactly once, using this ID.
@@ -88,11 +123,25 @@ public:
 
   // Starts loading an icon for a result that was previously emitted by
   // ResultsAvailable.  Must emit ArtLoaded exactly once with this ID.
-  virtual void LoadArtAsync(int id, const Result& result) = 0;
+  virtual void LoadArtAsync(int id, const Result& result);
 
-  // Starts loading tracks for a result that was previously emitted by
-  // ResultsAvailable.  Must emit TracksLoaded exactly once with this ID.
-  virtual void LoadTracksAsync(int id, const Result& result) = 0;
+  // Loads tracks for results that were previously emitted by ResultsAvailable.
+  // The default implementation creates a SongMimeData with one Song for each
+  // Result, unless the MimeDataContainsUrlsOnly flag is set.
+  virtual MimeData* LoadTracks(const ResultList& results);
+
+  // Returns some example search strings to display in the UI.  The provider
+  // should pick some of its items at random and return between 0 and count
+  // strings.  Remember to set the CanGiveSuggestions hint.
+  virtual QStringList GetSuggestions(int count) { return QStringList(); }
+
+  // If provider needs user login to search and play songs, this method should
+  // be reimplemented
+  virtual bool IsLoggedIn() { return true; }
+  virtual void ShowConfig() { } // Remember to set the CanShowConfig hint
+  // Returns the Internet service in charge of this provider, or NULL if there
+  // is none
+  virtual InternetService* internet_service() { return NULL; }
 
   static QImage ScaleAndPad(const QImage& image);
 
@@ -102,39 +151,55 @@ signals:
 
   void ArtLoaded(int id, const QImage& image);
 
-  void TracksLoaded(int id, MimeData* mime_data);
-
 protected:
   // These functions treat queries in the same way as LibraryQuery.  They're
   // useful for figuring out whether you got a result because it matched in
   // the song title or the artist/album name.
   static QStringList TokenizeQuery(const QString& query);
-  static Result::MatchQuality MatchQuality(const QStringList& tokens, const QString& string);
-
-  // Sorts a list of songs by disc, then by track.
-  static void SortSongs(SongList* list);
+  static bool Matches(const QStringList& tokens, const QString& string);
 
   // Subclasses must call this from their constructors.
   void Init(const QString& name, const QString& id, const QIcon& icon,
-            bool delay_searches, bool serialised_art);
+            Hints hints = NoHints);
+
+  struct PendingState {
+    PendingState() : orig_id_(-1) {}
+    PendingState(int orig_id, QStringList tokens)
+        : orig_id_(orig_id),
+          tokens_(tokens) {
+    }
+    int orig_id_;
+    QStringList tokens_;
+
+    bool operator<(const PendingState& b) const {
+      return orig_id_ < b.orig_id_;
+    }
+
+    bool operator==(const PendingState& b) const {
+      return orig_id_ == b.orig_id_;
+    }
+  };
+
+protected:
+  Application* app_;
 
 private:
   QString name_;
   QString id_;
   QIcon icon_;
-  bool delay_searches_;
-  bool serialised_art_;
+  Hints hints_;
 };
 
 Q_DECLARE_METATYPE(SearchProvider::Result)
 Q_DECLARE_METATYPE(SearchProvider::ResultList)
+Q_DECLARE_OPERATORS_FOR_FLAGS(SearchProvider::Hints)
 
 
 class BlockingSearchProvider : public SearchProvider {
   Q_OBJECT
 
 public:
-  BlockingSearchProvider(QObject* parent = 0);
+  BlockingSearchProvider(Application* app, QObject* parent = 0);
 
   void SearchAsync(int id, const QString& query);
   virtual ResultList Search(int id, const QString& query) = 0;
@@ -142,5 +207,7 @@ public:
 private slots:
   void BlockingSearchFinished();
 };
+
+Q_DECLARE_METATYPE(SearchProvider*)
 
 #endif // SEARCHPROVIDER_H

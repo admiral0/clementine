@@ -20,6 +20,8 @@
 
 #include "widgets/stretchheaderview.h"
 
+class PlaylistView;
+
 class QMenu;
 class QSignalMapper;
 
@@ -27,7 +29,8 @@ class PlaylistHeader : public StretchHeaderView {
   Q_OBJECT
 
  public:
-  PlaylistHeader(Qt::Orientation orientation, QWidget* parent = 0);
+  PlaylistHeader(Qt::Orientation orientation, PlaylistView* view,
+                 QWidget* parent = 0);
 
   // QWidget
   void contextMenuEvent(QContextMenuEvent* e);
@@ -35,20 +38,19 @@ class PlaylistHeader : public StretchHeaderView {
 
  signals:
   void SectionVisibilityChanged(int logical, bool visible);
-  void ColumnAlignmentChanged();
   void MouseEntered();
 
  private slots:
   void HideCurrent();
-  void AlignCurrentLeft();
-  void AlignCurrentCenter();
-  void AlignCurrentRight();
   void ToggleVisible(int section);
+  void SetColumnAlignment(QAction* action);
 
  private:
   void AddColumnAction(int index);
 
  private:
+  PlaylistView* view_;
+
   int menu_section_;
   QMenu* menu_;
   QAction* hide_action_;

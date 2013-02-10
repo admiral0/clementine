@@ -17,10 +17,12 @@
 
 #include "spotifysettingspage.h"
 
-#include "core/network.h"
+#include "config.h"
+#include "spotifymessages.pb.h"
 #include "spotifyservice.h"
 #include "internetmodel.h"
 #include "ui_spotifysettingspage.h"
+#include "core/network.h"
 #include "ui/iconloader.h"
 
 #include <QMessageBox>
@@ -31,14 +33,13 @@
 
 SpotifySettingsPage::SpotifySettingsPage(SettingsDialog* dialog)
   : SettingsPage(dialog),
-    network_(new NetworkAccessManager(this)),
     ui_(new Ui_SpotifySettingsPage),
     service_(InternetModel::Service<SpotifyService>()),
     validated_(false)
 {
   ui_->setupUi(this);
 
-  setWindowIcon(QIcon(":/icons/svg/spotify.svg"));
+  setWindowIcon(QIcon(":/icons/48x48/spotify.png"));
 
   QFont bold_font(font());
   bold_font.setBold(true);
@@ -56,6 +57,10 @@ SpotifySettingsPage::SpotifySettingsPage(SettingsDialog* dialog)
   ui_->login_state->AddCredentialField(ui_->password);
   ui_->login_state->AddCredentialGroup(ui_->account_group);
 
+  ui_->bitrate->addItem("96 " + tr("kbps"), pb::spotify::Bitrate96k);
+  ui_->bitrate->addItem("160 " + tr("kbps"), pb::spotify::Bitrate160k);
+  ui_->bitrate->addItem("320 " + tr("kbps"), pb::spotify::Bitrate320k);
+
   BlobStateChanged();
 }
 
@@ -69,10 +74,10 @@ void SpotifySettingsPage::BlobStateChanged() {
   ui_->account_group->setEnabled(installed);
   ui_->blob_status->setText(installed ? tr("Installed") : tr("Not installed"));
 
-#ifdef Q_OS_LINUX
+#ifdef HAVE_SPOTIFY_DOWNLOADER
   ui_->download_blob->setEnabled(!installed);
 #else
-  ui_->download_blob->setEnabled(false);
+  ui_->download_blob->hide();
 #endif
 }
 
@@ -100,11 +105,14 @@ void SpotifySettingsPage::Load() {
   s.beginGroup(SpotifyService::kSettingsGroup);
 
   original_username_ = s.value("username").toString();
-  original_password_ = s.value("password").toString();
 
   ui_->username->setText(original_username_);
-  ui_->password->setText(original_password_);
   validated_ = false;
+
+  ui_->bitrate->setCurrentIndex(ui_->bitrate->findData(
+      s.value("bitrate", pb::spotify::Bitrate320k).toInt()));
+  ui_->volume_normalisation->setChecked(
+      s.value("volume_normalisation", false).toBool());
 
   UpdateLoginState();
 }
@@ -115,6 +123,9 @@ void SpotifySettingsPage::Save() {
 
   s.setValue("username", ui_->username->text());
   s.setValue("password", ui_->password->text());
+
+  s.setValue("bitrate", ui_->bitrate->itemData(ui_->bitrate->currentIndex()).toInt());
+  s.setValue("volume_normalisation", ui_->volume_normalisation->isChecked());
 }
 
 void SpotifySettingsPage::LoginFinished(bool success) {
@@ -143,6 +154,10 @@ void SpotifySettingsPage::UpdateLoginState() {
     ui_->login_state->SetAccountTypeText(tr("Your username or password was incorrect."));
     break;
 
+  case SpotifyService::LoginState_ReloginFailed:
+    ui_->login_state->SetAccountTypeText(tr("You have been logged out of Spotify, please re-enter your password."));
+    break;
+
   default:
     ui_->login_state->SetAccountTypeText(tr("A Spotify Premium account is required."));
     break;
@@ -152,4 +167,6 @@ void SpotifySettingsPage::UpdateLoginState() {
 void SpotifySettingsPage::Logout() {
   service_->Logout();
   UpdateLoginState();
+
+  ui_->username->clear();
 }

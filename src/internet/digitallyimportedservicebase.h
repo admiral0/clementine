@@ -18,8 +18,13 @@
 #ifndef DIGITALLYIMPORTEDSERVICEBASE_H
 #define DIGITALLYIMPORTEDSERVICEBASE_H
 
-#include "internetservice.h"
+#include <boost/scoped_ptr.hpp>
 
+#include "digitallyimportedclient.h"
+#include "internetservice.h"
+#include "core/cachedlist.h"
+
+class DigitallyImportedClient;
 class DigitallyImportedUrlHandler;
 
 class QNetworkAccessManager;
@@ -30,11 +35,14 @@ class DigitallyImportedServiceBase : public InternetService {
   friend class DigitallyImportedUrlHandler;
 
 public:
-  DigitallyImportedServiceBase(
-      const QString& name, const QString& description, const QUrl& homepage_url,
-      const QString& homepage_name, const QUrl& stream_list_url,
-      const QString& url_scheme, const QString& icon_path,
-      InternetModel* model, QObject* parent = NULL);
+  DigitallyImportedServiceBase(const QString& name,
+                               const QString& description,
+                               const QUrl& homepage_url,
+                               const QIcon& icon,
+                               const QString& api_service_name,
+                               Application* app,
+                               InternetModel* model,
+                               QObject* parent = NULL);
   ~DigitallyImportedServiceBase();
 
   static const char* kSettingsGroup;
@@ -42,98 +50,86 @@ public:
 
   QStandardItem* CreateRootItem();
   void LazyPopulate(QStandardItem* parent);
-  void ShowContextMenu(const QModelIndex& index, const QPoint& global_pos);
+  void ShowContextMenu(const QPoint& global_pos);
 
   void ReloadSettings();
 
-  bool is_valid_stream_selected() const;
-  bool is_premium_stream_selected() const;
   bool is_premium_account() const;
 
   const QUrl& homepage_url() const { return homepage_url_; }
-  const QString& homepage_name() const { return homepage_name_; }
-  const QUrl& stream_list_url() const { return stream_list_url_; }
-  const QString& icon_path() const { return icon_path_; }
   const QIcon& icon() const { return icon_; }
   const QString& service_description() const { return service_description_; }
-  const QString& url_scheme() const { return url_scheme_; }
+  const QString& api_service_name() const { return api_service_name_; }
 
-  // Public for the global search provider.
-  struct Stream {
-    int id_;
-    QString key_;
-    QString name_;
-    QString description_;
+  bool IsChannelListStale() const { return saved_channels_.IsStale(); }
+  DigitallyImportedClient::ChannelList Channels();
+  void SongFromChannel(const DigitallyImportedClient::Channel& channel,
+                       Song* song) const;
 
-    bool operator <(const Stream& other) const { return name_ < other.name_; }
-  };
-  typedef QList<Stream> StreamList;
-
-  bool IsStreamListStale() const;
-  StreamList Streams();
+public slots:
+  void ShowSettingsDialog();
 
 signals:
   void StreamsChanged();
 
-protected:
-  struct Playlist {
-    Playlist(bool premium, const QString& url_template)
-      : premium_(premium), url_template_(url_template) {}
-
-    bool premium_;
-    QString url_template_;
-  };
-
-  QModelIndex GetCurrentIndex();
-
-  // Called by DigitallyImportedUrlHandler, implemented by subclasses, must
-  // call LoadPlaylistFinished eventually.
-  virtual void LoadStation(const QString& key) = 0;
-
-protected slots:
-  void LoadPlaylistFinished();
-
 private slots:
+  void LoadPlaylistFinished(QNetworkReply* reply);
   void Homepage();
   void ForceRefreshStreams();
   void RefreshStreams();
-  void RefreshStreamsFinished();
-  void ShowSettingsDialog();
-
-protected:
-  QNetworkAccessManager* network_;
-  DigitallyImportedUrlHandler* url_handler_;
-
-  int audio_type_;
-  QString username_;
-  QString password_;
-
-  int task_id_;
-
-  QList<Playlist> playlists_;
+  void RefreshStreamsFinished(QNetworkReply* reply, int task_id);
 
 private:
   void PopulateStreams();
-  StreamList LoadStreams() const;
-  void SaveStreams(const StreamList& streams);
+
+  void LoadStation(const QString& key);
 
 private:
   // Set by subclasses through the constructor
   QUrl homepage_url_;
-  QString homepage_name_;
-  QUrl stream_list_url_;
-  QString icon_path_;
   QIcon icon_;
   QString service_description_;
-  QString url_scheme_;
+  QString api_service_name_;
+
+  QStringList basic_playlists_;
+  QStringList premium_playlists_;
+
+  QNetworkAccessManager* network_;
+  DigitallyImportedUrlHandler* url_handler_;
+
+  int basic_audio_type_;
+  int premium_audio_type_;
+  QString username_;
+  QString listen_hash_;
 
   QStandardItem* root_;
 
-  QMenu* context_menu_;
+  boost::scoped_ptr<QMenu> context_menu_;
   QStandardItem* context_item_;
 
-  QList<Stream> saved_streams_;
-  QDateTime last_refreshed_streams_;
+  CachedList<DigitallyImportedClient::Channel> saved_channels_;
+
+  DigitallyImportedClient* api_client_;
+};
+
+class DigitallyImportedService : public DigitallyImportedServiceBase {
+public:
+  DigitallyImportedService(Application* app, InternetModel* model, QObject* parent = NULL);
+};
+
+class SkyFmService : public DigitallyImportedServiceBase {
+public:
+  SkyFmService(Application* app, InternetModel* model, QObject* parent = NULL);
+};
+
+class JazzRadioService : public DigitallyImportedServiceBase {
+public:
+  JazzRadioService(Application* app, InternetModel* model, QObject* parent = NULL);
+};
+
+class RockRadioService : public DigitallyImportedServiceBase {
+public:
+  RockRadioService(Application* app, InternetModel* model, QObject* parent = NULL);
 };
 
 #endif // DIGITALLYIMPORTEDSERVICEBASE_H

@@ -15,15 +15,14 @@
    along with Clementine.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "albumcoverfetcher.h"
-#include "coverprovider.h"
 #include "lastfmcoverprovider.h"
 
-#include <lastfm/Artist>
-#include <lastfm/XmlQuery>
-#include <lastfm/ws.h>
-
 #include <QNetworkReply>
+
+#include "albumcoverfetcher.h"
+#include "coverprovider.h"
+#include "core/closure.h"
+#include "internet/lastfmcompat.h"
 
 LastFmCoverProvider::LastFmCoverProvider(QObject* parent)
   : CoverProvider("last.fm", parent)
@@ -36,40 +35,29 @@ bool LastFmCoverProvider::StartSearch(const QString& artist, const QString& albu
   params["album"] = album + " " + artist;
 
   QNetworkReply* reply = lastfm::ws::post(params);
-  connect(reply, SIGNAL(finished()), SLOT(QueryFinished()));
-  pending_queries_[reply] = id;
+  NewClosure(reply, SIGNAL(finished()), this,
+             SLOT(QueryFinished(QNetworkReply*, int)), reply, id);
 
   return true;
 }
 
-void LastFmCoverProvider::QueryFinished() {
-  QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
-  if (!reply || !pending_queries_.contains(reply))
-    return;
-
-  int id = pending_queries_.take(reply);
+void LastFmCoverProvider::QueryFinished(QNetworkReply* reply, int id) {
   reply->deleteLater();
 
   CoverSearchResults results;
 
-  try {
-    lastfm::XmlQuery query(lastfm::ws::parse(reply));
-#ifdef Q_OS_WIN32
-    if (lastfm::ws::last_parse_error != lastfm::ws::NoError) {
-      throw std::runtime_error("");
-    }
-#endif
-
+  lastfm::XmlQuery query(lastfm::compat::EmptyXmlQuery());
+  if (lastfm::compat::ParseQuery(reply->readAll(), &query)) {
     // parse the list of search results
     QList<lastfm::XmlQuery> elements = query["results"]["albummatches"].children("album");
 
     foreach (const lastfm::XmlQuery& element, elements) {
       CoverSearchResult result;
       result.description = element["artist"].text() + " - " + element["name"].text();
-      result.image_url = element["image size=extralarge"].text();
+      result.image_url = QUrl(element["image size=extralarge"].text());
       results << result;
     }
-  } catch(std::runtime_error&) {
+  } else {
     // Drop through and emit an empty list of results.
   }
 

@@ -6,19 +6,17 @@
 #include <QQueue>
 #include <QUrl>
 
+class QNetworkReply;
+
 class KittenLoader : public AlbumCoverLoader {
   Q_OBJECT
  public:
   KittenLoader(QObject* parent = 0);
 
-  virtual quint64 LoadImageAsync(
-      const QString& art_automatic,
-      const QString& art_manual,
-      const QString& song_filename,
-      const QImage& embedded_image);
+  virtual quint64 LoadKitten(const AlbumCoverLoaderOptions& options);
 
  private slots:
-  void KittensRetrieved();
+  void KittensRetrieved(QNetworkReply* reply);
   void FetchMoreKittens();
 
  private:

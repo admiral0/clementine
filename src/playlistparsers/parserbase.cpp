@@ -16,10 +16,10 @@
 */
 
 #include "parserbase.h"
+#include "core/tagreaderclient.h"
 #include "library/librarybackend.h"
 #include "library/libraryquery.h"
 #include "library/sqlrow.h"
-#include "resolvers/songresolver.h"
 
 #include <QUrl>
 
@@ -32,20 +32,17 @@ ParserBase::ParserBase(LibraryBackendInterface* library, QObject *parent)
 void ParserBase::LoadSong(const QString& filename_or_url, qint64 beginning,
                           const QDir& dir, Song* song) const {
   if (filename_or_url.isEmpty()) {
-    // Try and resolve from various sources.
-    SongResolver resolver(library_);
-    resolver.ResolveSong(song);
     return;
   }
 
   QString filename = filename_or_url;
 
-  if (filename_or_url.contains(QRegExp("^[a-z]+://"))) {
+  if (filename_or_url.contains(QRegExp("^[a-z]{2,}:"))) {
     QUrl url(filename_or_url);
     if (url.scheme() == "file") {
       filename = url.toLocalFile();
     } else {
-      song->set_url(QUrl(filename_or_url));
+      song->set_url(QUrl::fromUserInput(filename_or_url));
       song->set_filetype(Song::Type_Stream);
       song->set_valid(true);
       return;
@@ -78,7 +75,7 @@ void ParserBase::LoadSong(const QString& filename_or_url, qint64 beginning,
   if (library_song.is_valid()) {
     *song = library_song;
   } else {
-    song->InitFromFile(filename, -1);
+    TagReaderClient::Instance()->ReadFileBlocking(filename, song);
   }
 }
 

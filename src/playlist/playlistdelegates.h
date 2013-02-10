@@ -22,10 +22,13 @@
 #include "library/library.h"
 #include "widgets/ratingwidget.h"
 
+#include <QCompleter>
+#include <QPixmapCache>
+#include <QStringListModel>
 #include <QStyledItemDelegate>
 #include <QTreeView>
-#include <QStringListModel>
-#include <QCompleter>
+
+class Player;
 
 class QueuedItemDelegate : public QStyledItemDelegate {
 public:
@@ -169,9 +172,22 @@ class TagCompletionItemDelegate : public PlaylistDelegateBase {
 };
 
 class NativeSeparatorsDelegate : public PlaylistDelegateBase {
-public:
+ public:
   NativeSeparatorsDelegate(QObject* parent) : PlaylistDelegateBase(parent) {}
   QString displayText(const QVariant& value, const QLocale& locale) const;
+};
+
+class SongSourceDelegate : public PlaylistDelegateBase {
+ public:
+  SongSourceDelegate(QObject* parent, Player* player);
+  QString displayText(const QVariant& value, const QLocale& locale) const;
+  void paint(QPainter* paint, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+
+ private:
+  QPixmap LookupPixmap(const QUrl& url, const QSize& size) const;
+
+  Player* player_;
+  mutable QPixmapCache cache_;
 };
 
 #endif // PLAYLISTDELEGATES_H

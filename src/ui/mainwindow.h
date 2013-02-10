@@ -26,6 +26,7 @@
 
 #include "config.h"
 #include "core/mac_startup.h"
+#include "core/tagreaderclient.h"
 #include "engines/engine_fwd.h"
 #include "library/librarymodel.h"
 #include "playlist/playlistitem.h"
@@ -34,8 +35,9 @@
 class About;
 class AddStreamDialog;
 class AlbumCoverManager;
+class Appearance;
+class Application;
 class ArtistInfoView;
-class ArtLoader;
 class BackgroundStreams;
 class CommandlineOptions;
 class CoverProviders;
@@ -47,7 +49,7 @@ class Equalizer;
 class ErrorDialog;
 class FileView;
 class GlobalSearch;
-class GlobalSearchPopup;
+class GlobalSearchView;
 class GlobalShortcuts;
 class GroupByDialog;
 class Library;
@@ -58,6 +60,7 @@ class OrganiseDialog;
 class OSD;
 class Player;
 class PlaylistBackend;
+class PlaylistListContainer;
 class PlaylistManager;
 class QueueManager;
 class InternetItem;
@@ -83,21 +86,13 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   Q_OBJECT
 
  public:
-  MainWindow(BackgroundThread<Database>* database,
-             TaskManager* task_manager,
-             PlaylistManager* playlists,
-             InternetModel* internet_model,
-             Player* player,
+  MainWindow(Application* app,
              SystemTrayIcon* tray_icon,
              OSD* osd,
-             ArtLoader* art_loader,
-             CoverProviders* cover_providers,
-             GlobalSearch* global_search,
              QWidget *parent = 0);
   ~MainWindow();
 
   static const char* kSettingsGroup;
-  static const char* kMusicFilterSpec;
   static const char* kAllFilesFilterSpec;
 
   // Don't change the values
@@ -181,6 +176,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void CopyFilesToLibrary(const QList<QUrl>& urls);
   void MoveFilesToLibrary(const QList<QUrl>& urls);
   void CopyFilesToDevice(const QList<QUrl>& urls);
+  void EditFileTags(const QList<QUrl>& urls);
 
   void AddToPlaylist(QMimeData* data);
   void AddToPlaylist(QAction* action);
@@ -214,6 +210,7 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void AddStream();
   void AddStreamAccepted();
   void AddCDTracks();
+  void AddPodcast();
 
   void CommandlineOptionsReceived(const QByteArray& serialized_options);
 
@@ -221,11 +218,13 @@ class MainWindow : public QMainWindow, public PlatformInterface {
 
   void NowPlayingWidgetPositionChanged(bool above_status_bar);
 
-  void SongSaveComplete();
+  void SongSaveComplete(TagReaderReply* reply,
+                        const QPersistentModelIndex& index);
 
   void ShowCoverManager();
 #ifdef HAVE_LIBLASTFM
-  void ScrobblerStatus(int value);
+  void ScrobbleSubmitted();
+  void ScrobbleError(int value);
 #endif
   void ShowAboutDialog();
   void ShowTranscodeDialog();
@@ -237,7 +236,6 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void OpenSettingsDialog();
   void OpenSettingsDialogAtPage(SettingsDialog::Page page);
   void ShowSongInfoConfig();
-  void ShowGlobalSearch();
 
   void SaveGeometry();
 
@@ -250,6 +248,12 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   void Exit();
 
   void HandleNotificationPreview(OSD::Behaviour type, QString line1, QString line2);
+
+  void ScrollToInternetIndex(const QModelIndex& index);
+  void FocusGlobalSearchField();
+  void DoGlobalSearch(const QString& query);
+
+  void ShowConsole();
 
  private:
   void ConnectInfoView(SongInfoBase* view);
@@ -266,27 +270,19 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   Ui_MainWindow* ui_;
   Windows7ThumbBar* thumbbar_;
 
+  Application* app_;
   SystemTrayIcon* tray_icon_;
   OSD* osd_;
   boost::scoped_ptr<EditTagDialog> edit_tag_dialog_;
-  TaskManager* task_manager_;
   boost::scoped_ptr<About> about_dialog_;
 
-  BackgroundThread<Database>* database_;
-  CoverProviders* cover_providers_;
-  InternetModel* internet_model_;
-  PlaylistBackend* playlist_backend_;
-  PlaylistManager* playlists_;
-  Player* player_;
-  Library* library_;
   GlobalShortcuts* global_shortcuts_;
-  GlobalSearch* global_search_;
   Remote* remote_;
 
-  DeviceManager* devices_;
-
+  GlobalSearchView* global_search_view_;
   LibraryViewContainer* library_view_;
   FileView* file_view_;
+  PlaylistListContainer* playlist_list_;
   InternetViewContainer* internet_view_;
   DeviceView* device_view_;
   SongInfoView* song_info_view_;
@@ -304,8 +300,6 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   boost::scoped_ptr<TagFetcher> tag_fetcher_;
   boost::scoped_ptr<TrackSelectionDialog> track_selection_dialog_;
   PlaylistItemList autocomplete_tag_items_;
-
-  boost::scoped_ptr<GlobalSearchPopup> search_popup_;
 
 #ifdef ENABLE_VISUALISATIONS
   boost::scoped_ptr<VisualisationContainer> visualisation_;
@@ -331,6 +325,8 @@ class MainWindow : public QMainWindow, public PlatformInterface {
   QAction* playlist_open_in_browser_;
   QAction* playlist_queue_;
   QAction* playlist_add_to_another_;
+  QList<QAction*> playlistitem_actions_;
+  QAction* playlistitem_actions_separator_;
   QModelIndex playlist_menu_index_;
 
   QSortFilterProxyModel* library_sort_model_;

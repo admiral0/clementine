@@ -16,6 +16,7 @@
 */
 
 #include "playlistbackend.h"
+#include "core/application.h"
 #include "core/database.h"
 #include "core/scopedtransaction.h"
 #include "core/song.h"
@@ -40,26 +41,34 @@ using boost::shared_ptr;
 
 const int PlaylistBackend::kSongTableJoins = 4;
 
-PlaylistBackend::PlaylistBackend(QObject* parent)
+PlaylistBackend::PlaylistBackend(Application* app, QObject* parent)
   : QObject(parent),
-    library_(NULL)
+    app_(app),
+    db_(app_->database())
 {
 }
 
-void PlaylistBackend::SetLibrary(LibraryBackend* library) {
-  library_ = library;
+PlaylistBackend::PlaylistList PlaylistBackend::GetAllOpenPlaylists() {
+  return GetPlaylists(true);
 }
 
 PlaylistBackend::PlaylistList PlaylistBackend::GetAllPlaylists() {
+  return GetPlaylists(false);
+}
+
+PlaylistBackend::PlaylistList PlaylistBackend::GetPlaylists(bool open_in_ui) {
   QMutexLocker l(db_->Mutex());
   QSqlDatabase db(db_->Connect());
 
   PlaylistList ret;
 
+  const QString open_in_ui_condition = open_in_ui ? "WHERE ui_order != -1" : "";
+
   QSqlQuery q("SELECT ROWID, name, last_played, dynamic_playlist_type,"
               "       dynamic_playlist_data, dynamic_playlist_backend,"
-              "       special_type"
+              "       special_type, ui_path"
               " FROM playlists"
+              " " + open_in_ui_condition +
               " ORDER BY ui_order", db);
   q.exec();
   if (db_->CheckErrors(q))
@@ -74,6 +83,7 @@ PlaylistBackend::PlaylistList PlaylistBackend::GetAllPlaylists() {
     p.dynamic_data = q.value(4).toByteArray();
     p.dynamic_backend = q.value(5).toString();
     p.special_type = q.value(6).toString();
+    p.ui_path = q.value(7).toString();
     ret << p;
   }
 
@@ -162,10 +172,10 @@ PlaylistItemPtr PlaylistBackend::NewSongFromQuery(const SqlRow& row, boost::shar
 PlaylistItemPtr PlaylistBackend::RestoreCueData(PlaylistItemPtr item, boost::shared_ptr<NewSongFromQueryState> state) {
   // we need library to run a CueParser; also, this method applies only to
   // file-type PlaylistItems
-  if(!library_ || item->type() != "File") {
+  if(item->type() != "File") {
     return item;
   }
-  CueParser cue_parser(library_);
+  CueParser cue_parser(app_->library_backend());
 
   Song song = item->Metadata();
   // we're only interested in .cue songs here
@@ -196,7 +206,7 @@ PlaylistItemPtr PlaylistBackend::RestoreCueData(PlaylistItemPtr item, boost::sha
   }
 
   foreach(const Song& from_list, song_list) {
-    if(from_list.url() == song.url() &&
+    if(from_list.url().toEncoded() == song.url().toEncoded() &&
        from_list.beginning_nanosec() == song.beginning_nanosec()) {
       // we found a matching section; replace the input
       // item with a new one containing CUE metadata
@@ -324,10 +334,14 @@ void PlaylistBackend::RenamePlaylist(int id, const QString &new_name) {
 void PlaylistBackend::SetPlaylistOrder(const QList<int>& ids) {
   QMutexLocker l(db_->Mutex());
   QSqlDatabase db(db_->Connect());
-  QSqlQuery q("UPDATE playlists SET ui_order=:index WHERE ROWID=:id", db);
-
   ScopedTransaction transaction(&db);
 
+  QSqlQuery q("UPDATE playlists SET ui_order=-1", db);
+  q.exec();
+  if (db_->CheckErrors(q))
+    return;
+
+  q = QSqlQuery("UPDATE playlists SET ui_order=:index WHERE ROWID=:id", db);
   for (int i=0 ; i<ids.count() ; ++i) {
     q.bindValue(":index", i);
     q.bindValue(":id", ids[i]);
@@ -335,6 +349,22 @@ void PlaylistBackend::SetPlaylistOrder(const QList<int>& ids) {
     if (db_->CheckErrors(q))
       return;
   }
+
+  transaction.Commit();
+}
+
+void PlaylistBackend::SetPlaylistUiPath(int id, const QString& path) {
+  QMutexLocker l(db_->Mutex());
+  QSqlDatabase db(db_->Connect());
+  QSqlQuery q("UPDATE playlists SET ui_path=:path WHERE ROWID=:id", db);
+
+  ScopedTransaction transaction(&db);
+
+  q.bindValue(":path", path);
+  q.bindValue(":id", id);
+  q.exec();
+  if (db_->CheckErrors(q))
+    return;
 
   transaction.Commit();
 }

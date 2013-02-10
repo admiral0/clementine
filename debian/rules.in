@@ -1,19 +1,25 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
 
+MY_MAKEFLAGS=
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+  NUMJOBS=$(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+  MY_MAKEFLAGS=-j$(NUMJOBS)
+endif
+
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	cd bin && cmake .. \
 	  -DCMAKE_INSTALL_PREFIX=$(CURDIR)/debian/clementine/usr \
 	  -DBUNDLE_PROJECTM_PRESETS=OFF \
-	  -DFORCE_SVN_REVISION=@SVN_REVISION@
+	  -DFORCE_GIT_REVISION=@GIT_REV@
 	touch configure-stamp
 
 build: build-stamp
-build-stamp: configure-stamp  
+build-stamp: configure-stamp
 	dh_testdir
-	cd bin && make
+	cd bin && make $(MY_MAKEFLAGS)
 	touch $@
 
 clean: 
@@ -42,6 +48,7 @@ binary-arch: install
 	dh_installchangelogs 
 	dh_installmenu
 	dh_installdocs
+	dh_gconf
 	dh_link
 	dh_strip
 	dh_compress

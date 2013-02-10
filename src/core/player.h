@@ -30,10 +30,8 @@
 #include "engines/engine_fwd.h"
 #include "playlist/playlistitem.h"
 
+class Application;
 class LastFMService;
-class MainWindow;
-class PlaylistManagerInterface;
-class Settings;
 
 
 class PlayerInterface : public QObject {
@@ -48,7 +46,6 @@ public:
 
   virtual PlaylistItemPtr GetCurrentItem() const = 0;
   virtual PlaylistItemPtr GetItemAt(int pos) const = 0;
-  virtual PlaylistManagerInterface* playlists() const = 0;
 
   virtual void RegisterUrlHandler(UrlHandler* handler) = 0;
   virtual void UnregisterUrlHandler(UrlHandler* handler) = 0;
@@ -107,7 +104,7 @@ class Player : public PlayerInterface {
   Q_OBJECT
 
 public:
-  Player(PlaylistManagerInterface* playlists, QObject* parent = 0);
+  Player(Application* app, QObject* parent = 0);
   ~Player();
 
   void Init();
@@ -118,10 +115,11 @@ public:
 
   PlaylistItemPtr GetCurrentItem() const { return current_item_; }
   PlaylistItemPtr GetItemAt(int pos) const;
-  PlaylistManagerInterface* playlists() const { return playlists_; }
 
   void RegisterUrlHandler(UrlHandler* handler);
   void UnregisterUrlHandler(UrlHandler* handler);
+
+  const UrlHandler* HandlerForUrl(const QUrl& url) const;
 
 public slots:
   void ReloadSettings();
@@ -154,6 +152,7 @@ public slots:
   // Play the next item on the playlist - disregarding radio stations like
   // last.fm that might have more tracks.
   void NextItem(Engine::TrackChangeFlags change);
+  void PreviousItem(Engine::TrackChangeFlags change);
 
   void NextInternal(Engine::TrackChangeFlags);
 
@@ -164,7 +163,11 @@ public slots:
   void HandleLoadResult(const UrlHandler::LoadResult& result);
 
  private:
-  PlaylistManagerInterface* playlists_;
+  // Returns true if we were supposed to stop after this track.
+  bool HandleStopAfter();
+
+ private:
+  Application* app_;
   LastFMService* lastfm_;
   QSettings settings_;
 

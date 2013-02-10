@@ -1,3537 +1,5328 @@
 # Clementine.
 # Copyright (C) 2010 David Sansome
 # This file is distributed under the same license as the Clementine package.
+# 
+# Translators:
 # David Sansome <me@davidsansome.com>, 2010.
-#
+#   <m.sagami+sourceforge@gmail.com>, 2011-2012.
+# Yoshihito YOSHINO <yy.y.ja.jp+transifex@gmail.com>, 2012.
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-04-09 10:24+0000\n"
-"PO-Revision-Date: 2011-02-15 15:49+0000\n"
-"Last-Translator: David Sansome <me@davidsansome.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"MIME-Version: 1.0\n"
+"Project-Id-Version: Clementine Music Player\n"
+"Report-Msgid-Bugs-To: http://code.google.com/p/clementine-player/issues/list\n"
+"PO-Revision-Date: 2013-01-30 13:18+0000\n"
+"Last-Translator: Clementine Buildbot <clementinebuildbot@davidsansome.com>\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: \n"
-"X-Launchpad-Export-Date: 2011-04-10 05:06+0000\n"
-"X-Generator: Launchpad (build 12735)\n"
+"Language: ja\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
+#: ../bin/src/ui_podcastsettingspage.h:246
+msgid " days"
+msgstr " 日"
+
+#: ../bin/src/ui_transcoderoptionsaac.h:130
+#: ../bin/src/ui_transcoderoptionsmp3.h:195
+#: ../bin/src/ui_transcoderoptionsopus.h:81
+#: ../bin/src/ui_transcoderoptionsspeex.h:220
+#: ../bin/src/ui_transcoderoptionsspeex.h:223
+#: ../bin/src/ui_transcoderoptionsvorbis.h:205
+#: ../bin/src/ui_transcoderoptionsvorbis.h:208
+#: ../bin/src/ui_transcoderoptionsvorbis.h:211
+#: ../bin/src/ui_transcoderoptionswma.h:80
 msgid " kbps"
-msgstr ""
+msgstr " kbps"
 
+#: ../bin/src/ui_songinfosettingspage.h:186
+#: ../bin/src/ui_playbacksettingspage.h:272
+#: ../bin/src/ui_playbacksettingspage.h:292
 msgid " ms"
-msgstr " ms"
+msgstr " ミリ秒"
 
+#: ../bin/src/ui_songinfosettingspage.h:182
 msgid " pt"
 msgstr " pt"
 
+#: ../bin/src/ui_notificationssettingspage.h:411
+#: ../bin/src/ui_visualisationselector.h:116
 msgid " seconds"
 msgstr " 秒"
 
+#: ../bin/src/ui_querysortpage.h:143
 msgid " songs"
 msgstr " 曲"
 
+#: widgets/osd.cpp:188
 #, qt-format
 msgid "%1 albums"
 msgstr "%1 枚のアルバム"
 
+#: core/utilities.cpp:106
 #, qt-format
 msgid "%1 days"
 msgstr "%1 日"
 
+#: core/utilities.cpp:127
 #, qt-format
 msgid "%1 days ago"
 msgstr "%1 日前"
 
+#: podcasts/gpoddersync.cpp:79
+#, qt-format
+msgid "%1 on %2"
+msgstr ""
+
+#: playlistparsers/playlistparser.cpp:74
 #, qt-format
 msgid "%1 playlists (%2)"
-msgstr "%1 個のプレイリスト (%2)"
+msgstr "%1 プレイリスト (%2)"
 
+#: playlist/playlistmanager.cpp:315
 #, qt-format
 msgid "%1 selected of"
 msgstr "%1 個選択中"
 
+#: devices/deviceview.cpp:123
 #, qt-format
 msgid "%1 song"
 msgstr "%1 曲"
 
+#: devices/deviceview.cpp:125
 #, qt-format
 msgid "%1 songs"
 msgstr "%1 曲"
 
+#: smartplaylists/searchpreview.cpp:133
 #, qt-format
 msgid "%1 songs found"
 msgstr "%1 曲見つかりました"
 
+#: smartplaylists/searchpreview.cpp:130
 #, qt-format
 msgid "%1 songs found (showing %2)"
 msgstr "%1 曲見つかりました (%2 曲を表示中)"
 
+#: playlist/playlistmanager.cpp:321
 #, qt-format
 msgid "%1 tracks"
 msgstr "%1 個のトラック"
 
+#: ui/albumcovermanager.cpp:419
 #, qt-format
 msgid "%1 transferred"
-msgstr ""
+msgstr "%1 転送済み"
 
+#: widgets/osd.cpp:238 widgets/osd.cpp:243 widgets/osd.cpp:248
+#: widgets/osd.cpp:253 widgets/osd.cpp:258 widgets/osd.cpp:263
 #, qt-format
 msgid "%1: Wiimotedev module"
-msgstr "%1: Wiimotedev モジュール"
+msgstr "%1: Wii リモコンデバイスモジュール"
 
+#: songinfo/lastfmtrackinfoprovider.cpp:94
 #, qt-format
 msgid "%L1 other listeners"
-msgstr ""
+msgstr "%L1 人のリスナー"
 
+#: songinfo/lastfmtrackinfoprovider.cpp:92
 #, qt-format
 msgid "%L1 total plays"
-msgstr ""
+msgstr "合計 %L1 回再生"
 
+#: ../bin/src/ui_notificationssettingspage.h:399
+msgid "%filename%"
+msgstr "%filename%"
+
+#: transcoder/transcodedialog.cpp:202
 #, c-format
 msgid "%n failed"
 msgstr "%n 曲失敗しました"
 
+#: transcoder/transcodedialog.cpp:197
 #, c-format
 msgid "%n finished"
 msgstr "%n が完了しました"
 
+#: transcoder/transcodedialog.cpp:192
 #, c-format
 msgid "%n remaining"
 msgstr "%n 曲残っています"
 
+#: playlist/playlistheader.cpp:37
 msgid "&Align text"
 msgstr "テキストの配置(&A)"
 
+#: playlist/playlistheader.cpp:40
 msgid "&Center"
 msgstr "中央揃え(&C)"
 
+#: ../bin/src/ui_globalshortcutssettingspage.h:178
 msgid "&Custom"
 msgstr "カスタム(&C)"
 
-msgid "&Help"
-msgstr "ヘルプ"
+#: ../bin/src/ui_mainwindow.h:722
+msgid "&Extras"
+msgstr "おまけ(&E)"
 
+#: ../bin/src/ui_mainwindow.h:721
+msgid "&Help"
+msgstr "ヘルプ(&H)"
+
+#: playlist/playlistheader.cpp:70
 #, qt-format
 msgid "&Hide %1"
-msgstr "%1 を非表示にする"
+msgstr "%1 を非表示にする(&H)"
 
+#: playlist/playlistheader.cpp:33
 msgid "&Hide..."
-msgstr "非表示にする..."
+msgstr "非表示にする(&H)..."
 
+#: playlist/playlistheader.cpp:39
 msgid "&Left"
 msgstr "左揃え(&L)"
 
+#: ../bin/src/ui_mainwindow.h:719
+msgid "&Music"
+msgstr "ミュージック(&M)"
+
+#: ../bin/src/ui_globalshortcutssettingspage.h:176
 msgid "&None"
 msgstr "なし(&N)"
 
+#: ../bin/src/ui_mainwindow.h:720
+msgid "&Playlist"
+msgstr "プレイリスト(&P)"
+
+#: ../bin/src/ui_mainwindow.h:653
 msgid "&Quit"
 msgstr "終了(&Q)"
 
+#: ../bin/src/ui_mainwindow.h:691
+msgid "&Repeat mode"
+msgstr "リピートモード(&R)"
+
+#: playlist/playlistheader.cpp:41
 msgid "&Right"
 msgstr "右揃え(&R)"
 
+#: ../bin/src/ui_mainwindow.h:690
+msgid "&Shuffle mode"
+msgstr "シャッフルモード(&S)"
+
+#: playlist/playlistheader.cpp:34
 msgid "&Stretch columns to fit window"
-msgstr "列をウィンドウに合わせる"
+msgstr "列の幅をウィンドウに合わせる(&S)"
 
+#: ../bin/src/ui_mainwindow.h:723
 msgid "&Tools"
-msgstr "ツール"
+msgstr "ツール(&T)"
 
+#: ui/edittagdialog.cpp:48
 msgid "(different across multiple songs)"
 msgstr "(複数の曲で一致しません)"
 
-msgid "..."
-msgstr ""
-
+#: ui/about.cpp:76
 msgid "...and all the Amarok contributors"
-msgstr "...および Amarok に貢献したすべての人々"
+msgstr "... および Amarok に貢献されたすべての方々"
 
+#: ../bin/src/ui_trackslider.h:70 ../bin/src/ui_trackslider.h:74
 msgid "0:00:00"
 msgstr "0:00:00"
 
+#: ../bin/src/ui_appearancesettingspage.h:284
+msgid "0px"
+msgstr "0px"
+
+#: core/utilities.cpp:106
 msgid "1 day"
 msgstr "1 日"
 
+#: playlist/playlistmanager.cpp:321
 msgid "1 track"
 msgstr "1 トラック"
 
-msgid "128K MP3"
-msgstr "128K MP3"
-
+#: ../bin/src/ui_magnatunedownloaddialog.h:143
+#: ../bin/src/ui_magnatunesettingspage.h:174
 msgid "128k MP3"
 msgstr "128k MP3"
 
+#: library/library.cpp:58
 msgid "50 random tracks"
 msgstr "ランダムな 50 トラック"
 
+#: ../bin/src/ui_digitallyimportedsettingspage.h:165
 msgid "<a href=\"http://www.di.fm/premium/\">Upgrade to Premium now</a>"
-msgstr ""
+msgstr "<a href=\"http://www.di.fm/premium/\">今すぐプレミアムへアップグレードする</a>"
 
+#: ../bin/src/ui_organisedialog.h:199
 msgid ""
 "<p>Tokens start with %, for example: %artist %album %title </p>\n"
 "\n"
-"<p>If you surround sections of text that contain a token with curly-braces, "
-"that section will be hidden if the token is empty.</p>"
-msgstr ""
-"<p>トークンは % で始まります、例: %artist %album %title </p>\n"
-"\n"
-"<p>トークンを含むテキストの一部を波括弧で囲むと、トークンが空である場合に限り"
-"そのセクションは非表示になります。</p>"
+"<p>If you surround sections of text that contain a token with curly-braces, that section will be hidden if the token is empty.</p>"
+msgstr "<p>トークンは % で始まります (例: %artist %album %title)。 </p>\n\n<p>トークンを含むテキストの一部を「{ }」で囲むと、トークンが空の場合、{ } の選択部分が非表示になります。</p>"
 
-msgid "A GrooveShark Anywhere account is required."
-msgstr ""
+#: internet/groovesharksettingspage.cpp:111
+msgid "A Grooveshark Anywhere account is required."
+msgstr "Grooveshark Anywhere のアカウントが必要です。"
 
+#: internet/spotifysettingspage.cpp:162
 msgid "A Spotify Premium account is required."
+msgstr "Spotify のプレミアムアカウントが必要です。"
+
+#: ../bin/src/ui_networkremotesettingspage.h:158
+msgid "A client can connect only, if the correct code was entered."
 msgstr ""
 
+#: smartplaylists/wizard.cpp:78
 msgid ""
 "A smart playlist is a dynamic list of songs that come from your library.  "
 "There are different types of smart playlist that offer different ways of "
 "selecting songs."
-msgstr ""
-"スマート プレイリストはライブラリにある曲の動的な一覧です。異なる種類のスマー"
-"ト プレイリストがありそれぞれ異なる曲の選択方法を提供します。"
+msgstr "スマートプレイリストは、ライブラリから一定の条件に従って抽出されるプレイリストです。さまざまな選曲方法を提供する、さまざまなスマートプレイリストがあります。"
 
-msgid "A song will be included in the playlist if it matches these conditions."
-msgstr "曲がこれらの状態に一致する場合はプレイリストに含まれます。"
+#: smartplaylists/querywizardplugin.cpp:153
+msgid ""
+"A song will be included in the playlist if it matches these conditions."
+msgstr "曲がこれらの条件に一致する場合はこのプレイリストに含まれます。"
 
+#: smartplaylists/searchterm.cpp:293
 msgid "A-Z"
 msgstr "A-Z"
 
+#: ../bin/src/ui_transcodersettingspage.h:179
 msgid "AAC"
-msgstr ""
+msgstr "AAC"
 
-msgid "AAC 128k (Premium only)"
-msgstr ""
+#: ../bin/src/ui_digitallyimportedsettingspage.h:179
+msgid "AAC 128k"
+msgstr "AAC 128k"
 
+#: ../bin/src/ui_digitallyimportedsettingspage.h:171
 msgid "AAC 32k"
-msgstr ""
+msgstr "AAC 32k"
 
-msgid "AAC 64k (Premium only)"
-msgstr ""
+#: ../bin/src/ui_digitallyimportedsettingspage.h:178
+msgid "AAC 64k"
+msgstr "AAC 64k"
 
+#: core/song.cpp:334
 msgid "AIFF"
 msgstr "AIFF"
 
+#: widgets/nowplayingwidget.cpp:119
 msgid "ALL GLORY TO THE HYPNOTOAD"
-msgstr ""
+msgstr "ALL GLORY TO THE HYPNOTOAD"
 
+#: ui/about.cpp:32
 #, qt-format
 msgid "About %1"
-msgstr "%1 のバージョン情報"
+msgstr "%1 について"
 
+#: ../bin/src/ui_mainwindow.h:674
 msgid "About Clementine..."
-msgstr "Clementine のバージョン情報..."
+msgstr "Clementine について..."
 
+#: ../bin/src/ui_mainwindow.h:709
 msgid "About Qt..."
-msgstr "Qt のバージョン情報..."
+msgstr "Qt について..."
 
+#: ../bin/src/ui_networkremotesettingspage.h:156
+msgid "Accept non public clients only"
+msgstr ""
+
+#: ../bin/src/ui_groovesharksettingspage.h:113
+#: ../bin/src/ui_magnatunesettingspage.h:155
+#: ../bin/src/ui_spotifysettingspage.h:209
+#: ../bin/src/ui_lastfmsettingspage.h:151
 msgid "Account details"
 msgstr "アカウントの詳細"
 
+#: ../bin/src/ui_digitallyimportedsettingspage.h:161
 msgid "Account details (Premium)"
-msgstr ""
+msgstr "アカウントの詳細 (プレミアム)"
 
+#: ../bin/src/ui_wiimotesettingspage.h:191
 msgid "Action"
 msgstr "アクション"
 
+#: wiimotedev/wiimotesettingspage.cpp:98
 msgid "Active/deactive Wiiremote"
-msgstr "Wiiremote のアクティブ/非アクティブの切り替え"
+msgstr "Wii リモコンのアクティブ・非アクティブを切り替える"
 
+#: podcasts/addpodcastdialog.cpp:56
+msgid "Add Podcast"
+msgstr "ポッドキャストの追加"
+
+#: ../bin/src/ui_addstreamdialog.h:113
 msgid "Add Stream"
-msgstr "ストリームの追加"
+msgstr "ストリームを追加"
 
+#: ../bin/src/ui_notificationssettingspage.h:397
 msgid "Add a new line if supported by the notification type"
-msgstr ""
+msgstr "改行を追加 (通知形式が対応している場合)"
 
+#: ../bin/src/ui_wiimotesettingspage.h:193
 msgid "Add action"
 msgstr "アクションの追加"
 
-msgid "Add and play now"
-msgstr ""
-
+#: internet/savedradio.cpp:103
 msgid "Add another stream..."
-msgstr "別のストリームの追加..."
+msgstr "別のストリームを追加..."
 
+#: library/librarysettingspage.cpp:62
 msgid "Add directory..."
-msgstr "ディレクトリの追加..."
+msgstr "ディレクトリを追加..."
 
+#: ui/mainwindow.cpp:1547
+msgid "Add file"
+msgstr "ファイルを追加"
+
+#: ../bin/src/ui_mainwindow.h:678
 msgid "Add file..."
-msgstr "ファイルの追加..."
+msgstr "ファイルを追加..."
 
+#: transcoder/transcodedialog.cpp:214
 msgid "Add files to transcode"
 msgstr "トランスコードするファイルの追加"
 
+#: ui/mainwindow.cpp:1575
 msgid "Add folder"
-msgstr "フォルダーの追加"
+msgstr "フォルダーを追加"
 
+#: ../bin/src/ui_mainwindow.h:695
 msgid "Add folder..."
-msgstr "フォルダーの追加..."
+msgstr "フォルダーを追加..."
 
-msgid "Add media"
-msgstr "メディアの追加"
-
+#: ../bin/src/ui_librarysettingspage.h:159
 msgid "Add new folder..."
-msgstr "新しいフォルダーの追加..."
+msgstr "新しいフォルダーを追加..."
 
+#: ../bin/src/ui_addpodcastdialog.h:179
+msgid "Add podcast"
+msgstr "ポッドキャストを追加"
+
+#: podcasts/podcastservice.cpp:257 ../bin/src/ui_mainwindow.h:716
+msgid "Add podcast..."
+msgstr "ポッドキャストを追加..."
+
+#: smartplaylists/searchtermwidget.cpp:341
 msgid "Add search term"
-msgstr "検索条件の追加"
+msgstr "検索条件を追加"
 
+#: ../bin/src/ui_notificationssettingspage.h:364
 msgid "Add song album tag"
-msgstr ""
+msgstr "曲のアルバムタグを追加"
 
+#: ../bin/src/ui_notificationssettingspage.h:370
 msgid "Add song albumartist tag"
-msgstr ""
+msgstr "曲のアルバムアーティストタグを追加"
 
+#: ../bin/src/ui_notificationssettingspage.h:361
 msgid "Add song artist tag"
-msgstr ""
+msgstr "曲のアーティストタグを追加"
 
+#: ../bin/src/ui_notificationssettingspage.h:376
 msgid "Add song composer tag"
-msgstr ""
+msgstr "曲の作曲者タグを追加"
 
+#: ../bin/src/ui_notificationssettingspage.h:379
 msgid "Add song disc tag"
-msgstr ""
+msgstr "曲のディスクタグを追加"
 
+#: ../bin/src/ui_notificationssettingspage.h:401
+msgid "Add song filename"
+msgstr "曲のファイル名を追加"
+
+#: ../bin/src/ui_notificationssettingspage.h:385
 msgid "Add song genre tag"
-msgstr ""
+msgstr "曲のジャンルタグを追加"
 
+#: ../bin/src/ui_notificationssettingspage.h:388
 msgid "Add song length tag"
-msgstr ""
+msgstr "曲の長さタグを追加"
 
+#: ../bin/src/ui_notificationssettingspage.h:391
 msgid "Add song play count"
-msgstr ""
+msgstr "曲の再生回数を追加"
 
+#: ../bin/src/ui_notificationssettingspage.h:394
 msgid "Add song skip count"
-msgstr ""
+msgstr "曲のスキップ回数を追加"
 
+#: ../bin/src/ui_notificationssettingspage.h:367
 msgid "Add song title tag"
-msgstr ""
+msgstr "曲のタイトルタグを追加"
 
+#: ../bin/src/ui_notificationssettingspage.h:382
 msgid "Add song track tag"
-msgstr ""
+msgstr "曲のトラックタグを追加"
 
+#: ../bin/src/ui_notificationssettingspage.h:373
 msgid "Add song year tag"
-msgstr ""
+msgstr "曲の年タグを追加"
 
+#: ../bin/src/ui_mainwindow.h:680
 msgid "Add stream..."
-msgstr "ストリームの追加..."
+msgstr "ストリームを追加..."
 
+#: internet/groovesharkservice.cpp:1085
+msgid "Add to Grooveshark favorites"
+msgstr "Grooveshark のお気に入りに追加"
+
+#: internet/groovesharkservice.cpp:1097
+msgid "Add to Grooveshark playlists"
+msgstr "Grooveshark のプレイリストに追加"
+
+#: ui/mainwindow.cpp:1372
 msgid "Add to another playlist"
-msgstr ""
+msgstr "別のプレイリストに追加"
 
+#: ../bin/src/ui_albumcovermanager.h:152
 msgid "Add to playlist"
-msgstr "プレイリストに追加"
+msgstr "プレイリストに追加する"
 
+#: ../bin/src/ui_behavioursettingspage.h:196
 msgid "Add to the queue"
-msgstr ""
+msgstr "キューに追加する"
 
+#: ../bin/src/ui_wiimoteshortcutgrabber.h:123
 msgid "Add wiimotedev action"
-msgstr "wiimotedev アクションの追加"
+msgstr "Wii リモコンデバイスのアクションの追加"
 
+#: ../bin/src/ui_transcodedialog.h:207
 msgid "Add..."
 msgstr "追加..."
 
+#: ../bin/src/ui_libraryfilterwidget.h:95
 msgid "Added this month"
-msgstr "今月追加されました"
+msgstr "今月追加されたもの"
 
+#: ../bin/src/ui_libraryfilterwidget.h:89
 msgid "Added this week"
-msgstr "今週追加されました"
+msgstr "今週追加されたもの"
 
+#: ../bin/src/ui_libraryfilterwidget.h:94
 msgid "Added this year"
-msgstr "今年追加されました"
+msgstr "今年追加されたもの"
 
+#: ../bin/src/ui_libraryfilterwidget.h:88
 msgid "Added today"
-msgstr "今日追加されました"
+msgstr "今日追加されたもの"
 
+#: ../bin/src/ui_libraryfilterwidget.h:90
+#: ../bin/src/ui_libraryfilterwidget.h:92
 msgid "Added within three months"
-msgstr "3 ヶ月以内に追加されました"
+msgstr "3 ヶ月以内に追加されたもの"
 
+#: internet/groovesharkservice.cpp:1392
+msgid "Adding song to My Music"
+msgstr "曲をマイミュージックに追加中"
+
+#: internet/groovesharkservice.cpp:1369
+msgid "Adding song to favorites"
+msgstr "曲をお気に入りに追加中"
+
+#: library/libraryfilterwidget.cpp:116
 msgid "Advanced grouping..."
 msgstr "高度なグループ化..."
 
+#: ../bin/src/ui_podcastsettingspage.h:247
+msgid "After "
+msgstr ""
+
+#: ../bin/src/ui_organisedialog.h:190
 msgid "After copying..."
 msgstr "コピー後..."
 
+#: playlist/playlist.cpp:1194 ui/organisedialog.cpp:55
+#: ui/qtsystemtrayicon.cpp:252 ../bin/src/ui_groupbydialog.h:129
+#: ../bin/src/ui_groupbydialog.h:142 ../bin/src/ui_groupbydialog.h:155
+#: ../bin/src/ui_albumcoversearcher.h:111
+#: ../bin/src/ui_albumcoversearcher.h:113 ../bin/src/ui_edittagdialog.h:656
+#: ../bin/src/ui_trackselectiondialog.h:209
 msgid "Album"
 msgstr "アルバム"
 
+#: ../bin/src/ui_playbacksettingspage.h:279
 msgid "Album (ideal loudness for all tracks)"
-msgstr "アルバム (すべてのトラックで理想の音量)"
+msgstr "アルバム (すべてのトラックで最適な音量)"
 
+#: playlist/playlist.cpp:1200 ui/organisedialog.cpp:58
+#: ../bin/src/ui_groupbydialog.h:131 ../bin/src/ui_groupbydialog.h:144
+#: ../bin/src/ui_groupbydialog.h:157 ../bin/src/ui_edittagdialog.h:658
 msgid "Album artist"
-msgstr "アルバム アーティスト"
-
-msgid "Album info on jamendo.com..."
-msgstr "jamendo.com のアルバム情報"
-
-msgid "Albumartist"
 msgstr "アルバムアーティスト"
 
+#: ../bin/src/ui_appearancesettingspage.h:279
+msgid "Album cover"
+msgstr "アルバムカバー"
+
+#: internet/jamendoservice.cpp:414
+msgid "Album info on jamendo.com..."
+msgstr "jamendo.com のアルバム情報..."
+
+#: ui/albumcovermanager.cpp:122
 msgid "Albums with covers"
-msgstr "カバー付きアーティスト"
+msgstr "カバー付きのアルバム"
 
+#: ui/albumcovermanager.cpp:123
 msgid "Albums without covers"
-msgstr "カバーなしのアーティスト"
+msgstr "カバーなしのアルバム"
 
+#: ui/mainwindow.cpp:154
 msgid "All Files (*)"
 msgstr "すべてのファイル (*)"
 
+#: ../bin/src/ui_mainwindow.h:686
 msgid "All Glory to the Hypnotoad!"
 msgstr "All Glory to the Hypnotoad!"
 
+#: ui/albumcovermanager.cpp:121
 msgid "All albums"
 msgstr "すべてのアルバム"
 
+#: ui/albumcovermanager.cpp:246
 msgid "All artists"
 msgstr "すべてのアーティスト"
 
+#: ui/albumcoverchoicecontroller.cpp:47
 msgid "All files (*)"
 msgstr "すべてのファイル (*)"
 
+#: playlistparsers/playlistparser.cpp:61
 #, qt-format
 msgid "All playlists (%1)"
 msgstr "すべてのプレイリスト (%1)"
 
+#: ui/about.cpp:73
 msgid "All the translators"
-msgstr ""
+msgstr "すべての翻訳者"
 
+#: library/library.cpp:82
 msgid "All tracks"
 msgstr "すべてのトラック"
 
+#: ../bin/src/ui_transcoderoptionsaac.h:140
 msgid "Allow mid/side encoding"
-msgstr ""
+msgstr "M/S エンコードを許可"
 
+#: ../bin/src/ui_transcodedialog.h:215
 msgid "Alongside the originals"
 msgstr "元と同じ"
 
+#: ../bin/src/ui_behavioursettingspage.h:180
 msgid "Always hide the main window"
-msgstr "常にメイン ウィンドウを非表示にする"
+msgstr "メインウィンドウを常に隠す"
 
+#: ../bin/src/ui_behavioursettingspage.h:179
 msgid "Always show the main window"
-msgstr "常にメイン ウィンドウを表示する"
+msgstr "メインウィンドウを常に表示する"
 
+#: ../bin/src/ui_behavioursettingspage.h:188
+#: ../bin/src/ui_behavioursettingspage.h:202
 msgid "Always start playing"
-msgstr ""
+msgstr "常に再生を開始する"
 
+#: internet/spotifyblobdownloader.cpp:60
 msgid ""
 "An additional plugin is required to use Spotify in Clementine.  Would you "
 "like to download and install it now?"
-msgstr ""
+msgstr "Clementine で Spotify を利用するには追加のプラグインが必要です。今すぐダウンロードしてインストールしますか?"
 
+#: devices/afcdevice.cpp:63
 msgid "An error occurred copying the iTunes database from the device"
-msgstr "デバイスからの iTunes データベースのコピー エラーです"
+msgstr "iTunes のデータベースをデバイスからコピー中にエラーが発生しました"
 
+#: devices/afcdevice.cpp:157
 msgid "An error occurred copying the iTunes database onto the device"
-msgstr "デバイスへの iTunes データベースのコピー エラーです"
+msgstr "iTunes データベースをデバイスへコピー中にエラーが発生しました"
 
+#: devices/gpodloader.cpp:61
 msgid "An error occurred loading the iTunes database"
-msgstr "iTunes データベースの読み込みエラーです"
+msgstr "iTunes のデータベースを読み込み中にエラーが発生しました"
 
+#: ui/edittagdialog.cpp:657
 #, qt-format
 msgid "An error occurred writing metadata to '%1'"
-msgstr "'%1' へのメタデータの書き込み中にエラーが発生しました"
+msgstr "メタデータを '%1' へ書き込み中にエラーが発生しました"
 
-#, qt-format
-msgid "An unknown last.fm error occurred: %1"
-msgstr "不明な last.fm エラーが発生しました: %1"
+#: internet/subsonicsettingspage.cpp:100
+msgid "An unspecified error occurred."
+msgstr ""
 
+#: ui/about.cpp:77
 msgid "And:"
 msgstr "そして:"
 
+#: moodbar/moodbarrenderer.cpp:156
+msgid "Angry"
+msgstr ""
+
+#: ../bin/src/ui_songinfosettingspage.h:180
+#: ../bin/src/ui_appearancesettingspage.h:266
 msgid "Appearance"
 msgstr "外観"
 
+#: core/commandlineoptions.cpp:157
 msgid "Append files/URLs to the playlist"
-msgstr "ファイル/URLをプレイリストに追加する"
+msgstr "ファイル・URL をプレイリストに追加する"
 
+#: devices/deviceview.cpp:211 globalsearch/globalsearchview.cpp:433
+#: internet/internetservice.cpp:56 library/libraryview.cpp:367
+#: widgets/fileviewlist.cpp:32
 msgid "Append to current playlist"
-msgstr ""
+msgstr "現在のプレイリストに追加"
 
+#: ../bin/src/ui_behavioursettingspage.h:193
 msgid "Append to the playlist"
-msgstr ""
+msgstr "プレイリストに追加"
 
+#: ../bin/src/ui_playbacksettingspage.h:282
 msgid "Apply compression to prevent clipping"
-msgstr "圧縮を適用してクリップを禁止する"
+msgstr "クリップ防止のために音量を制限する"
 
+#: ui/equalizer.cpp:191
 #, qt-format
 msgid "Are you sure you want to delete the \"%1\" preset?"
-msgstr "\"%1\" プリセットを削除してもよろしいですか?"
+msgstr "プリセット \"%1\" を削除してもよろしいですか?"
 
+#: internet/groovesharkservice.cpp:1290
+msgid "Are you sure you want to delete this playlist?"
+msgstr "本当にこのプレイリストを削除しますか?"
+
+#: ui/edittagdialog.cpp:763
 msgid "Are you sure you want to reset this song's statistics?"
 msgstr "この曲の統計をリセットしてもよろしいですか?"
 
+#: playlist/playlist.cpp:1193 ui/organisedialog.cpp:56
+#: ui/qtsystemtrayicon.cpp:250 ../bin/src/ui_groupbydialog.h:130
+#: ../bin/src/ui_groupbydialog.h:143 ../bin/src/ui_groupbydialog.h:156
+#: ../bin/src/ui_albumcoversearcher.h:107
+#: ../bin/src/ui_albumcoversearcher.h:109 ../bin/src/ui_edittagdialog.h:654
+#: ../bin/src/ui_trackselectiondialog.h:210
+#: ../bin/src/ui_lastfmstationdialog.h:96
 msgid "Artist"
 msgstr "アーティスト"
 
+#: ui/mainwindow.cpp:239
 msgid "Artist info"
 msgstr "アーティストの情報"
 
+#: internet/lastfmservice.cpp:208
 msgid "Artist radio"
-msgstr "アーティスト ラジオ"
+msgstr "アーティストラジオ"
 
+#: songinfo/echonesttags.cpp:59
 msgid "Artist tags"
-msgstr "アーティスト タグ"
+msgstr "アーティストタグ"
 
+#: ui/organisedialog.cpp:57
 msgid "Artist's initial"
 msgstr "アーティストの頭文字"
 
+#: ../bin/src/ui_transcodedialog.h:210
 msgid "Audio format"
 msgstr "オーディオ形式"
 
-msgid "Audio type"
-msgstr ""
-
-msgid "Authenticating..."
-msgstr "認証しています..."
-
+#: internet/digitallyimportedsettingspage.cpp:82
+#: internet/magnatunesettingspage.cpp:113 internet/lastfmservice.cpp:427
+#: internet/lastfmsettingspage.cpp:78
 msgid "Authentication failed"
-msgstr "認証が失敗しました"
+msgstr "認証に失敗しました"
 
+#: ../bin/src/ui_podcastinfowidget.h:192
+msgid "Author"
+msgstr "作者"
+
+#: ui/about.cpp:64
 msgid "Authors"
 msgstr "作者"
 
+#: ../bin/src/ui_transcoderoptionsspeex.h:227
 msgid "Auto"
-msgstr ""
+msgstr "自動"
 
+#: ../bin/src/ui_librarysettingspage.h:161
 msgid "Automatic updating"
 msgstr "自動更新中"
 
+#: ../bin/src/ui_librarysettingspage.h:170
 msgid "Automatically open single categories in the library tree"
-msgstr "自動的にライブラリ ツリーから単一のカテゴリを開く"
+msgstr "下位カテゴリが 1 つしかないときは、ライブラリツリーを自動で開く"
 
+#: widgets/freespacebar.cpp:45
 msgid "Available"
 msgstr "空き"
 
+#: ../bin/src/ui_transcoderoptionsspeex.h:221
 msgid "Average bitrate"
-msgstr ""
+msgstr "平均ビットレート"
 
+#: covers/coversearchstatisticsdialog.cpp:70
 msgid "Average image size"
-msgstr ""
+msgstr "平均画像サイズ"
 
+#: podcasts/addpodcastdialog.cpp:80
+msgid "BBC Podcasts"
+msgstr "BBC ポッドキャスト"
+
+#: playlist/playlist.cpp:1209 ui/organisedialog.cpp:62
+#: ../bin/src/ui_edittagdialog.h:638
 msgid "BPM"
 msgstr "BPM"
 
+#: ../bin/src/ui_backgroundstreamssettingspage.h:56
 msgid "Background Streams"
-msgstr "バックグラウンド ストリーム"
+msgstr "バックグラウンドストリーム"
 
+#: ../bin/src/ui_notificationssettingspage.h:425
 msgid "Background color"
 msgstr "背景色"
 
+#: ../bin/src/ui_appearancesettingspage.h:274
+msgid "Background image"
+msgstr "背景画像"
+
+#: ../bin/src/ui_notificationssettingspage.h:424
 msgid "Background opacity"
 msgstr "背景の不透明度"
 
+#: core/database.cpp:672
+msgid "Backing up database"
+msgstr "データベースをバックアップ中"
+
+#: ../bin/src/ui_mainwindow.h:659
 msgid "Ban"
-msgstr "Ban"
+msgstr "はじき出す"
 
+#: analyzers/baranalyzer.cpp:19
 msgid "Bar analyzer"
-msgstr "Bar アナライザー"
+msgstr "バー表示"
 
+#: ../bin/src/ui_notificationssettingspage.h:428
 msgid "Basic Blue"
-msgstr "Basic Blue"
+msgstr "標準のブルー"
 
+#: ../bin/src/ui_digitallyimportedsettingspage.h:167
+msgid "Basic audio type"
+msgstr "基本のオーディオの種類"
+
+#: ../bin/src/ui_behavioursettingspage.h:169
 msgid "Behavior"
 msgstr "動作"
 
+#: ../bin/src/ui_transcoderoptionsflac.h:83
 msgid "Best"
-msgstr ""
+msgstr "良"
 
+#: songinfo/echonestbiographies.cpp:83
 #, qt-format
 msgid "Biography from %1"
 msgstr "%1 からのバイオグラフィ"
 
+#: playlist/playlist.cpp:1210 ../bin/src/ui_edittagdialog.h:640
 msgid "Bit rate"
-msgstr "ビット レート"
+msgstr "ビットレート"
 
+#: ui/organisedialog.cpp:67 ../bin/src/ui_transcoderoptionsaac.h:129
+#: ../bin/src/ui_transcoderoptionsmp3.h:194
+#: ../bin/src/ui_transcoderoptionsopus.h:80
+#: ../bin/src/ui_transcoderoptionsspeex.h:218
+#: ../bin/src/ui_transcoderoptionswma.h:79
 msgid "Bitrate"
 msgstr "ビットレート"
 
+#: analyzers/blockanalyzer.cpp:22
 msgid "Block analyzer"
-msgstr "Block アナライザー"
+msgstr "ブロック表示"
 
+#: ../bin/src/ui_transcoderoptionsaac.h:141
 msgid "Block type"
-msgstr ""
+msgstr "ブロックタイプ"
 
+#: devices/ilister.cpp:122
 msgid "Bluetooth MAC Address"
 msgstr "Bluetooth の MAC アドレス"
 
+#: ../bin/src/ui_notificationssettingspage.h:421
 msgid "Body"
-msgstr ""
+msgstr "本文"
 
+#: analyzers/boomanalyzer.cpp:8
 msgid "Boom analyzer"
-msgstr "Boom アナライザー"
+msgstr "ブームアナライザー"
 
+#: ../bin/src/ui_magnatunedownloaddialog.h:146
+#: ../bin/src/ui_podcastsettingspage.h:242
+#: ../bin/src/ui_appearancesettingspage.h:282
 msgid "Browse..."
 msgstr "参照..."
 
+#: ../bin/src/ui_playbacksettingspage.h:291
 msgid "Buffer duration"
 msgstr "バッファの長さ"
 
+#: engines/gstengine.cpp:821
+msgid "Buffering"
+msgstr "バッファ中"
+
+#: ../bin/src/ui_globalsearchview.h:211
+msgid "But these sources are disabled:"
+msgstr "ただし次のソースは無効になっています:"
+
+#: ../bin/src/ui_wiimotesettingspage.h:192
 msgid "Buttons"
 msgstr "ボタン"
 
+#: core/song.cpp:337
 msgid "CDDA"
-msgstr ""
+msgstr "オーディオ CD"
 
+#: library/library.cpp:98
 msgid "CUE sheet support"
-msgstr ""
+msgstr "CUE シートのサポート"
 
+#: internet/spotifyblobdownloader.cpp:44
 msgid "Cancel"
-msgstr ""
+msgstr "キャンセル"
 
+#: ../bin/src/ui_edittagdialog.h:634
 msgid "Change cover art"
-msgstr "カバー アートの変更"
+msgstr "カバーアートの変更"
 
+#: songinfo/songinfotextview.cpp:83
 msgid "Change font size..."
-msgstr "フォント サイズの変更..."
+msgstr "フォントサイズの変更..."
 
+#: core/globalshortcuts.cpp:61
 msgid "Change repeat mode"
-msgstr ""
+msgstr "リピートモードの変更"
 
+#: ../bin/src/ui_globalshortcutssettingspage.h:179
 msgid "Change shortcut..."
 msgstr "ショートカットの変更..."
 
+#: core/globalshortcuts.cpp:60
 msgid "Change shuffle mode"
-msgstr ""
+msgstr "シャッフルモードの変更"
 
+#: core/commandlineoptions.cpp:163
 msgid "Change the language"
 msgstr "言語の変更"
 
+#: ../bin/src/ui_playbacksettingspage.h:294
+msgid ""
+"Changing mono playback preference will be effective for the next playing "
+"songs"
+msgstr "モノラル再生の設定変更は次に再生する曲から反映されます"
+
+#: ../bin/src/ui_podcastsettingspage.h:228
+msgid "Check for new episodes"
+msgstr "新しいエピソードのチェック"
+
+#: ui/mainwindow.cpp:587
 msgid "Check for updates..."
 msgstr "更新のチェック..."
 
+#: smartplaylists/wizard.cpp:86
 msgid "Choose a name for your smart playlist"
 msgstr "スマートプレイリストの名前を選択してください"
 
+#: ../bin/src/ui_playbacksettingspage.h:287
 msgid "Choose automatically"
 msgstr "自動的に選択する"
 
+#: ../bin/src/ui_notificationssettingspage.h:433
 msgid "Choose color..."
 msgstr "色の選択..."
 
+#: ../bin/src/ui_notificationssettingspage.h:434
 msgid "Choose font..."
-msgstr ""
+msgstr "フォントの選択..."
 
+#: ../bin/src/ui_visualisationselector.h:113
 msgid "Choose from the list"
 msgstr "一覧から選択する"
 
+#: smartplaylists/querywizardplugin.cpp:155
 msgid "Choose how the playlist is sorted and how many songs it will contain."
-msgstr "プレイリストの並べ替えの方法と何曲含めるかを選択します。"
+msgstr "プレイリストの並び順と、プレイリスト内に何曲含めるかを選択してください。"
 
-msgid "Choose manual cover"
-msgstr "マニュアル カバーの選択"
+#: podcasts/podcastsettingspage.cpp:132
+msgid "Choose podcast download directory"
+msgstr "ポッドキャストのダウンロードディレクトリを選択してください"
 
+#: ../bin/src/ui_songinfosettingspage.h:188
 msgid ""
 "Choose the websites you want Clementine to use when searching for lyrics."
-msgstr "歌詞の検索時に Clementine が使用する Web サイトを選択します。"
+msgstr "歌詞の検索時に Clementine が使用する Web サイトを選択してください。"
 
+#: ui/equalizer.cpp:109
 msgid "Classical"
-msgstr "Classical"
+msgstr "クラシック"
 
+#: ../bin/src/ui_podcastsettingspage.h:243
+msgid "Cleaning up"
+msgstr "整理"
+
+#: transcoder/transcodedialog.cpp:60 widgets/lineedit.cpp:41
+#: ../bin/src/ui_queuemanager.h:139
 msgid "Clear"
 msgstr "クリア"
 
+#: ../bin/src/ui_mainwindow.h:661 ../bin/src/ui_mainwindow.h:663
 msgid "Clear playlist"
-msgstr "プレイリストのクリア"
+msgstr "プレイリストをクリア"
 
+#: smartplaylists/searchtermwidget.cpp:329 ../bin/src/ui_mainwindow.h:644
+#: visualisations/visualisationcontainer.cpp:211
+#: ../bin/src/ui_visualisationoverlay.h:183
 msgid "Clementine"
 msgstr "Clementine"
 
+#: ../bin/src/ui_errordialog.h:93
 msgid "Clementine Error"
-msgstr "Clementine エラー"
+msgstr "Clementine のエラー"
 
+#: ../bin/src/ui_notificationssettingspage.h:429
 msgid "Clementine Orange"
-msgstr "Clementine Orange"
+msgstr "Clementine オレンジ"
 
+#: visualisations/visualisationcontainer.cpp:77
+#: visualisations/visualisationcontainer.cpp:151
 msgid "Clementine Visualization"
-msgstr "Clementine 視覚化"
+msgstr "Clementine ビジュアライゼーション"
 
+#: ../bin/src/ui_deviceproperties.h:376
 msgid ""
 "Clementine can automatically convert the music you copy to this device into "
 "a format that it can play."
-msgstr ""
-"Clementine はこのデバイスへコピーするミュージックを再生可能な形式に自動的に変"
-"換することができます。"
+msgstr "Clementine はこのデバイスへコピーする際、このデバイスで再生可能な形式に自動で変換できます。"
 
-msgid ""
-"Clementine can be controlled remotely by an Android phone.  To enable this "
-"feature log in with the same Google account that is configured on your phone."
-msgstr ""
+#: ../bin/src/ui_dropboxsettingspage.h:104
+msgid "Clementine can play music that you have uploaded to Dropbox"
+msgstr "Clementine は Dropbox にアップロードしたミュージックを再生できます"
 
+#: ../bin/src/ui_googledrivesettingspage.h:104
+msgid "Clementine can play music that you have uploaded to Google Drive"
+msgstr "Clementine は Google Drive にアップロードしたミュージックを再生できます"
+
+#: ../bin/src/ui_ubuntuonesettingspage.h:111
+msgid "Clementine can play music that you have uploaded to Ubuntu One"
+msgstr "Clementine は Ubuntu One にアップロードしたミュージックを再生できます"
+
+#: ../bin/src/ui_notificationssettingspage.h:403
 msgid "Clementine can show a message when the track changes."
-msgstr "Clementine はトラックの変更時にメッセージを表示します。"
+msgstr "Clementine はトラックの変更時にメッセージを表示できます。"
 
+#: ../bin/src/ui_podcastsettingspage.h:250
+msgid ""
+"Clementine can synchronize your subscription list with your other computers "
+"and podcast applications.  <a href=\"https://gpodder.net/register/\">Create "
+"an account</a>."
+msgstr "Clementine は購読リストを他のコンピューターやポッドキャストアプリケーションと同期できます。  <a href=\"https://gpodder.net/register/\">アカウントを作成する</a>。"
+
+#: visualisations/projectmvisualisation.cpp:128
 msgid ""
 "Clementine could not load any projectM visualisations.  Check that you have "
 "installed Clementine properly."
-msgstr ""
-"Clementine はいかなる projectM の視覚化も読み込むことができませんでした。"
-"Clementine が適切にインストールされているかチェックしてください。"
+msgstr "Clementine は projectM のビジュアライゼーションを読み込めませんでした。Clementine が正しくインストールされているか確認してください。"
 
+#: internet/lastfmsettingspage.cpp:104
 msgid ""
 "Clementine couldn't fetch your subscription status since there are problems "
-"with your connection. Played tracks will be cached and sent later to Last.fm."
-msgstr ""
+"with your connection. Played tracks will be cached and sent later to "
+"Last.fm."
+msgstr "接続に問題があるため、あなたの購読情報を取得できませんでした。再生したトラックはキャッシュされ、後で Last.fm に送信されます。"
 
+#: widgets/prettyimage.cpp:201
 msgid "Clementine image viewer"
-msgstr "Clementine イメージ ビューアー"
+msgstr "Clementine 画像ビューアー"
 
+#: ../bin/src/ui_trackselectiondialog.h:206
 msgid "Clementine was unable to find results for this file"
-msgstr ""
+msgstr "このファイルの検索結果を見つけられませんでした。"
 
+#: ../bin/src/ui_globalsearchview.h:210
+msgid "Clementine will find music in:"
+msgstr "Clementine は次にあるミュージックを検索します:"
+
+#: library/libraryview.cpp:349
 msgid "Click here to add some music"
 msgstr "ミュージックを追加するにはここをクリックします"
 
+#: ../bin/src/ui_trackslider.h:72
 msgid "Click to toggle between remaining time and total time"
-msgstr ""
+msgstr "ここをクリックすると、残り時間と合計時間の表示を切り替えます"
 
+#: ../bin/src/ui_googledrivesettingspage.h:106
+#: ../bin/src/ui_dropboxsettingspage.h:106
+msgid ""
+"Clicking the Login button will open a web browser.  You should return to "
+"Clementine after you have logged in."
+msgstr "ログインボタンをクリックするとウェブブラウザーが開きます。ログインした後に Clementine に戻る必要があります。"
+
+#: widgets/didyoumean.cpp:37
 msgid "Close"
-msgstr ""
+msgstr "閉じる"
 
+#: playlist/playlisttabbar.cpp:47
+msgid "Close playlist"
+msgstr "プレイリストを閉じる"
+
+#: visualisations/visualisationcontainer.cpp:127
 msgid "Close visualization"
-msgstr "視覚化を閉じる"
+msgstr "ビジュアライゼーションを閉じる"
 
+#: internet/magnatunedownloaddialog.cpp:280
 msgid "Closing this window will cancel the download."
-msgstr "このウィンドウを閉じるとダウンロードを取り消します。"
+msgstr "このウィンドウを閉じるとダウンロードをキャンセルします。"
 
+#: ui/albumcovermanager.cpp:200
 msgid "Closing this window will stop searching for album covers."
-msgstr "このウィンドウを閉じるとアルバム カバーの検索を中止します。"
+msgstr "このウィンドウを閉じるとアルバムカバーの検索を中止します。"
 
+#: ui/equalizer.cpp:110
 msgid "Club"
-msgstr "Club"
+msgstr "クラブ"
 
+#: devices/ilister.cpp:117
 msgid "Color"
 msgstr "色"
 
-msgid "Comma separated list of class:level, level is 0-3"
-msgstr ""
+#: ../bin/src/ui_appearancesettingspage.h:267
+msgid "Colors"
+msgstr "色"
 
+#: core/commandlineoptions.cpp:166
+msgid "Comma separated list of class:level, level is 0-3"
+msgstr "コンマ区切りの クラス:レベル のリスト、レベルは 0-3"
+
+#: playlist/playlist.cpp:1219 smartplaylists/searchterm.cpp:284
+#: ui/organisedialog.cpp:65 ../bin/src/ui_edittagdialog.h:661
 msgid "Comment"
 msgstr "コメント"
 
+#: ../bin/src/ui_edittagdialog.h:662
 msgid "Complete tags automatically"
-msgstr ""
+msgstr "タグの自動補完"
 
+#: ../bin/src/ui_mainwindow.h:713
 msgid "Complete tags automatically..."
-msgstr ""
+msgstr "タグを自動補完..."
 
+#: playlist/playlist.cpp:1201 ui/organisedialog.cpp:59
+#: ../bin/src/ui_groupbydialog.h:132 ../bin/src/ui_groupbydialog.h:145
+#: ../bin/src/ui_groupbydialog.h:158 ../bin/src/ui_edittagdialog.h:659
 msgid "Composer"
 msgstr "作曲者"
 
-msgid "Configure GrooveShark..."
-msgstr ""
+#: internet/searchboxwidget.cpp:42
+#, qt-format
+msgid "Configure %1..."
+msgstr "%1 の設定..."
 
+#: internet/groovesharkservice.cpp:550
+msgid "Configure Grooveshark..."
+msgstr "Grooveshark の設定..."
+
+#: internet/lastfmservice.cpp:126
 msgid "Configure Last.fm..."
-msgstr "Last.fm の構成..."
+msgstr "Last.fm の設定..."
 
+#: internet/magnatuneservice.cpp:279
 msgid "Configure Magnatune..."
-msgstr "Magnatune の構成..."
+msgstr "Magnatune の設定..."
 
+#: ../bin/src/ui_globalshortcutssettingspage.h:167
 msgid "Configure Shortcuts"
-msgstr "ショートカットの構成"
+msgstr "ショートカットの設定"
 
+#: internet/spotifyservice.cpp:526 internet/spotifyservice.cpp:538
 msgid "Configure Spotify..."
+msgstr "Spotify の設定..."
+
+#: internet/subsonicservice.cpp:92
+msgid "Configure Subsonic..."
 msgstr ""
 
+#: globalsearch/globalsearchview.cpp:140 globalsearch/globalsearchview.cpp:446
+msgid "Configure global search..."
+msgstr "全体検索の設定..."
+
+#: ui/mainwindow.cpp:470
 msgid "Configure library..."
-msgstr "ライブラリの構成..."
+msgstr "ライブラリの設定..."
 
+#: podcasts/addpodcastdialog.cpp:67 podcasts/podcastservice.cpp:288
+msgid "Configure podcasts..."
+msgstr "ポッドキャストの設定..."
+
+#: internet/digitallyimportedservicebase.cpp:186
+#: ../bin/src/ui_globalsearchsettingspage.h:150
+#: internet/googledriveservice.cpp:193
 msgid "Configure..."
-msgstr ""
+msgstr "設定..."
 
+#: ../bin/src/ui_wiimotesettingspage.h:186
 msgid "Connect Wii Remotes using active/deactive action"
-msgstr ""
-"アクティブ/非アクティブの切り替えアクションを使用して Wii Remote を接続する"
+msgstr "アクティブ・非アクティブの切り替えアクションを使用して Wii リモコンを接続する"
 
+#: devices/devicemanager.cpp:339 devices/devicemanager.cpp:343
 msgid "Connect device"
 msgstr "デバイスの接続"
 
+#: internet/spotifyservice.cpp:253
 msgid "Connecting to Spotify"
-msgstr ""
+msgstr "Spotify に接続中"
 
+#: ../bin/src/ui_console.h:80 ../bin/src/ui_mainwindow.h:689
+msgid "Console"
+msgstr "コンソール"
+
+#: ../bin/src/ui_transcoderoptionsmp3.h:196
 msgid "Constant bitrate"
-msgstr ""
+msgstr "固定ビットレート"
 
+#: ../bin/src/ui_deviceproperties.h:379
 msgid "Convert all music"
-msgstr "すべてのミュージックを変換する"
+msgstr "すべての曲を変換する"
 
+#: ../bin/src/ui_deviceproperties.h:378
 msgid "Convert any music that the device can't play"
-msgstr "デバイスが再生できないすべてのミュージックを変換する"
+msgstr "デバイスが再生できないすべての曲を変換する"
 
+#: internet/groovesharkservice.cpp:1170
+msgid "Copy to clipboard"
+msgstr "クリップボードにコピー"
+
+#: library/libraryview.cpp:389 ui/mainwindow.cpp:503
+#: widgets/fileviewlist.cpp:44
 msgid "Copy to device..."
 msgstr "デバイスへコピー..."
 
+#: devices/deviceview.cpp:218 ui/mainwindow.cpp:500
+#: widgets/fileviewlist.cpp:39
 msgid "Copy to library..."
 msgstr "ライブラリへコピー..."
 
+#: devices/afctransfer.cpp:50
 msgid "Copying iPod database"
-msgstr "iPod データベースのコピー中"
+msgstr "iPod データベースをコピーしています"
 
+#: ../bin/src/ui_podcastinfowidget.h:194
+msgid "Copyright"
+msgstr "著作権"
+
+#: internet/subsonicsettingspage.cpp:78
+msgid ""
+"Could not connect to Subsonic, check server URL. Example: "
+"http://localhost:4040/"
+msgstr ""
+
+#: transcoder/transcoder.cpp:64
 #, qt-format
 msgid ""
 "Could not create the GStreamer element \"%1\" - make sure you have all the "
 "required GStreamer plugins installed"
-msgstr ""
-"GStreamer 要素 \"%1\" を作成できませんでした - 必要な GStreamer プラグインが"
-"すべてインストールされていることを確認してください"
+msgstr "GStreamer 要素 \"%1\" を作成できませんでした。必要な GStreamer プラグインがすべてインストールされていることを確認してください"
 
+#: transcoder/transcoder.cpp:432
 #, qt-format
 msgid ""
 "Couldn't find a muxer for %1, check you have the correct GStreamer plugins "
 "installed"
-msgstr ""
-"%1 のミュクサーを見つけることができませんでした、正しい GStreamer プラグイン"
-"がインストールされていることをチェックしてください"
+msgstr "%1 のミュクサーを見つけることができませんでした。正しい GStreamer プラグインがインストールされていることをチェックしてください"
 
+#: transcoder/transcoder.cpp:426
 #, qt-format
 msgid ""
 "Couldn't find an encoder for %1, check you have the correct GStreamer "
 "plugins installed"
-msgstr ""
-"%1 のエンコーダーを見つけることができませんでした、正しい GStreamer プラグイ"
-"ンがインストールされていることをチェックしてください"
+msgstr "%1 のエンコーダーを見つけることができませんでした。正しい GStreamer プラグインがインストールされていることをチェックしてください"
 
+#: internet/lastfmservice.cpp:875
 msgid "Couldn't load the last.fm radio station"
 msgstr "last.fm ラジオ局を読み込めませんでした"
 
+#: internet/magnatunedownloaddialog.cpp:203
 #, qt-format
 msgid "Couldn't open output file %1"
 msgstr "出力ファイル %1 を開けませんでした"
 
+#: internet/cloudfileservice.cpp:87 ../bin/src/ui_albumcovermanager.h:149
+#: ../bin/src/ui_albumcoversearcher.h:105 ../bin/src/ui_mainwindow.h:684
+#: internet/googledriveservice.cpp:189
 msgid "Cover Manager"
-msgstr "カバー マネージャー"
+msgstr "カバーマネージャー"
 
+#: ui/edittagdialog.cpp:437
 msgid "Cover art from embedded image"
-msgstr "埋め込みイメージからのカバー アート"
+msgstr "埋め込み画像からのカバーアート"
 
+#: ui/edittagdialog.cpp:439
 #, qt-format
 msgid "Cover art loaded automatically from %1"
-msgstr "%1 から自動的に読み込まれたカバー アート"
+msgstr "%1 から自動的に読み込まれたカバーアート"
 
+#: ui/edittagdialog.cpp:432
 msgid "Cover art manually unset"
-msgstr "カバー アートは手動で未設定にされています"
+msgstr "カバーアートは手動で未設定にされています"
 
+#: ui/edittagdialog.cpp:441
 msgid "Cover art not set"
-msgstr "カバー アートが設定されていません"
+msgstr "カバーアートが設定されていません"
 
+#: ui/edittagdialog.cpp:435
 #, qt-format
 msgid "Cover art set from %1"
-msgstr "%1 からのカバー アート セット"
+msgstr "%1 からのカバーアートセット"
 
+#: covers/coversearchstatisticsdialog.cpp:60 ui/albumcoversearcher.cpp:106
 #, qt-format
 msgid "Covers from %1"
-msgstr ""
+msgstr "%1 からのカバー"
 
+#: internet/groovesharkservice.cpp:518 internet/groovesharkservice.cpp:1242
+msgid "Create a new Grooveshark playlist"
+msgstr "新規 Grooveshark プレイリストの作成"
+
+#: ../bin/src/ui_playbacksettingspage.h:269
 msgid "Cross-fade when changing tracks automatically"
-msgstr "トラックの変更時に自動的にクロスフェードする"
+msgstr "トラックが自動で変更するときにクロスフェードする"
 
+#: ../bin/src/ui_playbacksettingspage.h:268
 msgid "Cross-fade when changing tracks manually"
-msgstr "トラックの変更時に手動でクロスフェードする"
+msgstr "トラックを手動で変更したときにクロスフェードする"
 
+#: ../bin/src/ui_mainwindow.h:656
 msgid "Ctrl+Alt+V"
 msgstr "Ctrl+Alt+V"
 
+#: ../bin/src/ui_mainwindow.h:660
 msgid "Ctrl+B"
 msgstr "Ctrl+B"
 
+#: ../bin/src/ui_queuemanager.h:133
 msgid "Ctrl+Down"
-msgstr ""
+msgstr "Ctrl+Down"
 
+#: ../bin/src/ui_mainwindow.h:667
 msgid "Ctrl+E"
 msgstr "Ctrl+E"
 
+#: ../bin/src/ui_mainwindow.h:677
 msgid "Ctrl+H"
 msgstr "Ctrl+H"
 
+#: ../bin/src/ui_mainwindow.h:697
 msgid "Ctrl+J"
 msgstr "Ctrl+J"
 
+#: ../bin/src/ui_queuemanager.h:141 ../bin/src/ui_mainwindow.h:665
 msgid "Ctrl+K"
 msgstr "Ctrl+K"
 
+#: ../bin/src/ui_mainwindow.h:658
 msgid "Ctrl+L"
 msgstr "Ctrl+L"
 
+#: ../bin/src/ui_mainwindow.h:711
 msgid "Ctrl+M"
 msgstr "Ctrl+M"
 
+#: ../bin/src/ui_mainwindow.h:699
 msgid "Ctrl+N"
 msgstr "Ctrl+N"
 
+#: ../bin/src/ui_mainwindow.h:681
 msgid "Ctrl+O"
 msgstr "Ctrl+O"
 
+#: ../bin/src/ui_mainwindow.h:673
 msgid "Ctrl+P"
 msgstr "Ctrl+P"
 
+#: ../bin/src/ui_mainwindow.h:654
 msgid "Ctrl+Q"
 msgstr "Ctrl+Q"
 
+#: ../bin/src/ui_mainwindow.h:701
 msgid "Ctrl+S"
 msgstr "Ctrl+S"
 
+#: ../bin/src/ui_mainwindow.h:679
 msgid "Ctrl+Shift+A"
 msgstr "Ctrl+Shift+A"
 
+#: ../bin/src/ui_mainwindow.h:703
 msgid "Ctrl+Shift+O"
 msgstr "Ctrl+Shift+O"
 
+#: ../bin/src/ui_mainwindow.h:714
 msgid "Ctrl+T"
-msgstr ""
+msgstr "Ctrl+T"
 
+#: ../bin/src/ui_queuemanager.h:129
 msgid "Ctrl+Up"
-msgstr ""
+msgstr "Ctrl+Up"
 
+#: ui/equalizer.cpp:108 ../bin/src/ui_lastfmstationdialog.h:98
 msgid "Custom"
 msgstr "カスタム"
 
+#: ../bin/src/ui_appearancesettingspage.h:281
+msgid "Custom image:"
+msgstr "カスタム画像:"
+
+#: ../bin/src/ui_notificationssettingspage.h:416
 msgid "Custom message settings"
-msgstr ""
+msgstr "カスタムメッセージの設定"
 
+#: internet/lastfmservice.cpp:216
 msgid "Custom radio"
-msgstr "カスタム ラジオ"
+msgstr "カスタムラジオ"
 
+#: ../bin/src/ui_notificationssettingspage.h:430
 msgid "Custom..."
 msgstr "カスタム..."
 
+#: devices/devicekitlister.cpp:123
 msgid "DBus path"
 msgstr "DBus のパス"
 
+#: ui/equalizer.cpp:111
 msgid "Dance"
 msgstr "Dance"
 
+#: core/database.cpp:626
+msgid ""
+"Database corruption detected. Please read https://code.google.com/p"
+"/clementine-player/wiki/DatabaseCorruption for instructions on how to "
+"recover your database"
+msgstr "データベースの破損が見つかりました。データベースの復旧方法については https://code.google.com/p/clementine-player/wiki/DatabaseCorruption をお読みください"
+
+#: playlist/playlist.cpp:1217 ../bin/src/ui_edittagdialog.h:649
 msgid "Date created"
 msgstr "作成日時"
 
+#: playlist/playlist.cpp:1216 ../bin/src/ui_edittagdialog.h:648
 msgid "Date modified"
 msgstr "更新日時"
 
+#: smartplaylists/searchterm.cpp:307
 msgid "Days"
-msgstr ""
+msgstr "日"
 
+#: ../bin/src/ui_globalshortcutssettingspage.h:177
 msgid "De&fault"
 msgstr "既定(&F)"
 
+#: core/commandlineoptions.cpp:153
 msgid "Decrease the volume by 4%"
 msgstr "音量を 4% 下げます"
 
+#: core/globalshortcuts.cpp:53 wiimotedev/wiimotesettingspage.cpp:104
 msgid "Decrease volume"
 msgstr "音量を下げる"
 
+#: ../bin/src/ui_appearancesettingspage.h:275
+msgid "Default background image"
+msgstr "既定の背景画像"
+
+#: ../bin/src/ui_wiimotesettingspage.h:195
 msgid "Defaults"
 msgstr "既定"
 
+#: ../bin/src/ui_visualisationselector.h:115
 msgid "Delay between visualizations"
-msgstr "視覚化の間の遅延"
+msgstr "ビジュアライゼーションの間の遅延"
 
+#: playlist/playlistlistcontainer.cpp:75
+#: ../bin/src/ui_playlistlistcontainer.h:122
+msgid "Delete"
+msgstr "削除"
+
+#: internet/groovesharkservice.cpp:521 internet/groovesharkservice.cpp:1289
+msgid "Delete Grooveshark playlist"
+msgstr "Grooveshark プレイリストの削除"
+
+#: podcasts/podcastservice.cpp:274
+msgid "Delete downloaded data"
+msgstr "ダウンロード済みデータを削除"
+
+#: devices/deviceview.cpp:388 library/libraryview.cpp:608
+#: ui/mainwindow.cpp:1824 widgets/fileview.cpp:186
 msgid "Delete files"
 msgstr "ファイルの削除"
 
+#: devices/deviceview.cpp:220
 msgid "Delete from device..."
 msgstr "デバイスから削除..."
 
+#: library/libraryview.cpp:391 ui/mainwindow.cpp:504
+#: widgets/fileviewlist.cpp:45
 msgid "Delete from disk..."
 msgstr "ディスクから削除..."
 
+#: ../bin/src/ui_podcastsettingspage.h:244
+msgid "Delete played episodes"
+msgstr "再生したエピソードの削除"
+
+#: playlist/playlistlistcontainer.cpp:295
+msgid "Delete playlists"
+msgstr "プレイリストの削除"
+
+#: ui/equalizer.cpp:190 ../bin/src/ui_equalizer.h:124
 msgid "Delete preset"
 msgstr "プリセットの削除"
 
+#: library/libraryview.cpp:383
 msgid "Delete smart playlist"
 msgstr "スマートプレイリストを削除"
 
+#: ../bin/src/ui_organisedialog.h:194
 msgid "Delete the original files"
 msgstr "元のファイルを削除する"
 
+#: core/deletefiles.cpp:50
 msgid "Deleting files"
 msgstr "ファイルの削除中"
 
+#: ui/mainwindow.cpp:1307
 msgid "Dequeue selected tracks"
 msgstr "選択されたトラックをキューから削除する"
 
+#: ui/mainwindow.cpp:1305
 msgid "Dequeue track"
 msgstr "トラックをキューから削除"
 
+#: ../bin/src/ui_transcodedialog.h:212 ../bin/src/ui_organisedialog.h:189
 msgid "Destination"
 msgstr "フォルダー"
 
+#: ../bin/src/ui_transcodedialog.h:218
 msgid "Details..."
 msgstr "詳細..."
 
+#: devices/devicekitlister.cpp:126 devices/giolister.cpp:160
 msgid "Device"
 msgstr "デバイス"
 
+#: ../bin/src/ui_deviceproperties.h:368
 msgid "Device Properties"
 msgstr "デバイスのプロパティ"
 
+#: ../bin/src/ui_podcastsettingspage.h:254 devices/wmdmlister.cpp:360
 msgid "Device name"
 msgstr "デバイス名"
 
+#: devices/deviceview.cpp:207
 msgid "Device properties..."
 msgstr "デバイスのプロパティ..."
 
+#: ui/mainwindow.cpp:236
 msgid "Devices"
 msgstr "デバイス"
 
-msgid "Dialog"
-msgstr ""
-
+#: widgets/didyoumean.cpp:55
 msgid "Did you mean"
-msgstr ""
+msgstr "もしかして"
 
+#: ../bin/src/ui_digitallyimportedsettingspage.h:160
 msgid "Digitally Imported"
-msgstr ""
+msgstr "Digitally Imported"
 
+#: ../bin/src/ui_digitallyimportedsettingspage.h:164
 msgid "Digitally Imported password"
-msgstr ""
+msgstr "Digitally Imported のパスワード"
 
+#: ../bin/src/ui_digitallyimportedsettingspage.h:162
 msgid "Digitally Imported username"
-msgstr ""
+msgstr "Digitally Imported のユーザー名"
 
+#: ../bin/src/ui_networkproxysettingspage.h:159
 msgid "Direct internet connection"
 msgstr "インターネットに直接接続する"
 
+#: ../bin/src/ui_magnatunedownloaddialog.h:145
+#: ../bin/src/ui_transcodedialog.h:205
 msgid "Directory"
 msgstr "ディレクトリ"
 
+#: ../bin/src/ui_notificationssettingspage.h:412
 msgid "Disable duration"
+msgstr "長さを無効にする"
+
+#: ../bin/src/ui_appearancesettingspage.h:289
+msgid "Disable moodbar generation"
 msgstr ""
 
+#: globalsearch/searchproviderstatuswidget.cpp:47
+#: ../bin/src/ui_notificationssettingspage.h:405
 msgid "Disabled"
 msgstr "無効"
 
+#: playlist/playlist.cpp:1197 ui/organisedialog.cpp:61
+#: ../bin/src/ui_edittagdialog.h:655
 msgid "Disc"
 msgstr "ディスク"
 
+#: ../bin/src/ui_transcoderoptionsspeex.h:234
 msgid "Discontinuous transmission"
 msgstr ""
 
+#: internet/icecastfilterwidget.cpp:33 internet/searchboxwidget.cpp:30
+#: library/libraryfilterwidget.cpp:88 ../bin/src/ui_librarysettingspage.h:169
 msgid "Display options"
 msgstr "画面のオプション"
 
+#: core/commandlineoptions.cpp:161
 msgid "Display the on-screen-display"
 msgstr "OSD を表示する"
 
+#: ../bin/src/ui_mainwindow.h:712
 msgid "Do a full library rescan"
-msgstr ""
+msgstr "ライブラリ全体を再スキャン"
 
+#: ../bin/src/ui_deviceproperties.h:377
 msgid "Do not convert any music"
 msgstr "すべてのミュージックを変換しない"
 
+#: widgets/osd.cpp:286 ../bin/src/ui_playlistsequence.h:103
 msgid "Don't repeat"
-msgstr "繰り返さない"
+msgstr "リピートしない"
 
+#: library/libraryview.cpp:405
 msgid "Don't show in various artists"
 msgstr "さまざまなアーティストに表示しない"
 
+#: widgets/osd.cpp:273 ../bin/src/ui_playlistsequence.h:107
 msgid "Don't shuffle"
 msgstr "シャッフルしない"
 
+#: internet/magnatunedownloaddialog.cpp:282 ui/albumcovermanager.cpp:202
 msgid "Don't stop!"
 msgstr "中止しないでください!"
 
+#: devices/deviceview.cpp:115
 msgid "Double click to open"
-msgstr "ダブル クリックで開く"
+msgstr "ダブルクリックで開く"
 
+#: ../bin/src/ui_behavioursettingspage.h:190
 msgid "Double clicking a song will..."
-msgstr ""
+msgstr "曲をダブルクリックした際の動作..."
 
+#: podcasts/podcastservice.cpp:345
+#, c-format
+msgid "Download %n episodes"
+msgstr "%n 個のエピソードをダウンロード"
+
+#: internet/magnatunedownloaddialog.cpp:252
 msgid "Download directory"
-msgstr "ダウンロード ディレクトリ"
+msgstr "ダウンロードディレクトリ"
 
+#: ../bin/src/ui_podcastsettingspage.h:240
+msgid "Download episodes to"
+msgstr "エピソードのダウンロード先"
+
+#: ../bin/src/ui_magnatunesettingspage.h:161
 msgid "Download membership"
 msgstr "メンバーシップのダウンロード"
 
+#: ../bin/src/ui_podcastsettingspage.h:241
+msgid "Download new episodes automatically"
+msgstr "新しいエピソードを自動的にダウンロードする"
+
+#: podcasts/podcastservice.cpp:187
+msgid "Download queued"
+msgstr "ダウンロードがキューに追加されました"
+
+#: internet/magnatuneservice.cpp:275
 msgid "Download this album"
 msgstr "このアルバムのダウンロード"
 
+#: internet/jamendoservice.cpp:416
 msgid "Download this album..."
 msgstr "このアルバムをダウンロード..."
 
+#: podcasts/podcastservice.cpp:347
+msgid "Download this episode"
+msgstr "このエピソードをダウンロード"
+
+#: ../bin/src/ui_spotifysettingspage.h:216
 msgid "Download..."
-msgstr ""
+msgstr "ダウンロード..."
 
+#: podcasts/podcastservice.cpp:195
+#, qt-format
+msgid "Downloading (%1%)..."
+msgstr "ダウンロード中 (%1%)..."
+
+#: internet/icecastservice.cpp:101
 msgid "Downloading Icecast directory"
-msgstr "Icecast ディレクトリのダウンロード"
+msgstr "Icecast ディレクトリをダウンロード中"
 
+#: internet/jamendoservice.cpp:186
 msgid "Downloading Jamendo catalogue"
-msgstr "Jamendo カタログのダウンロード"
+msgstr "Jamendo カタログをダウンロード中"
 
+#: internet/magnatuneservice.cpp:157
 msgid "Downloading Magnatune catalogue"
-msgstr "Magnatune カタログのダウンロード"
+msgstr "Magnatune カタログをダウンロード中"
 
+#: internet/spotifyblobdownloader.cpp:44
 msgid "Downloading Spotify plugin"
-msgstr ""
+msgstr "Spotify のプラグインをダウンロード中"
 
+#: musicbrainz/tagfetcher.cpp:102
 msgid "Downloading metadata"
-msgstr ""
+msgstr "メタデータをダウンロード中"
 
+#: ui/notificationssettingspage.cpp:37
 msgid "Drag to reposition"
 msgstr "位置を変更するにはドラッグします"
 
+#: devices/wmdmlister.cpp:357
 msgid "Drive letter"
 msgstr "ドライブ文字"
 
+#: ../bin/src/ui_dropboxsettingspage.h:103
+msgid "Dropbox"
+msgstr "Dropbox"
+
+#: ../bin/src/ui_dynamicplaylistcontrols.h:109
 msgid "Dynamic mode is on"
-msgstr "ダイナミック モードはオンです"
+msgstr "ダイナミックモードはオンです"
 
+#: internet/jamendoservice.cpp:113 library/library.cpp:91
 msgid "Dynamic random mix"
-msgstr "ダイナミック ランダム ミックス"
+msgstr "ダイナミックランダムミックス"
 
+#: library/libraryview.cpp:381
 msgid "Edit smart playlist..."
-msgstr "スマートプレイリストを編集..."
+msgstr "スマートプレイリストの編集..."
 
+#: ui/mainwindow.cpp:1340
 #, qt-format
 msgid "Edit tag \"%1\"..."
 msgstr "タグ \"%1\" の編集..."
 
+#: ../bin/src/ui_mainwindow.h:670
 msgid "Edit tag..."
 msgstr "タグの編集..."
 
+#: ../bin/src/ui_edittagdialog.h:663
 msgid "Edit tags"
 msgstr "タグの編集"
 
+#: ../bin/src/ui_edittagdialog.h:632
 msgid "Edit track information"
 msgstr "トラック情報の編集"
 
+#: library/libraryview.cpp:395 widgets/fileviewlist.cpp:50
+#: ../bin/src/ui_mainwindow.h:666
 msgid "Edit track information..."
 msgstr "トラック情報の編集..."
 
+#: library/libraryview.cpp:397
 msgid "Edit tracks information..."
 msgstr "トラック情報の編集..."
 
+#: internet/savedradio.cpp:101
 msgid "Edit..."
 msgstr "編集..."
 
+#: ../bin/src/ui_wiimotesettingspage.h:183
 msgid "Enable Wii Remote support"
-msgstr "Wii Remote サポートを有効にする"
+msgstr "Wii リモコンサポートを有効にする"
 
+#: ../bin/src/ui_equalizer.h:126
 msgid "Enable equalizer"
 msgstr "イコライザーを有効にする"
 
-msgid "Enable playlist background image"
-msgstr ""
-
+#: ../bin/src/ui_wiimotesettingspage.h:187
 msgid "Enable shortcuts only when Clementine is focused"
 msgstr "Clementine にフォーカスがあるときのみショートカットを有効にする"
 
-msgid "Enable/disable Last.fm scrobbling"
-msgstr ""
+#: ../bin/src/ui_globalsearchsettingspage.h:147
+msgid ""
+"Enable sources below to include them in search results.  Results will be "
+"displayed in this order."
+msgstr "下のソースを有効にすると検索結果に含まれます。結果はこの並び順で表示されます。"
 
+#: core/globalshortcuts.cpp:62
+msgid "Enable/disable Last.fm scrobbling"
+msgstr "Last.fm の scrobbling を有効・無効にする"
+
+#: ../bin/src/ui_transcoderoptionsspeex.h:235
 msgid "Encoding complexity"
 msgstr ""
 
+#: ../bin/src/ui_transcoderoptionsmp3.h:197
 msgid "Encoding engine quality"
-msgstr ""
+msgstr "エンコーディングエンジンの品質"
 
+#: ../bin/src/ui_transcoderoptionsspeex.h:224
 msgid "Encoding mode"
-msgstr ""
+msgstr "エンコーディングモード"
 
+#: ../bin/src/ui_addpodcastbyurl.h:76
+msgid "Enter a URL"
+msgstr "URL を入力"
+
+#: ../bin/src/ui_coverfromurldialog.h:103
+msgid "Enter a URL to download a cover from the Internet:"
+msgstr "インターネットからカバーアートをダウンロードする URL を入力してください:"
+
+#: playlist/playlisttabbar.cpp:128
 msgid "Enter a new name for this playlist"
-msgstr "このプレイリストの名前を入力します"
+msgstr "このプレイリストの名前を入力してください"
 
+#: ../bin/src/ui_lastfmstationdialog.h:93
 msgid ""
 "Enter an <b>artist</b> or <b>tag</b> to start listening to Last.fm radio."
-msgstr ""
-"Last.fm ラジオの視聴を開始するには<b>アーティスト</b>か<b>タグ</b>を入力して"
-"ください。"
+msgstr "Last.fm ラジオの聴取を開始するには<b>アーティスト</b>か<b>タグ</b>を入力してください。"
 
-msgid "Enter an URL to download a cover from the Internet:"
-msgstr ""
+#: ../bin/src/ui_globalsearchview.h:209
+msgid ""
+"Enter search terms above to find music on your computer and on the internet"
+msgstr "コンピューター上およびインターネット上のミュージックを検索するには、上に検索条件を入力してください"
 
+#: ../bin/src/ui_itunessearchpage.h:77
+msgid "Enter search terms below to find podcasts in the iTunes Store"
+msgstr "iTunes Store のポッドキャストを検索するには、下に検索条件を入力してください"
+
+#: ../bin/src/ui_gpoddersearchpage.h:77
+msgid "Enter search terms below to find podcasts on gpodder.net"
+msgstr "gpodder.net 上のポッドキャストを検索するには、下に検索条件を入力してください"
+
+#: ../bin/src/ui_libraryfilterwidget.h:96
+#: ../bin/src/ui_albumcovermanager.h:153
 msgid "Enter search terms here"
-msgstr "ここに検索条件を入力します"
+msgstr "ここに検索条件を入力してください"
 
+#: ../bin/src/ui_addstreamdialog.h:114
 msgid "Enter the URL of an internet radio stream:"
-msgstr "インターネット ラジオ ストリームの URL を入力します:"
+msgstr "インターネットラジオストリームの URL を入力してください:"
 
+#: playlist/playlistlistcontainer.cpp:183
+msgid "Enter the name of the folder"
+msgstr ""
+
+#: ../bin/src/ui_libraryfilterwidget.h:87
 msgid "Entire collection"
 msgstr "コレクション全体"
 
+#: ../bin/src/ui_equalizer.h:118 ../bin/src/ui_mainwindow.h:693
 msgid "Equalizer"
 msgstr "イコライザー"
 
+#: core/commandlineoptions.cpp:164
 msgid "Equivalent to --log-levels *:1"
-msgstr ""
+msgstr "--log-levels *:1 と同じ"
 
+#: core/commandlineoptions.cpp:165
 msgid "Equivalent to --log-levels *:3"
-msgstr ""
+msgstr "--log-levels *:3 と同じ"
 
+#: internet/groovesharkservice.cpp:1015
+#: internet/magnatunedownloaddialog.cpp:225 library/libraryview.cpp:602
+#: ui/mainwindow.cpp:1776 ui/mainwindow.cpp:1892
 msgid "Error"
 msgstr "エラー"
 
+#: devices/mtploader.cpp:56
 msgid "Error connecting MTP device"
 msgstr "MTP デバイスの接続エラー"
 
+#: ui/organiseerrordialog.cpp:55
 msgid "Error copying songs"
-msgstr "曲のコピー エラー"
+msgstr "曲のコピーエラー"
 
+#: ui/organiseerrordialog.cpp:60
 msgid "Error deleting songs"
 msgstr "曲の削除エラー"
 
+#: internet/spotifyblobdownloader.cpp:215
 msgid "Error downloading Spotify plugin"
-msgstr ""
+msgstr "Spotify プラグインのダウンロードエラー"
 
+#: playlist/songloaderinserter.cpp:71 playlist/songloaderinserter.cpp:133
 #, qt-format
 msgid "Error loading %1"
 msgstr "%1 の読み込みエラー"
 
+#: internet/digitallyimportedservicebase.cpp:203
+#: internet/digitallyimportedurlhandler.cpp:89
 msgid "Error loading di.fm playlist"
-msgstr ""
+msgstr "di.fm プレイリストの読み込みエラー"
 
+#: transcoder/transcoder.cpp:399
 #, qt-format
 msgid "Error processing %1: %2"
 msgstr "%1 の処理エラー: %2"
 
+#: playlist/songloaderinserter.cpp:100
 msgid "Error while loading audio CD"
-msgstr ""
+msgstr "音楽 CD を読み込み中にエラーが発生しました"
 
+#: library/library.cpp:61
 msgid "Ever played"
-msgstr "再生されたことがある"
+msgstr "再生したことがある"
 
+#: ../bin/src/ui_podcastsettingspage.h:232
+msgid "Every 10 minutes"
+msgstr "10 分おき"
+
+#: ../bin/src/ui_podcastsettingspage.h:238
+msgid "Every 12 hours"
+msgstr "12 時間おき"
+
+#: ../bin/src/ui_podcastsettingspage.h:236
+msgid "Every 2 hours"
+msgstr "2 時間おき"
+
+#: ../bin/src/ui_podcastsettingspage.h:233
+msgid "Every 20 minutes"
+msgstr "20 分おき"
+
+#: ../bin/src/ui_podcastsettingspage.h:234
+msgid "Every 30 minutes"
+msgstr "30 分おき"
+
+#: ../bin/src/ui_podcastsettingspage.h:237
+msgid "Every 6 hours"
+msgstr "6 時間おき"
+
+#: ../bin/src/ui_podcastsettingspage.h:235
+msgid "Every hour"
+msgstr "1 時間おき"
+
+#: ../bin/src/ui_playbacksettingspage.h:270
 msgid "Except between tracks on the same album or in the same CUE sheet"
+msgstr "同じアルバムもしくはキューシートのトラック同士の場合は除外する"
+
+#: ../bin/src/ui_dynamicplaylistcontrols.h:111
+msgid "Expand"
+msgstr "広げる"
+
+#: widgets/loginstatewidget.cpp:142
+#, qt-format
+msgid "Expires on %1"
 msgstr ""
 
-msgid "Extras"
-msgstr "おまけ"
-
+#: ../bin/src/ui_mainwindow.h:675
 msgid "F1"
 msgstr "F1"
 
+#: ../bin/src/ui_mainwindow.h:671
 msgid "F2"
 msgstr "F2"
 
+#: ../bin/src/ui_mainwindow.h:646
 msgid "F5"
 msgstr "F5"
 
+#: ../bin/src/ui_mainwindow.h:648
 msgid "F6"
 msgstr "F6"
 
+#: ../bin/src/ui_mainwindow.h:650
 msgid "F7"
 msgstr "F7"
 
+#: ../bin/src/ui_mainwindow.h:652
 msgid "F8"
 msgstr "F8"
 
+#: ../bin/src/ui_magnatunedownloaddialog.h:140
+#: ../bin/src/ui_magnatunesettingspage.h:171
+#: ../bin/src/ui_transcodersettingspage.h:177
 msgid "FLAC"
 msgstr "FLAC"
 
+#: ../bin/src/ui_playbacksettingspage.h:267
 msgid "Fade out when stopping a track"
 msgstr "トラックの停止時にフェードアウトする"
 
+#: ../bin/src/ui_playbacksettingspage.h:266
 msgid "Fading"
 msgstr "フェード"
 
+#: ../bin/src/ui_playbacksettingspage.h:271
 msgid "Fading duration"
 msgstr "フェードの長さ"
 
+#: podcasts/gpoddertoptagspage.cpp:76
+msgid "Failed to fetch directory"
+msgstr "ディレクトリの取得に失敗しました"
+
+#: podcasts/gpoddersearchpage.cpp:76 podcasts/gpoddertoptagsmodel.cpp:109
+#: podcasts/itunessearchpage.cpp:66 podcasts/itunessearchpage.cpp:75
+#: podcasts/itunessearchpage.cpp:82
+msgid "Failed to fetch podcasts"
+msgstr "ポッドキャストの取得に失敗しました"
+
+#: podcasts/addpodcastbyurl.cpp:70 podcasts/fixedopmlpage.cpp:54
+msgid "Failed to load podcast"
+msgstr "ポッドキャストの読み込みに失敗しました"
+
+#: podcasts/podcasturlloader.cpp:167
+msgid "Failed to parse the XML for this RSS feed"
+msgstr "この RSS フィードの XML の分析に失敗しました"
+
+#: ../bin/src/ui_transcoderoptionsflac.h:82
+#: ../bin/src/ui_transcoderoptionsmp3.h:200
 msgid "Fast"
-msgstr ""
+msgstr "速"
 
+#: internet/groovesharkservice.cpp:615
+msgid "Favorites"
+msgstr "お気に入り"
+
+#: library/library.cpp:75
 msgid "Favourite tracks"
-msgstr "お気に入りトラック"
+msgstr "お気に入りのトラック"
 
+#: ../bin/src/ui_albumcovermanager.h:155
 msgid "Fetch Missing Covers"
-msgstr "見つからないカバーのフェッチ"
+msgstr "足りないカバーの取得"
 
+#: ../bin/src/ui_albumcovermanager.h:150
 msgid "Fetch automatically"
-msgstr "自動的にフェッチする"
+msgstr "自動的に取得する"
 
+#: ../bin/src/ui_coversearchstatisticsdialog.h:75
 msgid "Fetch completed"
+msgstr "取得完了"
+
+#: internet/subsonicservice.cpp:208
+msgid "Fetching Subsonic library"
 msgstr ""
 
+#: ui/coverfromurldialog.cpp:71 ui/coverfromurldialog.cpp:82
 msgid "Fetching cover error"
-msgstr ""
+msgstr "カバーの取得エラー"
 
+#: ui/organisedialog.cpp:69
 msgid "File extension"
 msgstr "ファイル拡張子"
 
+#: ../bin/src/ui_deviceproperties.h:384
 msgid "File formats"
 msgstr "ファイル形式"
 
+#: playlist/playlist.cpp:1212 ../bin/src/ui_edittagdialog.h:650
 msgid "File name"
 msgstr "ファイル名"
 
+#: playlist/playlist.cpp:1213
 msgid "File name (without path)"
 msgstr "ファイル名 (パスなし)"
 
+#: playlist/playlist.cpp:1214 ../bin/src/ui_edittagdialog.h:644
 msgid "File size"
-msgstr "ファイル サイズ"
+msgstr "ファイルサイズ"
 
+#: playlist/playlist.cpp:1215 ../bin/src/ui_groupbydialog.h:133
+#: ../bin/src/ui_groupbydialog.h:146 ../bin/src/ui_groupbydialog.h:159
+#: ../bin/src/ui_edittagdialog.h:646
 msgid "File type"
 msgstr "ファイルの種類"
 
+#: ../bin/src/ui_transcodedialog.h:206
 msgid "Filename"
 msgstr "ファイル名"
 
+#: ui/mainwindow.cpp:233
 msgid "Files"
 msgstr "ファイル"
 
+#: ../bin/src/ui_transcodedialog.h:203
 msgid "Files to transcode"
-msgstr "トランスコード"
+msgstr "トランスコードするファイル"
 
+#: devices/wmdmlister.cpp:359
 msgid "Filesystem name"
 msgstr "ファイルシステム名"
 
+#: devices/wmdmlister.cpp:364
 msgid "Filesystem serial number"
 msgstr "ファイルシステムのシリアル番号"
 
+#: devices/wmdmlister.cpp:358
 msgid "Filesystem type"
 msgstr "ファイルシステムの種類"
 
+#: smartplaylists/querywizardplugin.cpp:90
 msgid "Find songs in your library that match the criteria you specify."
 msgstr "指定する条件に一致するライブラリから曲を検索します。"
 
+#: musicbrainz/tagfetcher.cpp:55
 msgid "Fingerprinting song"
-msgstr ""
+msgstr "曲の特徴を検出しています"
 
+#: smartplaylists/wizard.cpp:85
 msgid "Finish"
 msgstr "完了"
 
+#: ../bin/src/ui_groupbydialog.h:125
 msgid "First level"
 msgstr "第 1 階層"
 
+#: core/song.cpp:326
 msgid "Flac"
 msgstr "Flac"
 
+#: ../bin/src/ui_songinfosettingspage.h:181
 msgid "Font size"
-msgstr "フォント サイズ"
+msgstr "フォントサイズ"
 
+#: ../bin/src/ui_spotifysettingspage.h:214
 msgid "For licensing reasons Spotify support is in a separate plugin."
-msgstr ""
+msgstr "ライセンス上の理由で Spotify サポートは別プラグインになっています。"
 
+#: ../bin/src/ui_transcoderoptionsmp3.h:204
 msgid "Force mono encoding"
-msgstr ""
+msgstr "モノラルエンコーディングを強制する"
 
+#: devices/deviceview.cpp:204 devices/deviceview.cpp:310
+#: devices/deviceview.cpp:314
 msgid "Forget device"
 msgstr "デバイスを忘れる"
 
+#: devices/deviceview.cpp:311
 msgid ""
 "Forgetting a device will remove it from this list and Clementine will have "
 "to rescan all the songs again next time you connect it."
-msgstr ""
-"デバイスを忘れるとこの一覧から削除して Clementine は次回接続時に再びすべての"
-"曲を再スキャンします。"
+msgstr "デバイスを忘れるとこの一覧から削除して Clementine は次回接続時に再びすべての曲を再スキャンします。"
 
+#: ../bin/src/ui_searchproviderstatuswidget.h:94
+#: ../bin/src/ui_suggestionwidget.h:70 ../bin/src/ui_icecastfilterwidget.h:74
+#: ../bin/src/ui_internetviewcontainer.h:71 ../bin/src/ui_searchboxwidget.h:62
+#: ../bin/src/ui_libraryfilterwidget.h:86
+#: ../bin/src/ui_libraryviewcontainer.h:59
+#: ../bin/src/ui_playlistcontainer.h:119
+#: ../bin/src/ui_playlistlistcontainer.h:117
+#: ../bin/src/ui_podcastinfowidget.h:191 ../bin/src/ui_querysearchpage.h:112
+#: ../bin/src/ui_querysortpage.h:136 ../bin/src/ui_searchpreview.h:104
+#: ../bin/src/ui_searchtermwidget.h:268 ../bin/src/ui_wizardfinishpage.h:83
+#: ../bin/src/ui_songkickconcertwidget.h:100
+#: ../bin/src/ui_transcoderoptionsaac.h:128
+#: ../bin/src/ui_transcoderoptionsflac.h:80
+#: ../bin/src/ui_transcoderoptionsmp3.h:190
+#: ../bin/src/ui_transcoderoptionsopus.h:79
+#: ../bin/src/ui_transcoderoptionsspeex.h:216
+#: ../bin/src/ui_transcoderoptionsvorbis.h:201
+#: ../bin/src/ui_transcoderoptionswma.h:78 ../bin/src/ui_equalizerslider.h:82
+#: ../bin/src/ui_fileview.h:107 ../bin/src/ui_loginstatewidget.h:171
+#: ../bin/src/ui_trackslider.h:69 ../bin/src/ui_visualisationoverlay.h:182
 msgid "Form"
 msgstr "フォーム"
 
+#: ../bin/src/ui_magnatunedownloaddialog.h:136
 msgid "Format"
 msgstr "形式"
 
+#: analyzers/analyzercontainer.cpp:46
+#: visualisations/visualisationcontainer.cpp:104
 msgid "Framerate"
 msgstr "フレームレート"
 
+#: ../bin/src/ui_transcoderoptionsspeex.h:236
 msgid "Frames per buffer"
 msgstr ""
 
+#: internet/lastfmservice.cpp:224
 msgid "Friends"
 msgstr "友だち"
 
+#: moodbar/moodbarrenderer.cpp:157
+msgid "Frozen"
+msgstr ""
+
+#: ui/equalizer.cpp:112
 msgid "Full Bass"
 msgstr "Full Bass"
 
+#: ui/equalizer.cpp:114
 msgid "Full Bass + Treble"
 msgstr "Full Bass + Treble"
 
+#: ui/equalizer.cpp:113
 msgid "Full Treble"
 msgstr "Full Treble"
 
+#: ../bin/src/ui_playbacksettingspage.h:283
 msgid "GStreamer audio engine"
-msgstr "GStreamer オーディオ エンジン"
+msgstr "GStreamer オーディオエンジン"
 
+#: ui/settingsdialog.cpp:128
+msgid "General"
+msgstr "全般"
+
+#: ../bin/src/ui_notificationssettingspage.h:409
 msgid "General settings"
 msgstr "全般設定"
 
+#: playlist/playlist.cpp:1199 ui/organisedialog.cpp:64
+#: ../bin/src/ui_groupbydialog.h:134 ../bin/src/ui_groupbydialog.h:147
+#: ../bin/src/ui_groupbydialog.h:160 ../bin/src/ui_edittagdialog.h:660
 msgid "Genre"
 msgstr "ジャンル"
 
+#: internet/groovesharkservice.cpp:540
+msgid "Get a URL to share this Grooveshark playlist"
+msgstr ""
+
+#: internet/groovesharkservice.cpp:537 internet/groovesharkservice.cpp:1108
+msgid "Get a URL to share this Grooveshark song"
+msgstr ""
+
+#: ../bin/src/ui_networkremotesettingspage.h:162
+msgid "Get the Android App now!"
+msgstr ""
+
+#: internet/groovesharkservice.cpp:788
+msgid "Getting Grooveshark popular songs"
+msgstr "Grooveshark で人気の曲を取得中"
+
+#: internet/somafmservice.cpp:100
 msgid "Getting channels"
 msgstr "チャンネルの取得中"
 
+#: internet/digitallyimportedservicebase.cpp:108
 msgid "Getting streams"
-msgstr ""
+msgstr "ストリームの取得中"
 
+#: ../bin/src/ui_addstreamdialog.h:116
 msgid "Give it a name:"
-msgstr "名前を付けてください:"
+msgstr "名前を入力してください:"
 
-msgid "Global search"
-msgstr ""
+#: ../bin/src/ui_addpodcastbyurl.h:78
+msgid "Go"
+msgstr "進む"
 
+#: ../bin/src/ui_mainwindow.h:704
 msgid "Go to next playlist tab"
-msgstr ""
+msgstr "次のプレイリストタブへ"
 
+#: ../bin/src/ui_mainwindow.h:705
 msgid "Go to previous playlist tab"
-msgstr ""
+msgstr "前のプレイリストタブへ"
 
-msgid "Google password"
-msgstr ""
+#: ../bin/src/ui_googledrivesettingspage.h:103
+msgid "Google Drive"
+msgstr "Google Drive"
 
-msgid "Google username"
-msgstr ""
-
+#: covers/coversearchstatisticsdialog.cpp:54 ui/albumcovermanager.cpp:413
+#: ../bin/src/ui_coversearchstatisticsdialog.h:76
 #, qt-format
 msgid "Got %1 covers out of %2 (%3 failed)"
-msgstr "%2 中 %1 個のカバーを取得しました (%3 個失敗しました)"
+msgstr "%2 個中 %1 個のカバーを取得しました (%3 個失敗しました)"
 
+#: ../bin/src/ui_behavioursettingspage.h:182
 msgid "Grey out non existent songs in my playlists"
-msgstr ""
+msgstr "プレイリスト上の存在しない曲をグレーで表示する"
 
-msgid "GrooveShark"
-msgstr ""
+#: ../bin/src/ui_groovesharksettingspage.h:112
+msgid "Grooveshark"
+msgstr "Grooveshark"
 
-msgid "GrooveShark login error"
-msgstr ""
+#: internet/groovesharkservice.cpp:406
+msgid "Grooveshark login error"
+msgstr "Grooveshark ログインエラー"
 
+#: internet/groovesharkservice.cpp:1160
+msgid "Grooveshark playlist's URL"
+msgstr "Grooveshark プレイリストの URL"
+
+#: internet/groovesharkservice.cpp:601
+msgid "Grooveshark radio"
+msgstr "Grooveshark ラジオ"
+
+#: internet/groovesharkservice.cpp:1138
+msgid "Grooveshark song's URL"
+msgstr "Grooveshark の曲の URL"
+
+#: ../bin/src/ui_groupbydialog.h:124
 msgid "Group Library by..."
 msgstr "ライブラリのグループ化..."
 
+#: globalsearch/globalsearchview.cpp:444 library/libraryfilterwidget.cpp:82
 msgid "Group by"
 msgstr "グループ化"
 
+#: library/libraryfilterwidget.cpp:110
 msgid "Group by Album"
 msgstr "アルバムでグループ化"
 
+#: library/libraryfilterwidget.cpp:104
 msgid "Group by Artist"
 msgstr "アーティストでグループ化"
 
+#: library/libraryfilterwidget.cpp:106
 msgid "Group by Artist/Album"
 msgstr "アーティスト/アルバムでグループ化"
 
+#: library/libraryfilterwidget.cpp:108
 msgid "Group by Artist/Year - Album"
 msgstr "アーティスト/年 - アルバムでグループ化"
 
+#: library/libraryfilterwidget.cpp:112
 msgid "Group by Genre/Album"
 msgstr "ジャンル/アルバムでグループ化"
 
+#: library/libraryfilterwidget.cpp:114
 msgid "Group by Genre/Artist/Album"
 msgstr "ジャンル/アーティスト/アルバムでグループ化"
 
+#: podcasts/podcasturlloader.cpp:196
+msgid "HTML page did not contain any RSS feeds"
+msgstr "HTML ページに RSS フィードが含まれていませんでした"
+
+#: ../bin/src/ui_networkproxysettingspage.h:163
 msgid "HTTP proxy"
 msgstr "HTTP プロキシ"
 
+#: moodbar/moodbarrenderer.cpp:158
+msgid "Happy"
+msgstr ""
+
+#: ../bin/src/ui_deviceproperties.h:371
 msgid "Hardware information"
 msgstr "ハードウェアの情報"
 
+#: ../bin/src/ui_deviceproperties.h:372
 msgid "Hardware information is only available while the device is connected."
-msgstr "ハードウェアの情報はデバイスが接続されているときのみ利用可能です。"
+msgstr "ハードウェアの情報はデバイス接続中のみ利用できます。"
 
+#: ../bin/src/ui_transcoderoptionsmp3.h:202
 msgid "High"
-msgstr ""
+msgstr "高"
 
+#: analyzers/analyzercontainer.cpp:64
+#: visualisations/visualisationcontainer.cpp:109
 #, qt-format
 msgid "High (%1 fps)"
-msgstr ""
+msgstr "高 (%1 fps)"
 
+#: visualisations/visualisationcontainer.cpp:119
 msgid "High (1024x1024)"
 msgstr "高 (1024x1024)"
 
-msgid "High (35 fps)"
-msgstr "高 (35 fps)"
-
+#: smartplaylists/searchterm.cpp:306
 msgid "Hours"
-msgstr ""
+msgstr "時間"
 
+#: core/backgroundstreams.cpp:30
 msgid "Hypnotoad"
 msgstr "Hypnotoad"
 
+#: ../bin/src/ui_magnatunesettingspage.h:159
 msgid "I don't have a Magnatune account"
 msgstr "Magnatune アカウントがありません"
 
+#: ../bin/src/ui_deviceproperties.h:370
 msgid "Icon"
 msgstr "アイコン"
 
+#: widgets/fancytabwidget.cpp:655
 msgid "Icons on top"
 msgstr "アイコンを上に配置"
 
+#: musicbrainz/tagfetcher.cpp:86
 msgid "Identifying song"
-msgstr ""
+msgstr "曲の識別中"
 
+#: devices/devicemanager.cpp:584 devices/devicemanager.cpp:592
 msgid ""
-"If you continue, this device will work slowly and songs copied to it may not "
-"work."
-msgstr ""
-"続行すると、このデバイスは低速で動作しコピーされた曲は動作しなくなる可能性が"
-"あります。"
+"If you continue, this device will work slowly and songs copied to it may not"
+" work."
+msgstr "続行すると、このデバイスは低速で動作しコピーされた曲は動作しなくなる可能性があります。"
 
-msgid ""
-"If you use the remote on more than one computer, this name will help you "
-"choose which one to connect to on your phone."
-msgstr ""
+#: ../bin/src/ui_addpodcastbyurl.h:77
+msgid "If you know the URL of a podcast, enter it below and press Go."
+msgstr "ポッドキャストの URL がある場合は、下に入力して進むを押してください。"
 
+#: ../bin/src/ui_organisedialog.h:204
 msgid "Ignore \"The\" in artist names"
 msgstr "アーティスト名の \"The\" を無視する"
 
+#: ui/albumcoverchoicecontroller.cpp:43
 msgid "Images (*.png *.jpg *.jpeg *.bmp *.gif *.xpm *.pbm *.pgm *.ppm *.xbm)"
-msgstr ""
+msgstr "画像 (*.png *.jpg *.jpeg *.bmp *.gif *.xpm *.pbm *.pgm *.ppm *.xbm)"
 
+#: ui/albumcoverchoicecontroller.cpp:45
 msgid "Images (*.png *.jpg *.jpeg *.bmp *.xpm *.pbm *.ppm *.xbm)"
+msgstr "画像 (*.png *.jpg *.jpeg *.bmp *.xpm *.pbm *.ppm *.xbm)"
+
+#: core/utilities.cpp:143
+#, qt-format
+msgid "In %1 days"
 msgstr ""
 
+#: core/utilities.cpp:147
+#, qt-format
+msgid "In %1 weeks"
+msgstr ""
+
+#: ../bin/src/ui_wizardfinishpage.h:86
 msgid ""
 "In dynamic mode new tracks will be chosen and added to the playlist every "
 "time a song finishes."
 msgstr ""
 
+#: internet/spotifyservice.cpp:360
 msgid "Inbox"
 msgstr ""
 
+#: ../bin/src/ui_notificationssettingspage.h:415
 msgid "Include album art in the notification"
-msgstr "通知にアルバム アートを含める"
+msgstr "通知にアルバムアートを含める"
 
+#: ../bin/src/ui_querysearchpage.h:118
 msgid "Include all songs"
-msgstr "すべての曲を読み込む"
+msgstr "すべての曲を含む"
 
-msgid "Include:"
+#: internet/subsonicsettingspage.cpp:87
+msgid "Incompatible Subsonic REST protocol version. Client must upgrade."
 msgstr ""
 
+#: internet/subsonicsettingspage.cpp:91
+msgid "Incompatible Subsonic REST protocol version. Server must upgrade."
+msgstr ""
+
+#: core/commandlineoptions.cpp:152
 msgid "Increase the volume by 4%"
 msgstr "音量を 4% 上げます"
 
+#: core/globalshortcuts.cpp:52 wiimotedev/wiimotesettingspage.cpp:103
 msgid "Increase volume"
 msgstr "音量を上げる"
 
+#: internet/cloudfileservice.cpp:135
+#, qt-format
+msgid "Indexing %1"
+msgstr ""
+
+#: ../bin/src/ui_deviceproperties.h:373 wiimotedev/wiimotesettingspage.cpp:124
 msgid "Information"
 msgstr "情報"
 
+#: ../bin/src/ui_organisedialog.h:203
 msgid "Insert..."
 msgstr "挿入..."
 
+#: internet/spotifysettingspage.cpp:75
 msgid "Installed"
+msgstr "インストール済み"
+
+#: core/database.cpp:611
+msgid "Integrity check"
 msgstr ""
 
+#: ui/mainwindow.cpp:235
 msgid "Internet"
 msgstr "インターネット"
 
+#: ui/settingsdialog.cpp:150
+msgid "Internet providers"
+msgstr "インターネットプロバイダ"
+
+#: internet/lastfmservice.cpp:433
 msgid "Invalid API key"
 msgstr "不正な API キーです"
 
-msgid "Invalid SKY.fm username or password"
-msgstr ""
-
-msgid "Invalid di.fm username or password"
-msgstr ""
-
+#: internet/lastfmservice.cpp:428
 msgid "Invalid format"
 msgstr "不正な形式です"
 
+#: internet/lastfmservice.cpp:426
 msgid "Invalid method"
 msgstr "不正なメソッドです"
 
+#: internet/lastfmservice.cpp:429
 msgid "Invalid parameters"
 msgstr "不正なパラメーターです"
 
+#: internet/lastfmservice.cpp:430
 msgid "Invalid resource specified"
 msgstr "不正なリソースが指定されました"
 
+#: internet/lastfmservice.cpp:425
 msgid "Invalid service"
 msgstr "不正なサービスです"
 
+#: internet/lastfmservice.cpp:432
 msgid "Invalid session key"
-msgstr "不正なセッション キーです"
+msgstr "不正なセッションキーです"
 
+#: internet/groovesharkservice.cpp:399
 msgid "Invalid username and/or password"
-msgstr ""
+msgstr "ユーザー名またはパスワードが違います"
 
-#, qt-format
-msgid "It seems user %1 doesn't have a GrooveShark Anywhere account"
-msgstr ""
+#: internet/jamendoservice.cpp:126
+msgid "Jamendo"
+msgstr "Jamendo"
 
+#: internet/jamendoservice.cpp:109
 msgid "Jamendo Most Listened Tracks"
 msgstr "Jamendo の最も聴かれているトラック"
 
+#: internet/jamendoservice.cpp:107
 msgid "Jamendo Top Tracks"
-msgstr "Jamendo のトップ トラック"
+msgstr "Jamendo のトップトラック"
 
+#: internet/jamendoservice.cpp:103
 msgid "Jamendo Top Tracks of the Month"
-msgstr "Jamendo の今月のトップ トラック"
+msgstr "Jamendo の今月のトップトラック"
 
+#: internet/jamendoservice.cpp:105
 msgid "Jamendo Top Tracks of the Week"
-msgstr "Jamendo の今週のトップ トラック"
+msgstr "Jamendo の今週のトップトラック"
 
+#: internet/jamendoservice.cpp:170
 msgid "Jamendo database"
-msgstr ""
+msgstr "Jamendo のデータベース"
 
+#: ../bin/src/ui_mainwindow.h:696
 msgid "Jump to the currently playing track"
-msgstr "現在再生中のトラックへジャンプする"
+msgstr "現在再生中のトラックへジャンプ"
 
+#: wiimotedev/wiimoteshortcutgrabber.cpp:72
 #, qt-format
 msgid "Keep buttons for %1 second..."
 msgstr "ボタンを %1 秒長押し..."
 
+#: ../bin/src/ui_wiimoteshortcutgrabber.h:127
+#: wiimotedev/wiimoteshortcutgrabber.cpp:73
+#: wiimotedev/wiimoteshortcutgrabber.cpp:117
 #, qt-format
 msgid "Keep buttons for %1 seconds..."
 msgstr "ボタンを %1 秒長押し..."
 
+#: ../bin/src/ui_behavioursettingspage.h:171
 msgid "Keep running in the background when the window is closed"
 msgstr "ウィンドウを閉じたときバックグラウンドで起動し続ける"
 
+#: ../bin/src/ui_organisedialog.h:193
 msgid "Keep the original files"
-msgstr "元のファイルを維持する"
+msgstr "元のファイルを保持する"
 
+#: ../bin/src/ui_mainwindow.h:688
 msgid "Kittens"
 msgstr "Kittens"
 
+#: ../bin/src/ui_behavioursettingspage.h:172
 msgid "Language"
 msgstr "言語"
 
+#: ui/equalizer.cpp:115
 msgid "Laptop/Headphones"
-msgstr "Laptop/Headphones"
+msgstr "ノートパソコン・ヘッドフォン"
 
+#: ui/equalizer.cpp:116
 msgid "Large Hall"
 msgstr "Large Hall"
 
+#: widgets/nowplayingwidget.cpp:91
 msgid "Large album cover"
-msgstr "大きいアルバム カバー"
+msgstr "大きいアルバムカバー"
 
+#: widgets/fancytabwidget.cpp:651
 msgid "Large sidebar"
-msgstr "大きいサイド バー"
+msgstr "大きいサイドバー"
 
+#: library/library.cpp:69 playlist/playlist.cpp:1206
+#: ../bin/src/ui_edittagdialog.h:641
 msgid "Last played"
-msgstr "最後に再生された"
+msgstr "最終再生"
 
+#: ../bin/src/ui_lastfmsettingspage.h:150
 msgid "Last.fm"
 msgstr "Last.fm"
 
+#: internet/lastfmservice.cpp:85
 #, qt-format
 msgid "Last.fm Custom Radio: %1"
-msgstr "Last.fm カスタム ラジオ: %1"
+msgstr "Last.fm カスタムラジオ: %1"
 
+#: internet/lastfmservice.cpp:255 internet/lastfmservice.cpp:699
+#: internet/lastfmservice.cpp:722
 #, qt-format
 msgid "Last.fm Library - %1"
-msgstr "Last.fm ライブラリ %1"
+msgstr "Last.fm ライブラリ - %1"
 
+#: globalsearch/lastfmsearchprovider.cpp:77 internet/lastfmservice.cpp:257
+#: internet/lastfmservice.cpp:260
 #, qt-format
 msgid "Last.fm Mix Radio - %1"
-msgstr "Last.fm ミックス ラジオ - %1"
+msgstr "Last.fm ミックスラジオ - %1"
 
+#: globalsearch/lastfmsearchprovider.cpp:79 internet/lastfmservice.cpp:262
+#: internet/lastfmservice.cpp:265
 #, qt-format
 msgid "Last.fm Neighbor Radio - %1"
 msgstr "Last.fm ご近所さんのラジオ - %1"
 
+#: globalsearch/lastfmsearchprovider.cpp:75 internet/lastfmservice.cpp:252
 #, qt-format
 msgid "Last.fm Radio Station - %1"
 msgstr "Last.fm ラジオ局 - %1"
 
+#: internet/lastfmservice.cpp:83
 #, qt-format
 msgid "Last.fm Similar Artists to %1"
 msgstr "Last.fm %1 にテイストの似たアーティスト"
 
+#: internet/lastfmservice.cpp:84
 #, qt-format
 msgid "Last.fm Tag Radio: %1"
-msgstr "Last.fm タグ ラジオ: %1"
+msgstr "Last.fm タグラジオ: %1"
 
+#: internet/lastfmservice.cpp:437
 msgid "Last.fm is currently busy, please try again in a few minutes"
-msgstr "Last.fm は現在混雑しています、数分後にやり直してください"
+msgstr "Last.fm は現在混雑しています。数分後にやり直してください"
 
+#: ../bin/src/ui_lastfmsettingspage.h:154
 msgid "Last.fm password"
 msgstr "Last.fm のパスワード"
 
+#: songinfo/lastfmtrackinfoprovider.cpp:78
 msgid "Last.fm play counts"
 msgstr "Last.fm の再生回数"
 
+#: songinfo/lastfmtrackinfoprovider.cpp:131
 msgid "Last.fm tags"
 msgstr "Last.fm タグ"
 
+#: ../bin/src/ui_lastfmsettingspage.h:152
 msgid "Last.fm username"
 msgstr "Last.fm のユーザー名"
 
+#: songinfo/lastfmtrackinfoprovider.cpp:111
 msgid "Last.fm wiki"
 msgstr "Last.fm wiki"
 
+#: library/library.cpp:85
 msgid "Least favourite tracks"
-msgstr "最低のお気に入りトラック"
+msgstr "嫌いなトラック"
 
+#: ../bin/src/ui_playbacksettingspage.h:290
 msgid "Leave blank for the default.  Examples: \"/dev/dsp\", \"front\", etc."
 msgstr "既定にするには空のままにします。例: \"/dev/dsp\"、\"front\"、など"
 
+#: playlist/playlist.cpp:1195 ui/organisedialog.cpp:66
+#: ui/qtsystemtrayicon.cpp:255 ../bin/src/ui_edittagdialog.h:636
 msgid "Length"
 msgstr "長さ"
 
+#: ui/mainwindow.cpp:222 ui/mainwindow.cpp:232
 msgid "Library"
 msgstr "ライブラリ"
 
+#: ../bin/src/ui_groupbydialog.h:122
 msgid "Library advanced grouping"
 msgstr "ライブラリの高度なグループ化"
 
+#: ui/mainwindow.cpp:2009
 msgid "Library rescan notice"
 msgstr ""
 
+#: smartplaylists/querywizardplugin.cpp:86
 msgid "Library search"
 msgstr "ライブラリ検索"
 
+#: ../bin/src/ui_querysortpage.h:140
 msgid "Limits"
 msgstr "制限"
 
+#: internet/groovesharkservice.cpp:602
+msgid ""
+"Listen to Grooveshark songs based on what you've listened to previously"
+msgstr "以前聴いた曲をもとに Grooveshark の曲を聴きます"
+
+#: ui/equalizer.cpp:117
 msgid "Live"
 msgstr "Live"
 
+#: ../bin/src/ui_albumcovermanager.h:151
 msgid "Load"
 msgstr "読み込み"
 
+#: ../bin/src/ui_coverfromurldialog.h:102
 msgid "Load cover from URL"
-msgstr ""
+msgstr "URL からカバーの読み込み"
 
+#: ui/albumcoverchoicecontroller.cpp:61
 msgid "Load cover from URL..."
-msgstr ""
+msgstr "URL からカバーの読み込み..."
 
+#: ui/albumcoverchoicecontroller.cpp:91
+msgid "Load cover from disk"
+msgstr "ディスクからカバーの読み込み"
+
+#: ui/albumcoverchoicecontroller.cpp:59
 msgid "Load cover from disk..."
-msgstr "ディスクからカバーを読み込み..."
+msgstr "ディスクからカバーの読み込み..."
 
+#: playlist/playlistcontainer.cpp:279
 msgid "Load playlist"
 msgstr "プレイリストの読み込み"
 
+#: ../bin/src/ui_mainwindow.h:702
 msgid "Load playlist..."
 msgstr "プレイリストの読み込み..."
 
+#: internet/lastfmservice.cpp:884
 msgid "Loading Last.fm radio"
 msgstr "Last.fm ラジオの読み込み中"
 
+#: devices/mtploader.cpp:42
 msgid "Loading MTP device"
 msgstr "MTP デバイスの読み込み中"
 
+#: devices/wmdmloader.cpp:47
 msgid "Loading Windows Media device"
 msgstr "Windows Media デバイスの読み込み中"
 
+#: devices/gpodloader.cpp:46
 msgid "Loading iPod database"
 msgstr "iPod データベースの読み込み中"
 
+#: smartplaylists/generatorinserter.cpp:52
 msgid "Loading smart playlist"
-msgstr "スマート プレイリストの読み込み中"
+msgstr "スマートプレイリストの読み込み中"
 
+#: library/librarymodel.cpp:138
 msgid "Loading songs"
-msgstr ""
+msgstr "曲の読み込み中"
 
+#: internet/digitallyimportedurlhandler.cpp:67
+#: internet/somafmurlhandler.cpp:49
 msgid "Loading stream"
 msgstr "ストリームの読み込み中"
 
+#: playlist/songloaderinserter.cpp:79 ui/edittagdialog.cpp:231
 msgid "Loading tracks"
 msgstr "トラックの読み込み中"
 
+#: playlist/songloaderinserter.cpp:139
 msgid "Loading tracks info"
-msgstr ""
+msgstr "トラック情報の読み込み中"
 
+#: library/librarymodel.cpp:133 podcasts/podcastdiscoverymodel.cpp:97
+#: widgets/prettyimage.cpp:168 widgets/widgetfadehelper.cpp:99
+#: ../bin/src/ui_addpodcastdialog.h:180 ../bin/src/ui_searchpreview.h:106
 msgid "Loading..."
 msgstr "読み込んでいます..."
 
+#: core/commandlineoptions.cpp:158
 msgid "Loads files/URLs, replacing current playlist"
-msgstr "現在のプレイリストと置き換えに、ファイル/URL を読み込みます"
+msgstr "ファイル・URL を読み込んで、現在のプレイリストを置き換えます"
 
+#: ../bin/src/ui_digitallyimportedsettingspage.h:163
+#: ../bin/src/ui_groovesharksettingspage.h:116
+#: ../bin/src/ui_magnatunesettingspage.h:164
+#: ../bin/src/ui_spotifysettingspage.h:212
+#: ../bin/src/ui_subsonicsettingspage.h:121
+#: ../bin/src/ui_lastfmsettingspage.h:153
+#: ../bin/src/ui_googledrivesettingspage.h:105
+#: ../bin/src/ui_ubuntuonesettingspage.h:112
+#: ../bin/src/ui_dropboxsettingspage.h:105
 msgid "Login"
+msgstr "ログイン"
+
+#: podcasts/podcastsettingspage.cpp:119
+msgid "Login failed"
 msgstr ""
 
+#: ../bin/src/ui_transcoderoptionsaac.h:137
 msgid "Long term prediction profile (LTP)"
 msgstr ""
 
+#: ../bin/src/ui_mainwindow.h:657
 msgid "Love"
 msgstr "Love"
 
+#: analyzers/analyzercontainer.cpp:62
+#: visualisations/visualisationcontainer.cpp:107
 #, qt-format
 msgid "Low (%1 fps)"
-msgstr ""
+msgstr "低 (%1 fps)"
 
-msgid "Low (15 fps)"
-msgstr "低 (15 fps)"
-
+#: visualisations/visualisationcontainer.cpp:117
 msgid "Low (256x256)"
-msgstr "低い (256x256)"
+msgstr "低 (256x256)"
 
+#: ../bin/src/ui_transcoderoptionsaac.h:135
 msgid "Low complexity profile (LC)"
 msgstr ""
 
+#: ../bin/src/ui_songinfosettingspage.h:187
 msgid "Lyrics"
 msgstr "歌詞"
 
+#: songinfo/ultimatelyricsprovider.cpp:136
 #, qt-format
 msgid "Lyrics from %1"
 msgstr "%1 からの歌詞"
 
+#: core/song.cpp:329 ../bin/src/ui_transcodersettingspage.h:175
 msgid "MP3"
 msgstr "MP3"
 
-msgid "MP3 256k (Premium only)"
-msgstr ""
+#: ../bin/src/ui_digitallyimportedsettingspage.h:177
+msgid "MP3 256k"
+msgstr "MP3 256k"
 
+#: ../bin/src/ui_digitallyimportedsettingspage.h:170
 msgid "MP3 96k"
-msgstr ""
+msgstr "MP3 96k"
 
+#: core/song.cpp:327
 msgid "MP4 AAC"
 msgstr "MP4 AAC"
 
+#: core/song.cpp:328
 msgid "MPC"
 msgstr "MPC"
 
+#: internet/magnatuneservice.cpp:102 ../bin/src/ui_magnatunesettingspage.h:154
 msgid "Magnatune"
 msgstr "Magnatune"
 
+#: ../bin/src/ui_magnatunedownloaddialog.h:131
 msgid "Magnatune Download"
 msgstr "Magnatune ダウンロード"
 
+#: widgets/osd.cpp:190
 msgid "Magnatune download finished"
 msgstr "Magnatune ダウンロードが完了しました"
 
+#: ../bin/src/ui_transcoderoptionsaac.h:134
 msgid "Main profile (MAIN)"
 msgstr ""
 
+#: core/backgroundstreams.cpp:36 ../bin/src/ui_mainwindow.h:687
+msgid "Make it so!"
+msgstr ""
+
+#: internet/spotifyservice.cpp:533
 msgid "Make playlist available offline"
 msgstr ""
 
+#: internet/lastfmservice.cpp:444
 msgid "Malformed response"
 msgstr "不正な応答です"
 
+#: ../bin/src/ui_networkproxysettingspage.h:160
 msgid "Manual proxy configuration"
 msgstr "プロキシの手動構成"
 
+#: ../bin/src/ui_podcastsettingspage.h:231
+#: ../bin/src/ui_podcastsettingspage.h:245
+msgid "Manually"
+msgstr "手動"
+
+#: devices/deviceproperties.cpp:153
 msgid "Manufacturer"
 msgstr "製造元"
 
+#: podcasts/podcastservice.cpp:284
+msgid "Mark as listened"
+msgstr ""
+
+#: podcasts/podcastservice.cpp:282
+msgid "Mark as new"
+msgstr ""
+
+#: ../bin/src/ui_querysearchpage.h:116
 msgid "Match every search term (AND)"
 msgstr "すべての検索条件に一致する (AND)"
 
+#: ../bin/src/ui_querysearchpage.h:117
 msgid "Match one or more search terms (OR)"
-msgstr "複数の検索条件に一致する"
+msgstr "1 つ以上の検索条件に一致する (OR)"
 
+#: ../bin/src/ui_transcoderoptionsvorbis.h:209
 msgid "Maximum bitrate"
-msgstr ""
+msgstr "最高ビットレート"
 
+#: analyzers/analyzercontainer.cpp:63
+#: visualisations/visualisationcontainer.cpp:108
 #, qt-format
 msgid "Medium (%1 fps)"
-msgstr ""
+msgstr "中 (%1 fps)"
 
-msgid "Medium (25 fps)"
-msgstr "中 (25 fps)"
-
+#: visualisations/visualisationcontainer.cpp:118
 msgid "Medium (512x512)"
 msgstr "中 (512x512)"
 
+#: ../bin/src/ui_magnatunesettingspage.h:156
 msgid "Membership type"
 msgstr "メンバーシップの種類"
 
+#: ../bin/src/ui_transcoderoptionsvorbis.h:206
 msgid "Minimum bitrate"
-msgstr ""
+msgstr "最低ビットレート"
 
+#: visualisations/projectmvisualisation.cpp:127
 msgid "Missing projectM presets"
 msgstr "projectM プリセットがありません"
 
+#: devices/deviceproperties.cpp:152
 msgid "Model"
 msgstr "モデル"
 
+#: ../bin/src/ui_librarysettingspage.h:163
 msgid "Monitor the library for changes"
 msgstr "ライブラリの変更を監視する"
 
+#: ../bin/src/ui_playbacksettingspage.h:296
+msgid "Mono playback"
+msgstr "モノラル再生"
+
+#: smartplaylists/searchterm.cpp:309
 msgid "Months"
-msgstr ""
+msgstr "ヶ月"
 
+#: playlist/playlist.cpp:1221
+msgid "Mood"
+msgstr "ムード"
+
+#: ../bin/src/ui_appearancesettingspage.h:287
+#: moodbar/moodbarproxystyle.cpp:342
+msgid "Moodbar style"
+msgstr "ムードバーの形式"
+
+#: ../bin/src/ui_appearancesettingspage.h:285
+msgid "Moodbars"
+msgstr "ムードバー"
+
+#: library/library.cpp:72
 msgid "Most played"
-msgstr "よく再生されている"
+msgstr "最も再生している"
 
+#: devices/giolister.cpp:159
 msgid "Mount point"
-msgstr "マウント ポイント"
+msgstr "マウントポイント"
 
+#: devices/devicekitlister.cpp:125
 msgid "Mount points"
-msgstr "マウント ポイント"
+msgstr "マウントポイント"
 
+#: ../bin/src/ui_globalsearchsettingspage.h:149
+#: ../bin/src/ui_queuemanager.h:131 ../bin/src/ui_songinfosettingspage.h:190
 msgid "Move down"
 msgstr "下へ移動"
 
+#: ui/mainwindow.cpp:501 widgets/fileviewlist.cpp:41
 msgid "Move to library..."
 msgstr "ライブラリへ移動..."
 
+#: ../bin/src/ui_globalsearchsettingspage.h:148
+#: ../bin/src/ui_queuemanager.h:127 ../bin/src/ui_songinfosettingspage.h:189
 msgid "Move up"
 msgstr "上へ移動"
 
+#: transcoder/transcodedialog.cpp:216 ui/mainwindow.cpp:1549
 msgid "Music"
 msgstr "ミュージック"
 
-msgid "Music (*.mp3 *.ogg *.flac *.mpc *.m4a *.aac *.wma *.mp4 *.spx *.wav)"
-msgstr ""
-"ミュージック (*.mp3 *.ogg *.flac *.mpc *.m4a *.aac *.wma *.mp4 *.spx *.wav)"
-
+#: ../bin/src/ui_librarysettingspage.h:157
 msgid "Music Library"
-msgstr "ミュージック ライブラリ"
+msgstr "ミュージックライブラリ"
 
+#: core/globalshortcuts.cpp:54 ../bin/src/ui_mainwindow.h:710
+#: wiimotedev/wiimotesettingspage.cpp:105
 msgid "Mute"
 msgstr "ミュート"
 
+#: globalsearch/lastfmsearchprovider.cpp:53 internet/lastfmservice.cpp:195
 msgid "My Last.fm Library"
-msgstr ""
+msgstr "マイ Last.fm ライブラリ"
 
+#: globalsearch/lastfmsearchprovider.cpp:55 internet/lastfmservice.cpp:200
 msgid "My Last.fm Mix Radio"
-msgstr ""
+msgstr "マイ Last.fm ミックスラジオ"
 
+#: globalsearch/lastfmsearchprovider.cpp:57 internet/lastfmservice.cpp:205
 msgid "My Last.fm Neighborhood"
-msgstr ""
+msgstr "マイ Last.fm のご近所さん"
 
+#: globalsearch/lastfmsearchprovider.cpp:51 internet/lastfmservice.cpp:190
 msgid "My Last.fm Recommended Radio"
-msgstr ""
+msgstr "マイ Last.fm のおすすめラジオ"
 
+#: internet/lastfmservice.cpp:197
 msgid "My Mix Radio"
-msgstr "マイ ミックス ラジオ"
+msgstr "マイミックスラジオ"
 
+#: internet/groovesharkservice.cpp:606
+msgid "My Music"
+msgstr "マイミュージック"
+
+#: internet/lastfmservice.cpp:202
 msgid "My Neighborhood"
 msgstr "ご近所さん"
 
+#: internet/lastfmservice.cpp:192
 msgid "My Radio Station"
 msgstr "ラジオ局"
 
+#: internet/lastfmservice.cpp:187
 msgid "My Recommendations"
 msgstr "おすすめ"
 
+#: internet/groovesharkservice.cpp:1243 internet/groovesharkservice.cpp:1336
+#: ui/equalizer.cpp:172 ../bin/src/ui_deviceproperties.h:369
+#: ../bin/src/ui_magnatunedownloaddialog.h:135
+#: ../bin/src/ui_wizardfinishpage.h:84
+#: ../bin/src/ui_globalshortcutssettingspage.h:174
 msgid "Name"
 msgstr "名前"
 
+#: ../bin/src/ui_organisedialog.h:197
 msgid "Naming options"
 msgstr "名前のオプション"
 
+#: ../bin/src/ui_transcoderoptionsspeex.h:230
 msgid "Narrow band (NB)"
 msgstr ""
 
+#: internet/lastfmservice.cpp:229
 msgid "Neighbors"
-msgstr "ご近所さん"
+msgstr "ご近所さんたち"
 
+#: ../bin/src/ui_songinfosettingspage.h:184
 msgid "Network"
 msgstr "ネットワーク"
 
+#: ../bin/src/ui_networkproxysettingspage.h:157
 msgid "Network Proxy"
-msgstr "ネットワーク プロキシ"
+msgstr "ネットワークプロキシ"
 
-msgid "Never"
-msgstr "しない"
-
-msgid "Never played"
-msgstr "再生されたことがない"
-
-msgid "Never start playing"
+#: ../bin/src/ui_networkremotesettingspage.h:147
+msgid "Network Remote"
 msgstr ""
 
+#: playlist/playlistdelegates.cpp:299 ui/edittagdialog.cpp:481
+msgid "Never"
+msgstr "なし"
+
+#: library/library.cpp:65
+msgid "Never played"
+msgstr "再生したことがない"
+
+#: ../bin/src/ui_behavioursettingspage.h:186
+#: ../bin/src/ui_behavioursettingspage.h:200
+msgid "Never start playing"
+msgstr "再生を開始しない"
+
+#: playlist/playlistlistcontainer.cpp:74
+#: playlist/playlistlistcontainer.cpp:182
+#: ../bin/src/ui_playlistlistcontainer.h:119
+msgid "New folder"
+msgstr "新しいフォルダー"
+
+#: ui/mainwindow.cpp:1389 ../bin/src/ui_mainwindow.h:698
 msgid "New playlist"
 msgstr "新しいプレイリスト"
 
+#: library/libraryview.cpp:379
 msgid "New smart playlist..."
-msgstr "新しいスマート プレイリスト..."
+msgstr "新しいスマートプレイリスト..."
 
+#: widgets/freespacebar.cpp:46
 msgid "New songs"
 msgstr "新しい曲"
 
+#: ../bin/src/ui_dynamicplaylistcontrols.h:110
 msgid "New tracks will be added automatically."
 msgstr "新しいトラックは自動的に追加されます。"
 
+#: library/library.cpp:78
 msgid "Newest tracks"
 msgstr "最新のトラック"
 
+#: ui/edittagdialog.cpp:161 ui/trackselectiondialog.cpp:49
 msgid "Next"
 msgstr "次へ"
 
+#: core/globalshortcuts.cpp:50 ../bin/src/ui_mainwindow.h:651
+#: wiimotedev/wiimotesettingspage.cpp:99
 msgid "Next track"
 msgstr "次のトラック"
 
+#: core/utilities.cpp:145
+msgid "Next week"
+msgstr ""
+
+#: analyzers/analyzercontainer.cpp:80
 msgid "No analyzer"
 msgstr "アナライザーがありません"
 
+#: ../bin/src/ui_appearancesettingspage.h:280
+msgid "No background image"
+msgstr "背景画像なし"
+
+#: ../bin/src/ui_transcoderoptionsaac.h:146
 msgid "No long blocks"
 msgstr ""
 
+#: playlist/playlistcontainer.cpp:389
 msgid ""
 "No matches found.  Clear the search box to show the whole playlist again."
-msgstr ""
-"見つかりません。再びプレイリスト全体を表示するには検索ボックスをクリアしま"
-"す。"
+msgstr "見つかりません。再びプレイリスト全体を表示するには検索ボックスをクリアします。"
 
+#: ../bin/src/ui_transcoderoptionsaac.h:145
 msgid "No short blocks"
 msgstr ""
 
+#: ../bin/src/ui_groupbydialog.h:128 ../bin/src/ui_groupbydialog.h:141
+#: ../bin/src/ui_groupbydialog.h:154
 msgid "None"
 msgstr "なし"
 
+#: library/libraryview.cpp:603 ui/mainwindow.cpp:1777 ui/mainwindow.cpp:1893
 msgid "None of the selected songs were suitable for copying to a device"
 msgstr "デバイスへのコピーに適切な曲が選択されていません"
 
+#: moodbar/moodbarrenderer.cpp:155
+msgid "Normal"
+msgstr ""
+
+#: ../bin/src/ui_transcoderoptionsaac.h:144
 msgid "Normal block type"
 msgstr ""
 
+#: playlist/playlistsequence.cpp:170
 msgid "Not available while using a dynamic playlist"
 msgstr "ダイナミック プレイリストの使用中は利用できません"
 
+#: devices/deviceview.cpp:107
 msgid "Not connected"
 msgstr "接続されていません"
 
+#: internet/lastfmservice.cpp:439
 msgid "Not enough content"
 msgstr "内容が足りません"
 
+#: internet/lastfmservice.cpp:441
 msgid "Not enough fans"
 msgstr "ファンが足りません"
 
+#: internet/lastfmservice.cpp:440
 msgid "Not enough members"
 msgstr "メンバーが足りません"
 
+#: internet/lastfmservice.cpp:442
 msgid "Not enough neighbors"
 msgstr "ご近所さんが足りません"
 
+#: internet/spotifysettingspage.cpp:75
 msgid "Not installed"
-msgstr ""
+msgstr "未インストール"
 
+#: globalsearch/globalsearchsettingspage.cpp:120
+#: globalsearch/searchproviderstatuswidget.cpp:48
+msgid "Not logged in"
+msgstr "ログインしていません"
+
+#: devices/deviceview.cpp:111
 msgid "Not mounted - double click to mount"
-msgstr "マウントされていません - マウントするにはダブル クリックします"
+msgstr "マウントされていません - マウントするにはダブルクリックします"
 
+#: ../bin/src/ui_notificationssettingspage.h:404
 msgid "Notification type"
 msgstr "通知の種類"
 
+#: ../bin/src/ui_notificationssettingspage.h:359
 msgid "Notifications"
 msgstr "通知"
 
+#: ui/macsystemtrayicon.mm:64
 msgid "Now Playing"
 msgstr "再生中"
 
+#: ui/notificationssettingspage.cpp:37
 msgid "OSD Preview"
 msgstr "OSD のプレビュー"
 
+#: core/song.cpp:330
 msgid "Ogg Flac"
 msgstr "Ogg Flac"
 
+#: core/song.cpp:333
+msgid "Ogg Opus"
+msgstr ""
+
+#: core/song.cpp:331
 msgid "Ogg Speex"
 msgstr "Ogg Speex"
 
+#: core/song.cpp:332 ../bin/src/ui_magnatunedownloaddialog.h:139
+#: ../bin/src/ui_magnatunesettingspage.h:170
 msgid "Ogg Vorbis"
 msgstr "Ogg Vorbis"
 
-msgid "Only show the first"
-msgstr "先頭の未表示する"
+#: ../bin/src/ui_networkremotesettingspage.h:151
+msgid ""
+"Only accept connections from clients within the ip ranges:\n"
+"10.x.x.x\n"
+"172.16.0.0 - 172.31.255.255\n"
+"192.168.x.x"
+msgstr ""
 
+#: ../bin/src/ui_querysortpage.h:142
+msgid "Only show the first"
+msgstr "先頭のみ表示する"
+
+#: internet/digitallyimportedservicebase.cpp:179
+#: internet/groovesharkservice.cpp:544 internet/icecastservice.cpp:296
+#: internet/jamendoservice.cpp:418 internet/magnatuneservice.cpp:277
+#: internet/somafmservice.cpp:91 internet/soundcloudservice.cpp:194
 #, qt-format
 msgid "Open %1 in browser"
-msgstr ""
+msgstr "%1 をブラウザーで開く"
 
+#: ../bin/src/ui_mainwindow.h:683
 msgid "Open &audio CD..."
-msgstr ""
+msgstr "オーディオ CD を開く(&A)..."
 
+#: podcasts/addpodcastdialog.cpp:230
+msgid "Open OPML file"
+msgstr "OPML ファイルを開く"
+
+#: podcasts/addpodcastdialog.cpp:73
+msgid "Open OPML file..."
+msgstr "OPML ファイルを開く..."
+
+#: ../bin/src/ui_deviceproperties.h:382
 msgid "Open device"
 msgstr "デバイスを開く"
 
-msgid "Open dir.xiph.org in browser"
-msgstr "ブラウザで dir.xiph.org を開きます"
+#: ../bin/src/ui_mainwindow.h:682
+msgid "Open file..."
+msgstr "ファイルを開く..."
 
+#: internet/googledriveservice.cpp:184
+msgid "Open in Google Drive"
+msgstr "Google Drive で開く"
+
+#: devices/deviceview.cpp:215 globalsearch/globalsearchview.cpp:437
+#: internet/internetservice.cpp:76 library/libraryview.cpp:371
+#: widgets/fileviewlist.cpp:36 ../bin/src/ui_behavioursettingspage.h:195
 msgid "Open in new playlist"
-msgstr ""
+msgstr "新しいプレイリストで開く"
 
-msgid "Open jamendo.com in browser"
-msgstr "ブラウザで jamendo.com を開きます"
-
-msgid "Open magnatune.com in browser"
-msgstr "ブラウザで magnatune.com を開きます"
-
-msgid "Open media..."
-msgstr "メディアを開く..."
-
-msgid "Open somafm.com in browser"
-msgstr "ブラウザで somafm.com を開きます"
-
+#: ../bin/src/ui_globalshortcutssettingspage.h:169
+#: ../bin/src/ui_globalshortcutssettingspage.h:171
 msgid "Open..."
 msgstr "開く..."
 
+#: internet/lastfmservice.cpp:431
 msgid "Operation failed"
 msgstr "操作が失敗しました"
 
+#: ../bin/src/ui_transcoderoptionsmp3.h:193
 msgid "Optimize for bitrate"
-msgstr ""
+msgstr "ビットレートを最適化"
 
+#: ../bin/src/ui_transcoderoptionsmp3.h:191
 msgid "Optimize for quality"
-msgstr ""
+msgstr "品質を最適化"
 
+#: ../bin/src/ui_transcodedialog.h:211
 msgid "Options..."
+msgstr "オプション..."
+
+#: ../bin/src/ui_transcodersettingspage.h:181
+msgid "Opus"
 msgstr ""
 
+#: ../bin/src/ui_organisedialog.h:188
 msgid "Organise Files"
 msgstr "ファイルの整理"
 
+#: library/libraryview.cpp:387 ui/mainwindow.cpp:502
 msgid "Organise files..."
 msgstr "ファイルの整理..."
 
+#: core/organise.cpp:65
 msgid "Organising files"
 msgstr "ファイルの整理中"
 
+#: ui/trackselectiondialog.cpp:167
 msgid "Original tags"
-msgstr ""
+msgstr "元のタグ"
 
+#: core/commandlineoptions.cpp:160
 msgid "Other options"
 msgstr "その他のオプション"
 
+#: ../bin/src/ui_playbacksettingspage.h:289
 msgid "Output device"
 msgstr "出力デバイス"
 
+#: ../bin/src/ui_transcodedialog.h:209
 msgid "Output options"
 msgstr "出力のオプション"
 
+#: ../bin/src/ui_playbacksettingspage.h:284
 msgid "Output plugin"
 msgstr "出力プラグイン"
 
+#: ../bin/src/ui_organisedialog.h:207
 msgid "Overwrite existing files"
 msgstr "既存のファイルを上書きする"
 
+#: ../bin/src/ui_podcastinfowidget.h:195
+msgid "Owner"
+msgstr "所有者"
+
+#: internet/jamendoservice.cpp:213
 msgid "Parsing Jamendo catalogue"
 msgstr "Jamendo カタログの分析中"
 
+#: ui/equalizer.cpp:118
 msgid "Party"
 msgstr "Party"
 
+#: ../bin/src/ui_groovesharksettingspage.h:115
+#: ../bin/src/ui_magnatunesettingspage.h:165
+#: ../bin/src/ui_spotifysettingspage.h:211
+#: ../bin/src/ui_subsonicsettingspage.h:120
+#: ../bin/src/ui_podcastsettingspage.h:253
+#: ../bin/src/ui_networkproxysettingspage.h:169
 msgid "Password"
 msgstr "パスワード"
 
+#: devices/ilister.cpp:119
 msgid "Password Protected"
 msgstr "パスワード保護されています"
 
+#: core/globalshortcuts.cpp:46 ui/mainwindow.cpp:844 ui/mainwindow.cpp:1230
+#: ui/qtsystemtrayicon.cpp:178 wiimotedev/wiimotesettingspage.cpp:106
 msgid "Pause"
 msgstr "一時停止"
 
+#: core/commandlineoptions.cpp:147
 msgid "Pause playback"
 msgstr "再生を一時停止します"
 
+#: widgets/osd.cpp:156
 msgid "Paused"
 msgstr "一時停止中"
 
+#: widgets/fancytabwidget.cpp:653
 msgid "Plain sidebar"
-msgstr "プレーン サイド バー"
+msgstr "プレーンサイドバー"
 
+#: core/globalshortcuts.cpp:45 ui/mainwindow.cpp:485 ui/mainwindow.cpp:812
+#: ui/mainwindow.cpp:831 ui/mainwindow.cpp:1233 ui/qtsystemtrayicon.cpp:166
+#: ui/qtsystemtrayicon.cpp:192 ../bin/src/ui_mainwindow.h:647
+#: wiimotedev/wiimotesettingspage.cpp:101
 msgid "Play"
 msgstr "再生"
 
+#: ../bin/src/ui_lastfmstationdialog.h:92
 msgid "Play Artist or Tag"
 msgstr "アーティストまたはタグの再生"
 
+#: internet/lastfmservice.cpp:118
 msgid "Play artist radio..."
-msgstr "アーティスト ラジオの再生..."
+msgstr "アーティストラジオの再生..."
 
+#: playlist/playlist.cpp:1204 ../bin/src/ui_edittagdialog.h:637
 msgid "Play count"
 msgstr "再生回数"
 
+#: internet/lastfmservice.cpp:122
 msgid "Play custom radio..."
-msgstr "カスタム ラジオの再生..."
+msgstr "カスタムラジオの再生..."
 
-msgid "Play from my Library"
-msgstr "ライブラリから再生"
-
+#: core/commandlineoptions.cpp:146
 msgid "Play if stopped, pause if playing"
 msgstr "停止中は再生し、再生中は一時停止します"
 
+#: ../bin/src/ui_behavioursettingspage.h:187
+#: ../bin/src/ui_behavioursettingspage.h:201
 msgid "Play if there is nothing already playing"
-msgstr ""
+msgstr "再生中の曲がない場合は再生する"
 
-msgid "Play last.fm artist radio"
-msgstr "last.fm アーティスト ラジオの再生"
-
-msgid "Play last.fm tag radio"
-msgstr "last.fm タグ ラジオの再生"
-
+#: internet/lastfmservice.cpp:120
 msgid "Play tag radio..."
-msgstr "タグ ラジオの再生..."
+msgstr "タグラジオの再生..."
 
+#: core/commandlineoptions.cpp:159
 msgid "Play the <n>th track in the playlist"
 msgstr "プレイリストの <n> 番目のトラックを再生する"
 
+#: core/globalshortcuts.cpp:47 wiimotedev/wiimotesettingspage.cpp:107
 msgid "Play/Pause"
-msgstr "再生/一時停止"
+msgstr "再生・一時停止"
 
+#: ../bin/src/ui_playbacksettingspage.h:264
 msgid "Playback"
 msgstr "再生"
 
-msgid "Player name"
-msgstr ""
-
+#: core/commandlineoptions.cpp:144
 msgid "Player options"
 msgstr "プレーヤーのオプション"
 
+#: playlist/playlistcontainer.cpp:273 playlist/playlistmanager.cpp:78
+#: playlist/playlistmanager.cpp:386 playlist/playlisttabbar.cpp:290
 msgid "Playlist"
 msgstr "プレイリスト"
 
+#: widgets/osd.cpp:173
 msgid "Playlist finished"
 msgstr "プレイリストが完了しました"
 
+#: core/commandlineoptions.cpp:156
 msgid "Playlist options"
 msgstr "プレイリストのオプション"
 
-msgid "Playlist search"
-msgstr "プレイリスト検索"
-
+#: smartplaylists/wizard.cpp:77
 msgid "Playlist type"
 msgstr "プレイリストの種類"
 
-msgid "Plugin status:"
-msgstr ""
+#: internet/groovesharkservice.cpp:624 ui/mainwindow.cpp:234
+msgid "Playlists"
+msgstr "プレイリスト"
 
+#: ../data/oauthsuccess.html:36
+msgid "Please close your browser and return to Clementine."
+msgstr "ブラウザーを閉じて Clementine に戻ってください。"
+
+#: ../bin/src/ui_spotifysettingspage.h:215
+msgid "Plugin status:"
+msgstr "プラグインの状態:"
+
+#: podcasts/podcastservice.cpp:110 ../bin/src/ui_podcastsettingspage.h:226
+msgid "Podcasts"
+msgstr "ポッドキャスト"
+
+#: ui/equalizer.cpp:119
 msgid "Pop"
 msgstr "Pop"
 
+#: internet/groovesharkservice.cpp:575
+msgid "Popular songs"
+msgstr "人気の曲"
+
+#: internet/groovesharkservice.cpp:578
+msgid "Popular songs of the Month"
+msgstr "今月人気の曲"
+
+#: internet/groovesharkservice.cpp:585
+msgid "Popular songs today"
+msgstr "今日人気の曲"
+
+#: ../bin/src/ui_notificationssettingspage.h:410
 msgid "Popup duration"
 msgstr "ポップアップの長さ"
 
+#: ../bin/src/ui_networkproxysettingspage.h:166
+#: ../bin/src/ui_networkremotesettingspage.h:149
 msgid "Port"
 msgstr "ポート"
 
+#: ui/equalizer.cpp:46 ../bin/src/ui_playbacksettingspage.h:281
 msgid "Pre-amp"
 msgstr "プリアンプ"
 
+#: ../bin/src/ui_digitallyimportedsettingspage.h:166
+#: ../bin/src/ui_magnatunesettingspage.h:166
+#: ../bin/src/ui_spotifysettingspage.h:217 ../bin/src/ui_settingsdialog.h:115
+#: ../bin/src/ui_lastfmsettingspage.h:155
 msgid "Preferences"
 msgstr "環境設定"
 
+#: ../bin/src/ui_mainwindow.h:672
 msgid "Preferences..."
 msgstr "環境設定..."
 
+#: ../bin/src/ui_librarysettingspage.h:164
 msgid "Preferred album art filenames (comma separated)"
-msgstr "優先するアルバム アートのファイル名 (コンマで区切ります"
+msgstr "優先するアルバムアートのファイル名 (コンマ区切り)"
 
+#: ../bin/src/ui_magnatunesettingspage.h:167
 msgid "Preferred audio format"
 msgstr "優先するオーディオ形式"
 
+#: ../bin/src/ui_spotifysettingspage.h:218
+msgid "Preferred bitrate"
+msgstr "優先するビットレート"
+
+#: ../bin/src/ui_deviceproperties.h:380
 msgid "Preferred format"
 msgstr "優先する形式"
 
+#: ../bin/src/ui_digitallyimportedsettingspage.h:174
+msgid "Premium audio type"
+msgstr "プレミアムのオーディオの種類"
+
+#: ../bin/src/ui_equalizer.h:119
 msgid "Preset:"
 msgstr "プリセット:"
 
+#: ../bin/src/ui_wiimoteshortcutgrabber.h:124
 msgid "Press a button combination to use for"
-msgstr "次に使用するボタンの組み合わせを押します:"
+msgstr "使用するボタンの組み合わせを押してください:"
 
+#: ../bin/src/ui_globalshortcutgrabber.h:73
 msgid "Press a key"
-msgstr "キーを押します"
+msgstr "キーを押してください"
 
+#: ui/globalshortcutgrabber.cpp:39 ../bin/src/ui_globalshortcutgrabber.h:74
 #, qt-format
 msgid "Press a key combination to use for %1..."
-msgstr "%1 に使用するキーの組み合わせを押します..."
+msgstr "%1 に使用するキーの組み合わせを押してください..."
 
+#: ../bin/src/ui_notificationssettingspage.h:423
 msgid "Pretty OSD options"
 msgstr "Pretty OSD のオプション"
 
+#: ../bin/src/ui_searchpreview.h:105 ../bin/src/ui_songinfosettingspage.h:183
+#: ../bin/src/ui_notificationssettingspage.h:418
+#: ../bin/src/ui_organisedialog.h:208
 msgid "Preview"
 msgstr "プレビュー"
 
+#: ui/edittagdialog.cpp:160 ui/trackselectiondialog.cpp:48
 msgid "Previous"
 msgstr "前へ"
 
+#: core/globalshortcuts.cpp:51 ../bin/src/ui_mainwindow.h:645
+#: wiimotedev/wiimotesettingspage.cpp:100
 msgid "Previous track"
 msgstr "前のトラック"
 
+#: core/commandlineoptions.cpp:167
 msgid "Print out version information"
-msgstr ""
+msgstr "バージョン情報を出力"
 
+#: ../bin/src/ui_transcoderoptionsaac.h:131
 msgid "Profile"
-msgstr ""
+msgstr "プロファイル"
 
+#: ../bin/src/ui_magnatunedownloaddialog.h:134
+#: ../bin/src/ui_transcodedialog.h:217
 msgid "Progress"
 msgstr "進行状況"
 
+#: ../bin/src/ui_wiimoteshortcutgrabber.h:125
+#: wiimotedev/wiimotesettingspage.cpp:227
 msgid "Push Wiiremote button"
-msgstr "Wiiremote ボタンを押す"
+msgstr "Wii リモコンのボタンを押してください"
 
+#: ../bin/src/ui_querysortpage.h:138
 msgid "Put songs in a random order"
-msgstr "曲をランダムな順序入れ替えます"
+msgstr "曲をランダムに並び替えます"
 
+#: ../bin/src/ui_transcoderoptionsflac.h:81
+#: ../bin/src/ui_transcoderoptionsmp3.h:192
+#: ../bin/src/ui_transcoderoptionsspeex.h:217
+#: ../bin/src/ui_transcoderoptionsvorbis.h:202
+#: visualisations/visualisationcontainer.cpp:114
 msgid "Quality"
 msgstr "品質"
 
+#: ../bin/src/ui_deviceproperties.h:383
 msgid "Querying device..."
 msgstr "デバイスを照会しています..."
 
+#: ../bin/src/ui_queuemanager.h:125 ../bin/src/ui_mainwindow.h:708
 msgid "Queue Manager"
-msgstr "キュー マネージャー"
+msgstr "キューマネージャー"
 
+#: ui/mainwindow.cpp:1311
 msgid "Queue selected tracks"
 msgstr "選択されたトラックをキューに追加"
 
+#: globalsearch/globalsearchview.cpp:441 library/libraryview.cpp:375
+#: ui/mainwindow.cpp:1309
 msgid "Queue track"
 msgstr "トラックをキューに追加"
 
+#: ../bin/src/ui_playbacksettingspage.h:278
 msgid "Radio (equal loudness for all tracks)"
 msgstr "ラジオ (すべてのトラックで均一の音量)"
 
+#: internet/groovesharkservice.cpp:593
+msgid "Radios"
+msgstr "ラジオ"
+
+#: core/backgroundstreams.cpp:31 ../bin/src/ui_mainwindow.h:685
 msgid "Rain"
 msgstr "Rain"
 
+#: ../bin/src/ui_visualisationselector.h:112
 msgid "Random visualization"
-msgstr "ランダムな視覚化"
+msgstr "ランダムなビジュアライゼーション"
 
+#: core/globalshortcuts.cpp:64
 msgid "Rate the current song 0 stars"
 msgstr "現在の曲を星 0 つと評価します"
 
+#: core/globalshortcuts.cpp:65
 msgid "Rate the current song 1 star"
 msgstr "現在の曲を星 1 つと評価します"
 
+#: core/globalshortcuts.cpp:66
 msgid "Rate the current song 2 stars"
 msgstr "現在の曲を星 2 つと評価します"
 
+#: core/globalshortcuts.cpp:67
 msgid "Rate the current song 3 stars"
 msgstr "現在の曲を星 3 つと評価します"
 
+#: core/globalshortcuts.cpp:68
 msgid "Rate the current song 4 stars"
 msgstr "現在の曲を星 4 つと評価します"
 
+#: core/globalshortcuts.cpp:69
 msgid "Rate the current song 5 stars"
 msgstr "現在の曲を星 5 つと評価します"
 
+#: playlist/playlist.cpp:1203 ../bin/src/ui_edittagdialog.h:645
 msgid "Rating"
 msgstr "評価"
 
+#: internet/magnatunedownloaddialog.cpp:279 ui/albumcovermanager.cpp:199
 msgid "Really cancel?"
-msgstr "本当に取り消しますか"
+msgstr "本当に取り消しますか?"
 
+#: internet/groovesharkservice.cpp:547
+msgid "Refresh"
+msgstr "更新"
+
+#: internet/jamendoservice.cpp:419 internet/magnatuneservice.cpp:278
+#: internet/subsonicservice.cpp:88
 msgid "Refresh catalogue"
 msgstr "カタログの更新"
 
+#: internet/somafmservice.cpp:92
 msgid "Refresh channels"
 msgstr "チャンネルの更新"
 
+#: internet/lastfmservice.cpp:124
+msgid "Refresh friends list"
+msgstr "友だち一覧の更新"
+
+#: internet/icecastservice.cpp:297
 msgid "Refresh station list"
 msgstr "局の一覧の更新"
 
+#: internet/digitallyimportedservicebase.cpp:182
 msgid "Refresh streams"
-msgstr ""
+msgstr "ストリームの更新"
 
+#: ui/equalizer.cpp:120
 msgid "Reggae"
 msgstr "Reggae"
 
+#: ../bin/src/ui_wiimoteshortcutgrabber.h:126
 msgid "Remember Wii remote swing"
-msgstr "Wii remote"
+msgstr "Wii リモコンのスイングを記憶する"
 
+#: ../bin/src/ui_behavioursettingspage.h:181
 msgid "Remember from last time"
 msgstr "最後から記憶する"
 
-msgid "Remote Control"
-msgstr ""
-
+#: internet/savedradio.cpp:100 ../bin/src/ui_queuemanager.h:135
+#: ../bin/src/ui_transcodedialog.h:208 internet/lastfmservice.cpp:115
 msgid "Remove"
 msgstr "削除"
 
+#: ../bin/src/ui_wiimotesettingspage.h:194
 msgid "Remove action"
 msgstr "アクションの削除"
 
+#: ../bin/src/ui_mainwindow.h:717
+msgid "Remove duplicates from playlist"
+msgstr "重複するものをプレイリストから削除"
+
+#: ../bin/src/ui_librarysettingspage.h:160
 msgid "Remove folder"
 msgstr "フォルダーの削除"
 
+#: internet/groovesharkservice.cpp:534
+msgid "Remove from My Music"
+msgstr "マイミュージックから削除する"
+
+#: internet/groovesharkservice.cpp:531
+msgid "Remove from favorites"
+msgstr "お気に入りから削除する"
+
+#: internet/groovesharkservice.cpp:528 ../bin/src/ui_mainwindow.h:692
 msgid "Remove from playlist"
 msgstr "プレイリストから削除"
 
-msgid "Remove playlist"
-msgstr "プレイリストの削除"
+#: internet/groovesharkservice.cpp:1537
+msgid "Removing songs from My Music"
+msgstr "マイミュージックから曲を削除しています"
 
+#: internet/groovesharkservice.cpp:1487
+msgid "Removing songs from favorites"
+msgstr "お気に入りから曲を削除しています"
+
+#: internet/groovesharkservice.cpp:1335
+#, qt-format
+msgid "Rename \"%1\" playlist"
+msgstr "\"%1\" プレイリストの名前を変更"
+
+#: internet/groovesharkservice.cpp:524
+msgid "Rename Grooveshark playlist"
+msgstr "Grooveshark のプレイリストの名前を変更"
+
+#: playlist/playlisttabbar.cpp:128
 msgid "Rename playlist"
 msgstr "プレイリストの名前の変更"
 
+#: playlist/playlisttabbar.cpp:48
 msgid "Rename playlist..."
 msgstr "プレイリストの名前の変更..."
 
+#: ../bin/src/ui_mainwindow.h:668
 msgid "Renumber tracks in this order..."
-msgstr "この順序でトラック番号を振る"
+msgstr "この順序でトラック番号を振る..."
 
+#: playlist/playlistsequence.cpp:174 ../bin/src/ui_playlistsequence.h:112
 msgid "Repeat"
-msgstr "繰り返し"
+msgstr "リピート"
 
+#: widgets/osd.cpp:288 ../bin/src/ui_playlistsequence.h:105
 msgid "Repeat album"
-msgstr "アルバムの繰り返し"
+msgstr "アルバムをリピート"
 
-msgid "Repeat mode"
-msgstr "繰り返しモード"
-
+#: widgets/osd.cpp:289 ../bin/src/ui_playlistsequence.h:106
 msgid "Repeat playlist"
-msgstr "プレイリストの繰り返し"
+msgstr "プレイリストをリピート"
 
+#: widgets/osd.cpp:287 ../bin/src/ui_playlistsequence.h:104
 msgid "Repeat track"
-msgstr "トラックの繰り返し"
+msgstr "トラックをリピート"
 
+#: devices/deviceview.cpp:213 globalsearch/globalsearchview.cpp:435
+#: internet/internetservice.cpp:66 library/libraryview.cpp:369
+#: widgets/fileviewlist.cpp:34
 msgid "Replace current playlist"
-msgstr ""
+msgstr "現在のプレイリストを置き換える"
 
+#: ../bin/src/ui_behavioursettingspage.h:194
 msgid "Replace the playlist"
-msgstr ""
+msgstr "プレイリストを置き換える"
 
+#: ../bin/src/ui_organisedialog.h:205
 msgid "Replaces spaces with underscores"
 msgstr "スペースをアンダースコアに置換する"
 
+#: ../bin/src/ui_playbacksettingspage.h:273
 msgid "Replay Gain"
-msgstr "Replay Gain"
+msgstr "リプレイゲイン"
 
+#: ../bin/src/ui_playbacksettingspage.h:275
 msgid "Replay Gain mode"
-msgstr "Replay Gain モード"
+msgstr "リプレイゲインモード"
 
+#: ../bin/src/ui_dynamicplaylistcontrols.h:112
 msgid "Repopulate"
 msgstr "再装着"
 
+#: widgets/lineedit.cpp:51
 msgid "Reset"
 msgstr "リセット"
 
+#: ui/edittagdialog.cpp:762 ../bin/src/ui_edittagdialog.h:635
 msgid "Reset play counts"
-msgstr "最整数のリセット"
+msgstr "再生回数のリセット"
 
+#: ../bin/src/ui_organisedialog.h:206
 msgid "Restrict to ASCII characters"
 msgstr "ASCII 文字に限定する"
 
-msgid "Rock"
-msgstr "Rock"
+#: internet/groovesharkservice.cpp:756
+msgid "Retrieving Grooveshark My Music songs"
+msgstr "Grooveshark のマイミュージックの曲を取得中"
 
+#: internet/groovesharkservice.cpp:724
+msgid "Retrieving Grooveshark favorites songs"
+msgstr "Grooveshark のお気に入りの曲を取得中"
+
+#: internet/groovesharkservice.cpp:661
+msgid "Retrieving Grooveshark playlists"
+msgstr "Grooveshark のプレイリストを取得中"
+
+#: ../data/oauthsuccess.html:3
+msgid "Return to Clementine"
+msgstr "Clementine に戻る"
+
+#: ui/equalizer.cpp:121
+msgid "Rock"
+msgstr "ロック"
+
+#: ../bin/src/ui_console.h:81
+msgid "Run"
+msgstr "実行"
+
+#: ../bin/src/ui_networkproxysettingspage.h:164
 msgid "SOCKS proxy"
 msgstr "SOCKS プロキシ"
 
+#: devices/deviceview.cpp:202
 msgid "Safely remove device"
 msgstr "デバイスを安全に取り外す"
 
+#: ../bin/src/ui_organisedialog.h:196
 msgid "Safely remove the device after copying"
 msgstr "コピー後にデバイスを安全に取り外す"
 
+#: playlist/playlist.cpp:1211 ../bin/src/ui_edittagdialog.h:642
 msgid "Sample rate"
-msgstr "サンプル レート"
+msgstr "サンプルレート"
 
+#: ui/organisedialog.cpp:68
 msgid "Samplerate"
 msgstr "サンプルレート"
 
+#: ../bin/src/ui_appearancesettingspage.h:288
+msgid "Save .mood files in your music library"
+msgstr ""
+
+#: ui/albumcoverchoicecontroller.cpp:114
 msgid "Save album cover"
-msgstr ""
+msgstr "カバーアートの保存"
 
+#: ui/albumcoverchoicecontroller.cpp:60
 msgid "Save cover to disk..."
-msgstr ""
+msgstr "カバーをディスクに保存..."
 
+#: widgets/prettyimage.cpp:185 widgets/prettyimage.cpp:232
 msgid "Save image"
-msgstr "イメージの保存"
+msgstr "画像の保存"
 
+#: playlist/playlistcontainer.cpp:316
 msgid "Save playlist"
 msgstr "プレイリストの保存"
 
+#: playlist/playlisttabbar.cpp:49 ../bin/src/ui_mainwindow.h:700
 msgid "Save playlist..."
 msgstr "プレイリストの保存..."
 
+#: ui/equalizer.cpp:172 ../bin/src/ui_equalizer.h:121
 msgid "Save preset"
 msgstr "プリセットの保存"
 
+#: ../bin/src/ui_addstreamdialog.h:115
 msgid "Save this stream in the Internet tab"
 msgstr "このストリームを [インターネット] タブに保存する"
 
+#: ui/edittagdialog.cpp:664 ui/trackselectiondialog.cpp:256
 msgid "Saving tracks"
 msgstr "トラックの保存中"
 
+#: ../bin/src/ui_transcoderoptionsaac.h:136
 msgid "Scalable sampling rate profile (SSR)"
 msgstr ""
 
+#: playlist/playlist.cpp:1207 ../bin/src/ui_edittagdialog.h:643
 msgid "Score"
 msgstr "スコア"
 
+#: ../bin/src/ui_lastfmsettingspage.h:156
 msgid "Scrobble tracks that I listen to"
 msgstr "聴取するトラックを Scrobble する"
 
+#: ui/mainwindow.cpp:231 ../bin/src/ui_globalsearchsettingspage.h:145
+#: ../bin/src/ui_gpoddersearchpage.h:78 ../bin/src/ui_itunessearchpage.h:78
+#: ../bin/src/ui_albumcoversearcher.h:114
 msgid "Search"
 msgstr "検索"
 
-msgid "Search GrooveShark"
-msgstr ""
-
-msgid "Search GrooveShark (opens a new tab)"
-msgstr ""
-
+#: ../bin/src/ui_icecastfilterwidget.h:78
 msgid "Search Icecast stations"
 msgstr "Icecast 局の検索"
 
+#: internet/jamendoservice.cpp:425
 msgid "Search Jamendo"
 msgstr "Jamendo の検索"
 
+#: internet/magnatuneservice.cpp:284
 msgid "Search Magnatune"
 msgstr "Magnatune の検索"
 
-msgid "Search Spotify"
+#: internet/subsonicservice.cpp:72
+msgid "Search Subsonic"
 msgstr ""
 
-msgid "Search Spotify (opens a new tab)"
-msgstr ""
-
-msgid "Search Spotify (opens a new tab)..."
-msgstr ""
-
+#: ui/albumcoverchoicecontroller.cpp:62
 msgid "Search for album covers..."
-msgstr "アルバム カバーの検索..."
+msgstr "アルバムカバーの検索..."
 
+#: ../bin/src/ui_globalsearchview.h:208
+msgid "Search for anything"
+msgstr ""
+
+#: ../bin/src/ui_gpoddersearchpage.h:76
+msgid "Search gpodder.net"
+msgstr "gpodder.net を検索"
+
+#: ../bin/src/ui_itunessearchpage.h:76
+msgid "Search iTunes"
+msgstr "iTunes を検索"
+
+#: ../bin/src/ui_querysearchpage.h:113
 msgid "Search mode"
 msgstr "検索モード"
 
+#: smartplaylists/querywizardplugin.cpp:154
 msgid "Search options"
-msgstr "検索のぷしょん"
+msgstr "検索オプション"
 
+#: internet/groovesharkservice.cpp:567 internet/soundcloudservice.cpp:104
+#: internet/spotifyservice.cpp:347
+msgid "Search results"
+msgstr "検索結果"
+
+#: smartplaylists/querywizardplugin.cpp:152
+#: ../bin/src/ui_querysearchpage.h:120
 msgid "Search terms"
 msgstr "検索条件"
 
+#: internet/groovesharkservice.cpp:268
+msgid "Searching on Grooveshark"
+msgstr "Grooveshark を検索中"
+
+#: ../bin/src/ui_groupbydialog.h:138
 msgid "Second level"
 msgstr "第 2 階層"
 
+#: core/globalshortcuts.cpp:56 wiimotedev/wiimotesettingspage.cpp:108
 msgid "Seek backward"
-msgstr "後ろへシーク"
+msgstr "後方へシーク"
 
+#: core/globalshortcuts.cpp:55 wiimotedev/wiimotesettingspage.cpp:109
 msgid "Seek forward"
-msgstr "前へシーク"
+msgstr "前方へシーク"
 
+#: core/commandlineoptions.cpp:155
 msgid "Seek the currently playing track by a relative amount"
 msgstr "現在再生中のトラックを相対値でシークする"
 
+#: core/commandlineoptions.cpp:154
 msgid "Seek the currently playing track to an absolute position"
 msgstr "現在再生中のトラックの絶対的な位置へシークする"
 
+#: visualisations/visualisationselector.cpp:40
 msgid "Select All"
 msgstr "すべて選択"
 
+#: visualisations/visualisationselector.cpp:42
 msgid "Select None"
 msgstr "選択しない"
 
+#: ../bin/src/ui_appearancesettingspage.h:272
+msgid "Select background color:"
+msgstr "背景色の選択:"
+
+#: ui/appearancesettingspage.cpp:240
+msgid "Select background image"
+msgstr "背景画像の選択"
+
+#: ../bin/src/ui_trackselectiondialog.h:207
 msgid "Select best possible match"
 msgstr ""
 
+#: ../bin/src/ui_appearancesettingspage.h:283
+msgid "Select blur radius:"
+msgstr ""
+
+#: ../bin/src/ui_appearancesettingspage.h:270
+msgid "Select foreground color:"
+msgstr "前景色の選択:"
+
+#: ../bin/src/ui_visualisationselector.h:108
 msgid "Select visualizations"
-msgstr "視覚化の選択"
+msgstr "ビジュアライゼーションの選択"
 
+#: visualisations/visualisationcontainer.cpp:124
 msgid "Select visualizations..."
-msgstr "視覚化の選択..."
+msgstr "ビジュアライゼーションの選択..."
 
+#: devices/devicekitlister.cpp:124
 msgid "Serial number"
 msgstr "シリアル番号"
 
+#: ../bin/src/ui_subsonicsettingspage.h:118
+msgid "Server URL"
+msgstr ""
+
+#: ../bin/src/ui_subsonicsettingspage.h:117
+msgid "Server details"
+msgstr ""
+
+#: internet/lastfmservice.cpp:434
 msgid "Service offline"
 msgstr "サービスがオフラインです"
 
+#: ui/mainwindow.cpp:1338
 #, qt-format
 msgid "Set %1 to \"%2\"..."
-msgstr "%1 を \"%2\" へ設定します..."
+msgstr "%1 を \"%2\" に設定します..."
 
+#: core/commandlineoptions.cpp:151
 msgid "Set the volume to <value> percent"
 msgstr "音量を <value> パーセントへ設定しました"
 
+#: ../bin/src/ui_mainwindow.h:669
 msgid "Set value for all selected tracks..."
 msgstr "すべての選択されたトラックの音量を設定しました..."
 
-msgid "Settings"
-msgstr ""
-
+#: ../bin/src/ui_globalshortcutssettingspage.h:173
 msgid "Shortcut"
 msgstr "ショートカット"
 
+#: ui/globalshortcutssettingspage.cpp:133
+#: ../bin/src/ui_globalshortcutssettingspage.h:175
 #, qt-format
 msgid "Shortcut for %1"
 msgstr "%1 のショートカット"
 
+#: wiimotedev/wiimotesettingspage.cpp:124
 #, qt-format
 msgid "Shortcut for %1 already exists"
 msgstr "%1 のショートカットは既に存在します"
 
+#: library/libraryfilterwidget.cpp:61
 msgid "Show"
 msgstr "表示"
 
-msgid "Show Global Search Popup"
-msgstr ""
-
+#: core/globalshortcuts.cpp:58 wiimotedev/wiimotesettingspage.cpp:111
 msgid "Show OSD"
 msgstr "OSD の表示"
 
+#: ../bin/src/ui_playbacksettingspage.h:265
 msgid "Show a glowing animation on the current track"
-msgstr "現在のトラックに揺らめきアニメーションを表示する"
+msgstr "現在のトラックを光らせるアニメーションを表示する"
 
-msgid "Show a native desktop notification"
-msgstr "ネイティブなデスクトップ通知を表示する"
-
-msgid "Show a notification when I change the repeat/shuffle mode"
+#: ../bin/src/ui_appearancesettingspage.h:286
+msgid "Show a moodbar in the track progress bar"
 msgstr ""
 
+#: ../bin/src/ui_notificationssettingspage.h:406
+msgid "Show a native desktop notification"
+msgstr "ネイティブのデスクトップ通知を表示する"
+
+#: ../bin/src/ui_notificationssettingspage.h:414
+msgid "Show a notification when I change the repeat/shuffle mode"
+msgstr "リピート・シャッフルモードの変更時に通知を表示する"
+
+#: ../bin/src/ui_notificationssettingspage.h:413
 msgid "Show a notification when I change the volume"
 msgstr "音量の変更時に通知を表示する"
 
+#: ../bin/src/ui_notificationssettingspage.h:408
 msgid "Show a popup from the system tray"
-msgstr "システム トレイからポップアップを表示する"
+msgstr "システムトレイからポップアップを表示する"
 
+#: ../bin/src/ui_notificationssettingspage.h:407
 msgid "Show a pretty OSD"
 msgstr "Pretty OSD を表示する"
 
+#: widgets/nowplayingwidget.cpp:113
 msgid "Show above status bar"
-msgstr "ステータス バーの上に表示"
+msgstr "ステータスバーの上に表示"
 
+#: ui/mainwindow.cpp:458
 msgid "Show all songs"
-msgstr ""
+msgstr "すべての曲を表示"
 
+#: ../bin/src/ui_querysortpage.h:141
 msgid "Show all the songs"
 msgstr "すべての曲を表示"
 
+#: ../bin/src/ui_librarysettingspage.h:171
 msgid "Show cover art in library"
-msgstr "ライブラリにカバー アートを表示"
+msgstr "ライブラリにカバーアートを表示"
 
+#: ../bin/src/ui_librarysettingspage.h:172
 msgid "Show dividers"
-msgstr ""
+msgstr "区切りを表示する"
 
+#: ui/albumcoverchoicecontroller.cpp:64 widgets/prettyimage.cpp:183
 msgid "Show fullsize..."
-msgstr "原寸表示"
+msgstr "原寸表示..."
 
+#: library/libraryview.cpp:399 ui/mainwindow.cpp:505
+#: widgets/fileviewlist.cpp:52
 msgid "Show in file browser..."
-msgstr ""
+msgstr "ファイルブラウザーで表示..."
 
+#: library/libraryview.cpp:403
 msgid "Show in various artists"
-msgstr "さまざまなアーティストに表示する"
+msgstr "さまざまなアーティストに表示"
 
+#: moodbar/moodbarproxystyle.cpp:337
+msgid "Show moodbar"
+msgstr ""
+
+#: ui/mainwindow.cpp:459
 msgid "Show only duplicates"
-msgstr ""
+msgstr "重複するものだけ表示"
 
+#: ui/mainwindow.cpp:460
 msgid "Show only untagged"
-msgstr ""
+msgstr "タグのないものだけ表示"
 
+#: ../bin/src/ui_globalsearchsettingspage.h:153
+msgid "Show search suggestions"
+msgstr "検索のおすすめを表示する"
+
+#: ../bin/src/ui_lastfmsettingspage.h:157
 msgid "Show the \"love\" and \"ban\" buttons"
-msgstr "\"Love\" および \"Ban\" ボタンを表示する"
+msgstr "\"Love\" および \"はじき出す\" ボタンを表示する"
 
+#: ../bin/src/ui_lastfmsettingspage.h:158
 msgid "Show the scrobble button in the main window"
-msgstr ""
+msgstr "scrobble ボタンをメインウィンドウに表示する"
 
+#: ../bin/src/ui_behavioursettingspage.h:170
 msgid "Show tray icon"
-msgstr "トレイ アイコンを表示する"
+msgstr "トレイアイコンを表示する"
 
+#: ../bin/src/ui_globalsearchsettingspage.h:152
+msgid "Show which sources are enabled and disabled"
+msgstr "有効および無効になっているソースを表示"
+
+#: core/globalshortcuts.cpp:57
 msgid "Show/Hide"
-msgstr "表示/非表示の切り替え"
+msgstr "表示・非表示の切り替え"
 
+#: playlist/playlistsequence.cpp:173 ../bin/src/ui_playlistsequence.h:115
 msgid "Shuffle"
 msgstr "シャッフル"
 
+#: widgets/osd.cpp:276 ../bin/src/ui_playlistsequence.h:110
+msgid "Shuffle albums"
+msgstr "アルバムをシャッフル"
+
+#: widgets/osd.cpp:274 ../bin/src/ui_playlistsequence.h:109
 msgid "Shuffle all"
 msgstr "すべてシャッフル"
 
-msgid "Shuffle by album"
-msgstr "アルバムでシャッフル"
-
-msgid "Shuffle mode"
-msgstr "シャッフル モード"
-
+#: ../bin/src/ui_mainwindow.h:676
 msgid "Shuffle playlist"
 msgstr "プレイリストのシャッフル"
 
+#: widgets/osd.cpp:275 ../bin/src/ui_playlistsequence.h:108
+msgid "Shuffle tracks in this album"
+msgstr "このアルバムのトラックをシャッフル"
+
+#: ../bin/src/ui_podcastsettingspage.h:252
+msgid "Sign in"
+msgstr "サインイン"
+
+#: ../bin/src/ui_loginstatewidget.h:173
 msgid "Sign out"
 msgstr "サインアウト"
 
+#: ../bin/src/ui_loginstatewidget.h:175
 msgid "Signing in..."
-msgstr ""
+msgstr "サインインしています..."
 
+#: songinfo/echonestsimilarartists.cpp:57
 msgid "Similar artists"
 msgstr "テイストの似たアーティスト"
 
+#: ui/equalizer.cpp:123
 msgid "Ska"
 msgstr "Ska"
 
+#: core/commandlineoptions.cpp:149
 msgid "Skip backwards in playlist"
 msgstr "プレイリストで後ろにスキップ"
 
+#: playlist/playlist.cpp:1205 ../bin/src/ui_edittagdialog.h:639
 msgid "Skip count"
 msgstr "スキップ回数"
 
+#: core/commandlineoptions.cpp:150
 msgid "Skip forwards in playlist"
 msgstr "プレイリストで前にスキップ"
 
+#: widgets/nowplayingwidget.cpp:90
 msgid "Small album cover"
-msgstr "小さいアルバム カバー"
+msgstr "小さいアルバムカバー"
 
+#: widgets/fancytabwidget.cpp:652
 msgid "Small sidebar"
-msgstr "小さいサイド バー"
+msgstr "小さいサイドバー"
 
+#: smartplaylists/wizard.cpp:68
 msgid "Smart playlist"
-msgstr "スマート プレイリスト"
+msgstr "スマートプレイリスト"
 
+#: library/librarymodel.cpp:1149
 msgid "Smart playlists"
-msgstr "スマート プレイリスト"
+msgstr "スマートプレイリスト"
 
+#: ui/equalizer.cpp:122
 msgid "Soft"
 msgstr "Soft"
 
+#: ui/equalizer.cpp:124
 msgid "Soft Rock"
 msgstr "Soft Rock"
 
+#: ../bin/src/ui_songinfosettingspage.h:179
 msgid "Song Information"
 msgstr "曲の情報"
 
+#: ui/mainwindow.cpp:238
 msgid "Song info"
 msgstr "曲の情報"
 
+#: analyzers/sonogram.cpp:18
 msgid "Sonogram"
 msgstr "Sonogram"
 
+#: ../bin/src/ui_trackselectiondialog.h:205
 msgid "Sorry"
-msgstr ""
+msgstr "申し訳ありません"
 
+#: ../bin/src/ui_icecastfilterwidget.h:75
 msgid "Sort by genre (alphabetically)"
 msgstr "ジャンルで整列 (アルファベット順)"
 
+#: ../bin/src/ui_icecastfilterwidget.h:76
 msgid "Sort by genre (by popularity)"
 msgstr "ジャンルで整列 (人気順)"
 
+#: ../bin/src/ui_icecastfilterwidget.h:77
 msgid "Sort by station name"
 msgstr "局名で整列"
 
+#: ../bin/src/ui_querysortpage.h:139
 msgid "Sort songs by"
 msgstr "曲の並べ替え"
 
+#: ../bin/src/ui_querysortpage.h:137
 msgid "Sorting"
-msgstr "並べ替え"
+msgstr "並べ替え中"
 
+#: playlist/playlist.cpp:1220
+msgid "Source"
+msgstr "ソース"
+
+#: ../bin/src/ui_globalsearchsettingspage.h:146
+msgid "Sources"
+msgstr "ソース"
+
+#: ../bin/src/ui_transcodersettingspage.h:178
 msgid "Speex"
-msgstr ""
+msgstr "Speex"
 
+#: ../bin/src/ui_spotifysettingspage.h:208
 msgid "Spotify"
-msgstr ""
+msgstr "Spotify"
 
+#: internet/spotifyservice.cpp:184
 msgid "Spotify login error"
-msgstr ""
+msgstr "Spotify ログインエラー"
 
+#: ../bin/src/ui_spotifysettingspage.h:213
 msgid "Spotify plugin"
-msgstr ""
+msgstr "Spotify プラグイン"
 
+#: internet/spotifyblobdownloader.cpp:59
 msgid "Spotify plugin not installed"
-msgstr ""
+msgstr "Spotify プラグインはインストールされていません"
 
+#: ../bin/src/ui_transcoderoptionsmp3.h:201
 msgid "Standard"
-msgstr ""
+msgstr "標準"
 
+#: internet/spotifyservice.cpp:354
 msgid "Starred"
 msgstr ""
 
+#: core/commandlineoptions.cpp:145
 msgid "Start the playlist currently playing"
 msgstr "現在再生中のプレイリストを開始する"
 
+#: transcoder/transcodedialog.cpp:88
 msgid "Start transcoding"
 msgstr "トランスコードの開始"
 
-msgid "Start typing in the search box above to find music on GrooveShark."
+#: internet/groovesharkservice.cpp:568 internet/soundcloudservice.cpp:105
+#: internet/spotifyservice.cpp:348
+msgid ""
+"Start typing something on the search box above to fill this search results "
+"list"
 msgstr ""
 
-msgid "Start typing in the search box above to find music on Spotify."
-msgstr ""
-
+#: transcoder/transcoder.cpp:405
 #, qt-format
 msgid "Starting %1"
 msgstr "%1 の開始中"
 
+#: internet/magnatunedownloaddialog.cpp:120
 msgid "Starting..."
 msgstr "開始しています..."
 
+#: internet/groovesharkservice.cpp:596
+msgid "Stations"
+msgstr "局"
+
+#: core/globalshortcuts.cpp:48 ../bin/src/ui_mainwindow.h:649
+#: wiimotedev/wiimotesettingspage.cpp:102
 msgid "Stop"
 msgstr "停止"
 
+#: wiimotedev/wiimotesettingspage.cpp:110
 msgid "Stop after"
 msgstr "次で停止"
 
+#: ui/mainwindow.cpp:487 ../bin/src/ui_mainwindow.h:655
 msgid "Stop after this track"
 msgstr "このトラックで停止"
 
+#: core/commandlineoptions.cpp:148
 msgid "Stop playback"
 msgstr "再生の停止"
 
+#: core/globalshortcuts.cpp:49
 msgid "Stop playing after current track"
 msgstr "現在のトラックで停止"
 
+#: widgets/osd.cpp:166
 msgid "Stopped"
 msgstr "停止しました"
 
+#: core/song.cpp:339
 msgid "Stream"
 msgstr "ストリーム"
 
+#: internet/subsonicsettingspage.cpp:29
+msgid ""
+"Streaming from a Subsonic server requires a valid server license after the "
+"30-day trial period."
+msgstr ""
+
+#: ../bin/src/ui_magnatunesettingspage.h:160
 msgid "Streaming membership"
 msgstr "ストリーミングのメンバーシップ"
 
+#: internet/groovesharkservice.cpp:627
+msgid "Subscribed playlists"
+msgstr ""
+
+#: ../bin/src/ui_podcastinfowidget.h:196
+msgid "Subscribers"
+msgstr ""
+
+#: internet/subsonicservice.cpp:101 ../bin/src/ui_subsonicsettingspage.h:116
+msgid "Subsonic"
+msgstr ""
+
+#: ../data/oauthsuccess.html:34
+msgid "Success!"
+msgstr "成功!"
+
+#: transcoder/transcoder.cpp:200
 #, qt-format
 msgid "Successfully written %1"
 msgstr "%1 の書き込みに成功しました"
 
+#: ui/trackselectiondialog.cpp:171
 msgid "Suggested tags"
 msgstr ""
 
+#: ../bin/src/ui_edittagdialog.h:651
+#: ../bin/src/ui_notificationssettingspage.h:420
 msgid "Summary"
 msgstr "要約"
 
+#: analyzers/analyzercontainer.cpp:65
+#: visualisations/visualisationcontainer.cpp:110
 #, qt-format
 msgid "Super high (%1 fps)"
-msgstr ""
+msgstr "最高 (%1 fps)"
 
-msgid "Super high (60 fps)"
-msgstr "最高 (60 fps)"
+#: visualisations/visualisationcontainer.cpp:120
+msgid "Super high (2048x2048)"
+msgstr "最高 (2048x2048)"
 
+#: ../bin/src/ui_deviceproperties.h:374
 msgid "Supported formats"
 msgstr "サポートされている形式"
 
-msgid "Switch provider"
-msgstr ""
-
+#: internet/spotifyservice.cpp:561
 msgid "Syncing Spotify inbox"
 msgstr ""
 
+#: internet/spotifyservice.cpp:556
 msgid "Syncing Spotify playlist"
 msgstr ""
 
+#: internet/spotifyservice.cpp:565
 msgid "Syncing Spotify starred tracks"
 msgstr ""
 
+#: moodbar/moodbarrenderer.cpp:159
+msgid "System colors"
+msgstr ""
+
+#: widgets/fancytabwidget.cpp:654
 msgid "Tabs on top"
 msgstr "タブを上に配置"
 
+#: ../bin/src/ui_lastfmstationdialog.h:97
 msgid "Tag"
 msgstr "タグ"
 
+#: ../bin/src/ui_trackselectiondialog.h:204
 msgid "Tag fetcher"
-msgstr ""
+msgstr "タグ取得ツール"
 
+#: internet/lastfmservice.cpp:212
 msgid "Tag radio"
-msgstr "タグ ラジオ"
+msgstr "タグラジオ"
 
+#: ../bin/src/ui_transcoderoptionsvorbis.h:204
 msgid "Target bitrate"
-msgstr ""
+msgstr "目標ビットレート"
 
+#: ui/equalizer.cpp:125
 msgid "Techno"
-msgstr "Techno"
+msgstr "テクノ"
 
+#: ../bin/src/ui_notificationssettingspage.h:432
 msgid "Text options"
-msgstr ""
+msgstr "文字のオプション"
 
+#: ui/about.cpp:69
 msgid "Thanks to"
 msgstr "謝辞"
 
+#: ui/globalshortcutssettingspage.cpp:175
 #, qt-format
 msgid "The \"%1\" command could not be started."
-msgstr "\"%1\" コマンドは開始できませんでした。"
+msgstr "コマンド \"%1\" は開始できませんでした。"
 
+#: ../bin/src/ui_appearancesettingspage.h:277
+msgid "The album cover of the currently playing song"
+msgstr "再生中の曲のアルバムカバー"
+
+#: internet/magnatunedownloaddialog.cpp:90
 #, qt-format
 msgid "The directory %1 is not valid"
 msgstr "ディレクトリ %1 は不正です"
 
+#: playlist/playlistmanager.cpp:154 playlist/playlistmanager.cpp:172
 #, qt-format
 msgid "The playlist '%1' was empty or could not be loaded."
 msgstr "プレイリスト '%1' は空であるか読み込めませんでした。"
 
+#: smartplaylists/searchtermwidget.cpp:330
 msgid "The second value must be greater than the first one!"
-msgstr ""
+msgstr "2 つ目の値は 1 つ目より大きくする必要があります!"
 
+#: ui/coverfromurldialog.cpp:71
 msgid "The site you requested does not exist!"
-msgstr ""
+msgstr "指定されたサイトは存在しません!"
 
+#: ui/coverfromurldialog.cpp:82
 msgid "The site you requested is not an image!"
+msgstr "指定されたサイトは画像ではありません!"
+
+#: internet/subsonicsettingspage.cpp:95
+msgid ""
+"The trial period for the Subsonic server is over. Please donate to get a "
+"license key. Visit subsonic.org for details."
 msgstr ""
 
+#: ui/mainwindow.cpp:2002
 msgid ""
 "The version of Clementine you've just updated to requires a full library "
 "rescan because of the new features listed below:"
+msgstr "更新したこのバージョンの Clementine は、次の新機能によりライブラリ全体の再スキャンが必要です。"
+
+#: library/libraryview.cpp:529
+msgid "There are other songs in this album"
 msgstr ""
 
-msgid "There was a problem fetching the metadata from Magnatune"
-msgstr "Magnatune からのメタデータのフェッチの問題がありました"
+#: podcasts/gpoddersearchpage.cpp:77 podcasts/gpoddertoptagsmodel.cpp:110
+#: podcasts/gpoddertoptagspage.cpp:77
+msgid "There was a problem communicating with gpodder.net"
+msgstr "gpodder.net との通信に問題がありました"
 
+#: internet/magnatunedownloaddialog.cpp:158
+msgid "There was a problem fetching the metadata from Magnatune"
+msgstr "Magnatune からのメタデータ取得に問題がありました"
+
+#: podcasts/itunessearchpage.cpp:76
+msgid "There was a problem parsing the response from the iTunes Store"
+msgstr "iTunes Store からの応答の分析に問題がありました"
+
+#: ui/organiseerrordialog.cpp:56
 msgid ""
 "There were problems copying some songs.  The following files could not be "
 "copied:"
-msgstr "曲のコピーの問題がありました。以下のファイルはコピーできませんでした:"
+msgstr "曲のコピーに問題がありました。次のファイルはコピーできませんでした:"
 
+#: ui/organiseerrordialog.cpp:61
 msgid ""
 "There were problems deleting some songs.  The following files could not be "
 "deleted:"
-msgstr "曲の削除の問題がありました。以下のファイルは削除できませんでした:"
+msgstr "曲の削除に問題がありました。次のファイルは削除できませんでした:"
 
+#: library/libraryview.cpp:609 ui/mainwindow.cpp:1825 widgets/fileview.cpp:187
 msgid ""
 "These files will be deleted from disk, are you sure you want to continue?"
-msgstr "これらのファイルはディスクから削除されます、続行してもよろしいですか?"
+msgstr "これらのファイルはディスクから削除されます。続行してもよろしいですか?"
 
+#: devices/deviceview.cpp:389
 msgid ""
 "These files will be deleted from the device, are you sure you want to "
 "continue?"
-msgstr "これらのファイルはデバイスから削除されます、続行してもよろしいですか?"
+msgstr "これらのファイルはデバイスから削除されます。続行してもよろしいですか?"
 
+#: ../bin/src/ui_librarysettingspage.h:158
 msgid "These folders will be scanned for music to make up your library"
 msgstr "これらのフォルダーはライブラリを作成するためにスキャンされます"
 
+#: ../bin/src/ui_transcodersettingspage.h:174
 msgid ""
 "These settings are used in the \"Transcode Music\" dialog, and when "
 "converting music before copying it to a device."
-msgstr ""
+msgstr "以下の設定は \"ミュージックのトランスコード\" ダイアログや、音楽を変換してデバイスへコピーする前に使われます。"
 
+#: ../bin/src/ui_groupbydialog.h:151
 msgid "Third level"
 msgstr "第 3 階層"
 
+#: internet/jamendoservice.cpp:170
 msgid ""
 "This action will create a database which could be as big as 150 MB.\n"
 "Do you want to continue anyway?"
-msgstr ""
+msgstr "この操作は 150 メガバイト以上のデータベースを作る可能性があります。\n操作を続行しますか?"
 
+#: internet/magnatunedownloaddialog.cpp:175
 msgid "This album is not available in the requested format"
 msgstr "このアルバムは要求されたフォーマットでは利用できません"
 
+#: ../bin/src/ui_deviceproperties.h:381
 msgid ""
-"This device must be connected and opened before Clementine can see what file "
-"formats it supports."
-msgstr ""
-"Clementine がこのデバイスのサポートするファイル形式を認識する前にデバイスが接"
-"続されて開かれている必要があります。"
+"This device must be connected and opened before Clementine can see what file"
+" formats it supports."
+msgstr "Clementine がこのデバイスのサポートするファイル形式を認識する前にデバイスが接続されて開かれている必要があります。"
 
+#: ../bin/src/ui_deviceproperties.h:375
 msgid "This device supports the following file formats:"
-msgstr "このデバイスは以下のファイル形式をサポートしています:"
+msgstr "このデバイスは次のファイル形式をサポートしています:"
 
+#: devices/devicemanager.cpp:582 devices/devicemanager.cpp:590
 msgid "This device will not work properly"
 msgstr "このデバイスは適切に動作しません"
 
+#: devices/devicemanager.cpp:583
 msgid ""
 "This is an MTP device, but you compiled Clementine without libmtp support."
-msgstr ""
-"これは MTP デバイスですが、Clementine は libmtp サポートなしでコンパイルされ"
-"ています。"
+msgstr "これは MTP デバイスですが、Clementine は libmtp サポートなしでコンパイルされています。"
 
+#: devices/devicemanager.cpp:591
 msgid "This is an iPod, but you compiled Clementine without libgpod support."
-msgstr ""
-"これは iPod ですが、Clementine は libgpod サポートなしでコンパイルされていま"
-"す。"
+msgstr "これは iPod ですが、Clementine は libgpod サポートなしでコンパイルされています。"
 
+#: devices/devicemanager.cpp:340
 msgid ""
 "This is the first time you have connected this device.  Clementine will now "
 "scan the device to find music files - this may take some time."
-msgstr ""
-"このデバイスに初めて接続しました。Clementine はミュージック ファイルを検索す"
-"るためにデバイスをスキャンします - これには時間がかかる可能性があります。"
+msgstr "このデバイスに初めて接続しました。Clementine はミュージックファイルを検索するためにデバイスをスキャンします - これには時間がかかる可能性があります。"
 
-msgid ""
-"This playlist will be removed; the action can't be undone. Are you sure you "
-"want to continue?"
-msgstr ""
-
+#: internet/lastfmservice.cpp:435
 msgid "This stream is for paid subscribers only"
 msgstr "このストリームは有料会員専用です"
 
+#: devices/devicemanager.cpp:603
 #, qt-format
 msgid "This type of device is not supported: %1"
-msgstr "このデバイスの種類はサポートされていません: %1"
+msgstr "この種類のデバイスはサポートされていません: %1"
 
+#: ../bin/src/ui_songinfosettingspage.h:185
 msgid "Timeout"
 msgstr "タイムアウト"
 
+#: devices/ilister.cpp:120
 msgid "Timezone"
 msgstr "タイムゾーン"
 
+#: playlist/playlist.cpp:1192 ui/organisedialog.cpp:54
+#: ui/qtsystemtrayicon.cpp:248 ../bin/src/ui_about.h:142
+#: ../bin/src/ui_edittagdialog.h:652 ../bin/src/ui_trackselectiondialog.h:211
 msgid "Title"
 msgstr "タイトル"
 
+#: internet/groovesharkservice.cpp:1016
+msgid ""
+"To start Grooveshark radio, you should first listen to a few other "
+"Grooveshark songs"
+msgstr "Grooveshark のラジオを開始するには、まず始めに他の Grooveshark の曲をいくつか聴くとよいでしょう"
+
+#: core/utilities.cpp:123 core/utilities.cpp:139
 msgid "Today"
 msgstr "今日"
 
+#: core/globalshortcuts.cpp:59
 msgid "Toggle Pretty OSD"
-msgstr ""
+msgstr "Pretty OSD の切り替え"
 
+#: visualisations/visualisationcontainer.cpp:101
 msgid "Toggle fullscreen"
 msgstr "全画面表示の切り替え"
 
+#: ui/mainwindow.cpp:1313
 msgid "Toggle queue status"
 msgstr "キュー状態の切り替え"
 
+#: ../bin/src/ui_mainwindow.h:715
 msgid "Toggle scrobbling"
-msgstr ""
+msgstr "scrobbling の切り替え"
 
+#: core/commandlineoptions.cpp:162
 msgid "Toggle visibility for the pretty on-screen-display"
+msgstr "pretty OSD 表示の切り替え"
+
+#: core/utilities.cpp:141
+msgid "Tomorrow"
 msgstr ""
 
+#: podcasts/podcasturlloader.cpp:116
+msgid "Too many redirects"
+msgstr "リダイレクトが多すぎます"
+
+#: internet/spotifyservice.cpp:366
+msgid "Top tracks"
+msgstr ""
+
+#: covers/coversearchstatisticsdialog.cpp:71
 msgid "Total bytes transferred"
-msgstr ""
+msgstr "合計転送バイト数"
 
+#: covers/coversearchstatisticsdialog.cpp:68
 msgid "Total network requests made"
-msgstr ""
+msgstr "合計ネットワーク要求回数"
 
+#: playlist/playlist.cpp:1196 ui/organisedialog.cpp:60
+#: ../bin/src/ui_edittagdialog.h:653 ../bin/src/ui_trackselectiondialog.h:213
 msgid "Track"
 msgstr "トラック"
 
+#: ../bin/src/ui_transcodedialog.h:202 ../bin/src/ui_mainwindow.h:694
 msgid "Transcode Music"
 msgstr "ミュージックのトランスコード"
 
+#: ../bin/src/ui_transcodelogdialog.h:63
 msgid "Transcoder Log"
 msgstr "トランスコーダーのログ"
 
+#: ../bin/src/ui_transcodersettingspage.h:173
 msgid "Transcoding"
-msgstr ""
+msgstr "トランスコード"
 
+#: transcoder/transcoder.cpp:312
 #, qt-format
 msgid "Transcoding %1 files using %2 threads"
 msgstr "%2 個のスレッドを使用して %1 個のファイルをトランスコードしています"
 
+#: ../bin/src/ui_transcoderoptionsdialog.h:54
 msgid "Transcoding options"
-msgstr ""
+msgstr "トランスコードのオプション"
 
+#: core/song.cpp:336
 msgid "TrueAudio"
 msgstr "TrueAudio"
 
+#: analyzers/turbine.cpp:15
 msgid "Turbine"
 msgstr "Turbine"
 
+#: ../bin/src/ui_dynamicplaylistcontrols.h:113
 msgid "Turn off"
 msgstr "オフにする"
 
+#: devices/giolister.cpp:161
 msgid "URI"
 msgstr "URI"
 
+#: core/commandlineoptions.cpp:144
 msgid "URL(s)"
 msgstr "URL"
 
+#: ../bin/src/ui_ubuntuonesettingspage.h:110
+msgid "Ubuntu One"
+msgstr "Ubuntu One"
+
+#: ../bin/src/ui_transcoderoptionsspeex.h:228
 msgid "Ultra wide band (UWB)"
 msgstr ""
 
+#: internet/magnatunedownloaddialog.cpp:144
 #, qt-format
 msgid "Unable to download %1 (%2)"
-msgstr "%1 をダウンロードすることができません (%2)"
+msgstr "%1 をダウンロードできません (%2)"
 
+#: core/song.cpp:343 library/librarymodel.cpp:301 library/librarymodel.cpp:306
+#: library/librarymodel.cpp:947 playlist/playlistdelegates.cpp:309
+#: playlist/playlistmanager.cpp:394 playlist/playlistmanager.cpp:397
+#: ui/albumcoverchoicecontroller.cpp:110 ui/edittagdialog.cpp:418
+#: ui/edittagdialog.cpp:459
 msgid "Unknown"
 msgstr "不明"
 
+#: podcasts/podcasturlloader.cpp:198
+msgid "Unknown content-type"
+msgstr "不明なコンテンツタイプ"
+
+#: internet/digitallyimportedclient.cpp:69 internet/lastfmservice.cpp:448
 msgid "Unknown error"
 msgstr "不明なエラー"
 
+#: ui/albumcoverchoicecontroller.cpp:63
 msgid "Unset cover"
-msgstr "未設定のカバー"
+msgstr "カバーを未設定にする"
 
-msgid "Update changed library folders"
+#: podcasts/addpodcastdialog.cpp:61 podcasts/podcastservice.cpp:277
+msgid "Unsubscribe"
+msgstr "購読解除"
+
+#: songinfo/songkickconcerts.cpp:168
+msgid "Upcoming Concerts"
 msgstr ""
 
+#: internet/groovesharkservice.cpp:1198
+msgid "Update Grooveshark playlist"
+msgstr "Grooveshark のプレイリストを更新"
+
+#: podcasts/podcastservice.cpp:260
+msgid "Update all podcasts"
+msgstr "すべてのポッドキャストを更新"
+
+#: ../bin/src/ui_mainwindow.h:706
+msgid "Update changed library folders"
+msgstr "変更されたライブラリフォルダーを更新"
+
+#: ../bin/src/ui_librarysettingspage.h:162
 msgid "Update the library when Clementine starts"
 msgstr "Clementine の起動時にライブラリを更新する"
 
+#: podcasts/podcastservice.cpp:268
+msgid "Update this podcast"
+msgstr "このポッドキャストを更新"
+
+#: ../bin/src/ui_podcastsettingspage.h:227
+msgid "Updating"
+msgstr "更新"
+
+#: library/librarywatcher.cpp:92
 #, qt-format
 msgid "Updating %1"
 msgstr "%1 の更新中"
 
+#: devices/deviceview.cpp:103
 #, qt-format
 msgid "Updating %1%..."
 msgstr "更新しています %1%..."
 
+#: library/librarywatcher.cpp:90
 msgid "Updating library"
 msgstr "ライブラリの更新中"
 
+#: core/commandlineoptions.cpp:144
 msgid "Usage"
 msgstr "使用量"
 
+#: ../bin/src/ui_lastfmsettingspage.h:159
+msgid "Use Album Artist tag when available"
+msgstr "利用可能ならアルバムアーティストタグを使用する"
+
+#: ../bin/src/ui_globalshortcutssettingspage.h:168
 msgid "Use Gnome's shortcut keys"
-msgstr "Gnome のショートカット キーを使用する"
+msgstr "Gnome のショートカットキーを使用する"
 
-msgid "Use Replay Gain metadata if it is available"
-msgstr "利用可能なら Replay Gain のメタデータを使用する"
-
-msgid "Use Wii Remote"
-msgstr "Wii Remote の使用"
-
-msgid "Use a custom message for notifications"
+#: ../bin/src/ui_networkremotesettingspage.h:148
+msgid "Use Remotecontrol"
 msgstr ""
 
+#: ../bin/src/ui_playbacksettingspage.h:274
+msgid "Use Replay Gain metadata if it is available"
+msgstr "利用可能ならリプレイゲインのメタデータを使用する"
+
+#: ../bin/src/ui_wiimotesettingspage.h:189
+msgid "Use Wii Remote"
+msgstr "Wii リモコンの使用"
+
+#: ../bin/src/ui_appearancesettingspage.h:269
+msgid "Use a custom color set"
+msgstr "カスタム色設定を使用する"
+
+#: ../bin/src/ui_notificationssettingspage.h:417
+msgid "Use a custom message for notifications"
+msgstr "通知にカスタムメッセージを使用する"
+
+#: ../bin/src/ui_networkproxysettingspage.h:167
 msgid "Use authentication"
 msgstr "認証を使用する"
 
-msgid "Use bitrate management engine"
+#: ../bin/src/ui_networkremotesettingspage.h:160
+msgid "Use authentication code"
 msgstr ""
 
+#: ../bin/src/ui_transcoderoptionsvorbis.h:203
+msgid "Use bitrate management engine"
+msgstr "ビットレート管理エンジンを使用する"
+
+#: ../bin/src/ui_wizardfinishpage.h:85
 msgid "Use dynamic mode"
-msgstr "ダイナミック モードを使用する"
+msgstr "ダイナミックモードを使用する"
 
+#: ../bin/src/ui_wiimotesettingspage.h:188
 msgid "Use notifications to report Wii Remote status"
-msgstr "Wii Remote の状態の報告に通知を使用する"
+msgstr "Wii リモコンの状態の報告に通知を使用する"
 
+#: ../bin/src/ui_transcoderoptionsaac.h:139
 msgid "Use temporal noise shaping"
 msgstr ""
 
+#: ../bin/src/ui_behavioursettingspage.h:175
 msgid "Use the system default"
 msgstr "システム既定を使用する"
 
+#: ../bin/src/ui_appearancesettingspage.h:268
+msgid "Use the system default color set"
+msgstr "システム既定の色設定を使用する"
+
+#: ../bin/src/ui_networkproxysettingspage.h:158
 msgid "Use the system proxy settings"
 msgstr "システムのプロキシ設定を使用する"
 
+#: ../bin/src/ui_spotifysettingspage.h:219
+msgid "Use volume normalisation"
+msgstr "音量の正規化を使用する"
+
+#: widgets/freespacebar.cpp:47
 msgid "Used"
 msgstr "使用中"
 
+#: internet/groovesharkservice.cpp:402
+#, qt-format
+msgid "User %1 doesn't have a Grooveshark Anywhere account"
+msgstr "ユーザー %1 には Grooveshark Anywhere のアカウントがありません。"
+
+#: ui/settingsdialog.cpp:142
+msgid "User interface"
+msgstr "ユーザーインターフェース"
+
+#: ../bin/src/ui_groovesharksettingspage.h:114
+#: ../bin/src/ui_magnatunesettingspage.h:163
+#: ../bin/src/ui_spotifysettingspage.h:210
+#: ../bin/src/ui_subsonicsettingspage.h:119
+#: ../bin/src/ui_podcastsettingspage.h:251
+#: ../bin/src/ui_networkproxysettingspage.h:168
 msgid "Username"
 msgstr "ユーザー名"
 
+#: ../bin/src/ui_behavioursettingspage.h:183
 msgid "Using the menu to add a song will..."
-msgstr ""
+msgstr "メニューから曲を追加した場合..."
 
+#: ../bin/src/ui_magnatunedownloaddialog.h:142
+#: ../bin/src/ui_magnatunesettingspage.h:173
 msgid "VBR MP3"
 msgstr "VBR MP3"
 
+#: ../bin/src/ui_transcoderoptionsspeex.h:232
 msgid "Variable bit rate"
-msgstr ""
+msgstr "可変ビットレート"
 
-msgid "Various Artists"
-msgstr "さまざまなアーティスト"
-
+#: globalsearch/globalsearchmodel.cpp:104 library/librarymodel.cpp:238
+#: playlist/playlistmanager.cpp:409 ui/albumcovermanager.cpp:247
 msgid "Various artists"
 msgstr "さまざまなアーティスト"
 
+#: ui/about.cpp:34
 #, qt-format
 msgid "Version %1"
-msgstr "Version %1"
+msgstr "バージョン %1"
 
+#: ../bin/src/ui_albumcovermanager.h:154
 msgid "View"
 msgstr "表示"
 
+#: ../bin/src/ui_visualisationselector.h:109
 msgid "Visualization mode"
-msgstr "視覚化モード"
+msgstr "ビジュアライゼーションモード"
 
+#: ../bin/src/ui_mainwindow.h:707 ui/dbusscreensaver.cpp:35
 msgid "Visualizations"
-msgstr "視覚化"
+msgstr "ビジュアライゼーション"
 
+#: ../bin/src/ui_visualisationoverlay.h:185
 msgid "Visualizations Settings"
-msgstr "視覚化の設定"
+msgstr "ビジュアライゼーションの設定"
 
+#: ../bin/src/ui_transcoderoptionsspeex.h:233
 msgid "Voice activity detection"
 msgstr ""
 
+#: widgets/osd.cpp:180
 #, qt-format
 msgid "Volume %1%"
 msgstr "音量 %1%"
 
+#: devices/wmdmlister.cpp:361
 msgid "Volume name"
 msgstr "ボリューム名"
 
+#: ../bin/src/ui_transcodersettingspage.h:176
 msgid "Vorbis"
-msgstr ""
+msgstr "Vorbis"
 
+#: ../bin/src/ui_magnatunedownloaddialog.h:141
+#: ../bin/src/ui_magnatunesettingspage.h:172
 msgid "WAV"
 msgstr "WAV"
 
+#: ../bin/src/ui_transcodersettingspage.h:180
 msgid "WMA"
-msgstr ""
+msgstr "WMA"
 
+#: core/song.cpp:335
 msgid "Wav"
 msgstr "Wav"
 
-msgid "Weeks"
-msgstr ""
+#: ../bin/src/ui_podcastinfowidget.h:193
+msgid "Website"
+msgstr "ウェブサイト"
 
+#: smartplaylists/searchterm.cpp:308
+msgid "Weeks"
+msgstr "週"
+
+#: ../bin/src/ui_behavioursettingspage.h:178
 msgid "When Clementine starts"
 msgstr "Clementine の起動時"
 
+#: ../bin/src/ui_librarysettingspage.h:166
 msgid ""
-"When looking for album art Clementine will first look for picture files that "
-"contain one of these words.\n"
+"When looking for album art Clementine will first look for picture files that contain one of these words.\n"
 "If there are no matches then it will use the largest image in the directory."
-msgstr ""
-"アルバム アートの検索時に Clementine はまずこれらの単語の 1 つを含む画像ファ"
-"イルを探します。\n"
-"一致がない場合はディレクトリの最も大きいイメージを使用します。"
+msgstr "アルバム アートの検索時に Clementine はまずこれらの単語の 1 つを含む画像ファイルを探します。\n一致するものがない場合はディレクトリにある最も大きいイメージを使用します。"
 
+#: ../bin/src/ui_globalsearchsettingspage.h:151
+msgid "When the list is empty..."
+msgstr "リストが空のとき..."
+
+#: ../bin/src/ui_globalsearchview.h:212
+msgid "Why not try..."
+msgstr "おすすめの検索..."
+
+#: devices/ilister.cpp:121
 msgid "WiFi MAC Address"
 msgstr "WiFi の MAC アドレス"
 
+#: ../bin/src/ui_transcoderoptionsspeex.h:229
 msgid "Wide band (WB)"
 msgstr ""
 
+#: widgets/osd.cpp:239
 #, qt-format
 msgid "Wii Remote %1: actived"
-msgstr "Wii Remote %1: アクティブになりました"
+msgstr "Wii リモコン %1: アクティブになりました"
 
+#: widgets/osd.cpp:249
 #, qt-format
 msgid "Wii Remote %1: connected"
-msgstr "Wii Remote %1: 接続されました"
+msgstr "Wii リモコン %1: 接続されました"
 
+#: widgets/osd.cpp:264
 #, qt-format
 msgid "Wii Remote %1: critical battery (%2%) "
-msgstr "Wii Remote %1: バッテリーがありません (%2%) "
+msgstr "Wii リモコン %1: バッテリーがありません (%2%) "
 
+#: widgets/osd.cpp:244
 #, qt-format
 msgid "Wii Remote %1: disactived"
-msgstr "Wii Remote %1: 非アクティブになりました"
+msgstr "Wii リモコン %1: 非アクティブになりました"
 
+#: widgets/osd.cpp:254
 #, qt-format
 msgid "Wii Remote %1: disconnected"
-msgstr "Wii Remote %1: 切断されました"
+msgstr "Wii リモコン %1: 切断されました"
 
+#: widgets/osd.cpp:259
 #, qt-format
 msgid "Wii Remote %1: low battery (%2%)"
-msgstr "Wii Remote %1: バッテリーが少なくなりました (%2%)"
+msgstr "Wii リモコン %1: バッテリーが少なくなりました (%2%)"
 
+#: ../bin/src/ui_wiimotesettingspage.h:182
 msgid "Wiimotedev"
-msgstr ""
+msgstr "Wii リモコンデバイス"
 
-msgid "Windows Media 128k (Premium only)"
-msgstr ""
+#: ../bin/src/ui_digitallyimportedsettingspage.h:181
+msgid "Windows Media 128k"
+msgstr "Windows Media 128k"
 
+#: ../bin/src/ui_digitallyimportedsettingspage.h:172
 msgid "Windows Media 40k"
-msgstr ""
+msgstr "Windows Media 40k"
 
-msgid "Windows Media 64k (Premium only)"
-msgstr ""
+#: ../bin/src/ui_digitallyimportedsettingspage.h:180
+msgid "Windows Media 64k"
+msgstr "Windows Media 64k"
 
+#: core/song.cpp:325
 msgid "Windows Media audio"
 msgstr "Windows Media オーディオ"
 
+#: library/libraryview.cpp:530
+msgid ""
+"Would you like to move the other songs in this album to Various Artists as "
+"well?"
+msgstr "このアルバムにある他の曲も さまざまなアーティスト に移動しますか?"
+
+#: ui/mainwindow.cpp:2007
 msgid "Would you like to run a full rescan right now?"
+msgstr "全体の再スキャンを今すぐ実行しますか?"
+
+#: internet/subsonicsettingspage.cpp:83
+msgid "Wrong username or password."
 msgstr ""
 
+#: playlist/playlist.cpp:1198 ui/organisedialog.cpp:63
+#: ../bin/src/ui_groupbydialog.h:135 ../bin/src/ui_groupbydialog.h:148
+#: ../bin/src/ui_groupbydialog.h:161 ../bin/src/ui_edittagdialog.h:657
+#: ../bin/src/ui_trackselectiondialog.h:212
 msgid "Year"
 msgstr "年"
 
+#: ../bin/src/ui_groupbydialog.h:136 ../bin/src/ui_groupbydialog.h:149
+#: ../bin/src/ui_groupbydialog.h:162
 msgid "Year - Album"
 msgstr "年 - アルバム"
 
+#: smartplaylists/searchterm.cpp:310
 msgid "Years"
-msgstr ""
+msgstr "年"
 
+#: core/utilities.cpp:125
 msgid "Yesterday"
 msgstr "昨日"
 
-msgid "You are about to download the following albums"
-msgstr "以下のアルバムをダウンロードしようとしています"
-
-msgid "You are not signed in."
+#: playlist/playlistlistcontainer.cpp:296
+#, qt-format
+msgid "You are about to delete %1 playlists, are you sure?"
 msgstr ""
 
+#: ../bin/src/ui_magnatunedownloaddialog.h:132
+msgid "You are about to download the following albums"
+msgstr "次のアルバムをダウンロードしようとしています"
+
+#: ../bin/src/ui_loginstatewidget.h:172
+msgid "You are not signed in."
+msgstr "サインインしていません。"
+
+#: widgets/loginstatewidget.cpp:75
 #, qt-format
 msgid "You are signed in as %1."
-msgstr ""
+msgstr "%1 でサインインしています。"
 
+#: widgets/loginstatewidget.cpp:73
 msgid "You are signed in."
-msgstr ""
+msgstr "サインインしています。"
 
+#: ../bin/src/ui_groupbydialog.h:123
 msgid "You can change the way the songs in the library are organised."
-msgstr "ライブラリの曲が整理される方法を変更できます。"
+msgstr "ライブラリの曲を整理する方法を変更できます。"
 
+#: internet/digitallyimportedsettingspage.cpp:46
 msgid ""
 "You can listen for free without an account, but Premium members can listen "
 "to higher quality streams without advertisements."
-msgstr ""
+msgstr "アカウントがなくても無料で聴くことができますが、プレミアムメンバーは広告なしでより高音質で聴くことができます。"
 
+#: internet/magnatunesettingspage.cpp:53
 msgid ""
-"You can listen to Magnatune songs for free without an account.  Purchasing a "
-"membership removes the messages at the end of each track."
-msgstr ""
-"Magnatune の曲はアカウントなしで無料で聴取できます。メンバーシップを購入する"
-"とトラックの最後のメッセージを削除できます。"
+"You can listen to Magnatune songs for free without an account.  Purchasing a"
+" membership removes the messages at the end of each track."
+msgstr "Magnatune の曲はアカウントなしで無料で聴くことができます。メンバーシップを購入すると各トラック最後のメッセージを削除できます。"
 
+#: ../bin/src/ui_backgroundstreamssettingspage.h:57
 msgid "You can listen to background streams at the same time as other music."
-msgstr ""
-"バックグラウンド ストリームを別のミュージックとして同時に聴くことができます。"
+msgstr "バックグラウンドストリームを別のミュージックとして同時に聴くことができます。"
 
+#: internet/lastfmsettingspage.cpp:142
 msgid ""
-"You can scrobble tracks for free, but only <span style=\" font-weight:600;"
-"\">paid subscribers</span> can stream Last.fm radio from Clementine."
-msgstr ""
-"トラックは無料で Scrobble できますが、<span style=\" font-weight:600;\">有料"
-"会員</span>になると Clementine から Last.fm ラジオを配信できます。"
+"You can scrobble tracks for free, but only <span style=\" font-"
+"weight:600;\">paid subscribers</span> can stream Last.fm radio from "
+"Clementine."
+msgstr "トラックは無料で Scrobble できますが、<span style=\" font-weight:600;\">有料会員</span>になると Clementine から Last.fm ラジオを配信できます。"
 
+#: ../bin/src/ui_wiimotesettingspage.h:184
 msgid ""
-"You can use your Wii Remote as a remote control for Clementine.  <a href="
-"\"http://www.clementine-player.org/wiimote\">See the page on the Clementine "
-"wiki</a> for more information.\n"
-msgstr ""
-"Clementine のリモート コントロールとして Wii Remote を使用できます。詳細は<a "
-"href=\"http://www.clementine-player.org/wiimote\">Clementine wiki のページを"
-"ご覧ください</a>。\n"
+"You can use your Wii Remote as a remote control for Clementine.  <a "
+"href=\"http://www.clementine-player.org/wiimote\">See the page on the "
+"Clementine wiki</a> for more information.\n"
+msgstr "Clementine のリモートコントロールとして Wii リモコンを使用できます。詳細は<a href=\"http://www.clementine-player.org/wiimote\">Clementine wiki のページをご覧ください</a>。\n"
 
-msgid "You do not have a GrooveShark Anywhere account."
-msgstr ""
+#: internet/groovesharksettingspage.cpp:103
+msgid "You do not have a Grooveshark Anywhere account."
+msgstr "Grooveshark Anywhere のアカウントがありません。"
 
+#: internet/spotifysettingspage.cpp:149
 msgid "You do not have a Spotify Premium account."
+msgstr "Spotify のプレミアムアカウントがありません。"
+
+#: internet/digitallyimportedclient.cpp:89
+msgid "You do not have an active subscription"
 msgstr ""
 
+#: internet/spotifyservice.cpp:170
 msgid ""
-"You have selected a Premium-only audio type but do not have any account "
-"details entered"
-msgstr ""
+"You have been logged out of Spotify, please re-enter your password in the "
+"Settings dialog."
+msgstr "Spotify からログアウトしました。設定ダイアログでパスワードを再入力してください。"
 
-msgid "You have selected an invalid audio type setting"
-msgstr ""
+#: internet/spotifysettingspage.cpp:158
+msgid "You have been logged out of Spotify, please re-enter your password."
+msgstr "Spotify からログアウトしました。パスワードを再入力してください。"
 
+#: songinfo/lastfmtrackinfoprovider.cpp:87
 msgid "You love this track"
 msgstr "このトラックは Love されています"
 
+#: ../bin/src/ui_globalshortcutssettingspage.h:170
 msgid ""
 "You need to launch System Preferences and turn on \"<span style=\" font-"
 "style:italic;\">Enable access for assistive devices</span>\" to use global "
 "shortcuts in Clementine."
-msgstr ""
-"Clementine でグローバル ショートカットを使用するには [システム環境設定] を起"
-"動して \"<span style=\" font-style:italic;\">補助装置にアクセスできるようにす"
-"る</span>\" をオンにする必要があります。"
+msgstr "Clementine でグローバルショートカットを使用するには [システム環境設定] を起動して \"<span style=\" font-style:italic;\">補助装置にアクセスできるようにする</span>\" をオンにする必要があります。"
 
+#: ../bin/src/ui_behavioursettingspage.h:177
 msgid "You will need to restart Clementine if you change the language."
-msgstr "言語を変更する場合は Clementine の再起動が必要になります。"
+msgstr "言語を変更するには Clementine の再起動が必要です。"
 
+#: internet/lastfmsettingspage.cpp:108
 msgid ""
-"You will not be able to play Last.fm radio stations as you are not a Last.fm "
-"subscriber."
+"You will not be able to play Last.fm radio stations as you are not a Last.fm"
+" subscriber."
 msgstr ""
 
-#, qt-format
-msgid "You're logged in as <b>%1</b>"
-msgstr ""
-
-msgid "Your Google credentials were incorrect"
-msgstr ""
-
+#: internet/lastfmsettingspage.cpp:78
 msgid "Your Last.fm credentials were incorrect"
-msgstr "Last.fm の資格情報が正しくありません"
+msgstr "Last.fm の認証情報が間違っています"
 
+#: internet/magnatunesettingspage.cpp:113
 msgid "Your Magnatune credentials were incorrect"
-msgstr ""
+msgstr "Magnatune の認証情報が間違っています"
 
-msgid ""
-"Your gstreamer installation is missing the 'ofa' plugin.  This is required "
-"for automatic tag fetching.  Try installing the 'gstreamer-plugins-bad' "
-"package."
-msgstr ""
-
+#: library/libraryview.cpp:343
 msgid "Your library is empty!"
 msgstr "ライブラリは空です!"
 
+#: globalsearch/savedradiosearchprovider.cpp:28 internet/savedradio.cpp:49
 msgid "Your radio streams"
-msgstr "あなたのラジオ ストリーム"
+msgstr "ラジオストリーム"
 
+#: songinfo/lastfmtrackinfoprovider.cpp:88
 #, qt-format
 msgid "Your scrobbles: %1"
 msgstr "Scrobble 回数: %1"
 
-msgid "Your username or password was incorrect."
-msgstr ""
+#: visualisations/visualisationcontainer.cpp:152
+msgid "Your system is missing OpenGL support, visualizations are unavailable."
+msgstr "システムが OpenGL をサポートしていないため、ビジュアライゼーションを利用できません。"
 
+#: internet/groovesharksettingspage.cpp:107
+#: internet/spotifysettingspage.cpp:154
+msgid "Your username or password was incorrect."
+msgstr "ユーザー名またはパスワードが間違っています。"
+
+#: smartplaylists/searchterm.cpp:293
 msgid "Z-A"
 msgstr "Z-A"
 
+#: ui/equalizer.cpp:126
 msgid "Zero"
 msgstr "Zero"
 
+#: playlist/playlistundocommands.cpp:37
 #, c-format
 msgid "add %n songs"
-msgstr "%n 曲追加"
+msgstr "%n 曲の追加"
 
+#: smartplaylists/searchterm.cpp:205
 msgid "after"
-msgstr "以後"
+msgstr "が次の値より後"
 
+#: ../bin/src/ui_searchtermwidget.h:270
 msgid "ago"
-msgstr ""
+msgstr "前"
 
+#: ../bin/src/ui_searchtermwidget.h:269
 msgid "and"
-msgstr ""
+msgstr "と"
 
+#: ../bin/src/ui_transcoderoptionsspeex.h:219
 msgid "automatic"
-msgstr ""
+msgstr "自動"
 
+#: smartplaylists/searchterm.cpp:206
 msgid "before"
-msgstr "以前"
+msgstr "が次の値より前"
 
+#: smartplaylists/searchterm.cpp:211
 msgid "between"
-msgstr ""
+msgstr "が次の値の間"
 
+#: smartplaylists/searchterm.cpp:297
 msgid "biggest first"
 msgstr "大きい順"
 
+#: playlist/playlistview.cpp:201 ui/edittagdialog.cpp:452
 msgid "bpm"
 msgstr "bpm"
 
+#: smartplaylists/searchterm.cpp:217
 msgid "contains"
-msgstr "次を含む"
+msgstr "が次を含む"
 
+#: ../bin/src/ui_transcoderoptionsspeex.h:222
+#: ../bin/src/ui_transcoderoptionsvorbis.h:207
+#: ../bin/src/ui_transcoderoptionsvorbis.h:210
 msgid "disabled"
-msgstr ""
+msgstr "無効"
 
+#: widgets/osd.cpp:114
 #, qt-format
 msgid "disc %1"
 msgstr "ディスク %1"
 
+#: smartplaylists/searchterm.cpp:218
 msgid "does not contain"
-msgstr "次を含まない"
+msgstr "が次を含まない"
 
+#: smartplaylists/searchterm.cpp:220
 msgid "ends with"
-msgstr "次で終わる"
+msgstr "が次で終わる"
 
+#: smartplaylists/searchterm.cpp:223
 msgid "equals"
-msgstr "次に一致する"
+msgstr "が次に一致する"
 
+#: ../bin/src/ui_podcastsettingspage.h:249
+msgid "gpodder.net"
+msgstr "gpodder.net"
+
+#: podcasts/gpoddertoptagspage.cpp:34
+msgid "gpodder.net directory"
+msgstr "gpodder.net ディレクトリ"
+
+#: smartplaylists/searchterm.cpp:221
 msgid "greater than"
-msgstr "次より大きい"
+msgstr "が次より大きい"
 
+#: smartplaylists/searchterm.cpp:209
 msgid "in the last"
 msgstr ""
 
+#: playlist/playlistview.cpp:203 ui/edittagdialog.cpp:454
+#: internet/spotifysettingspage.cpp:60 internet/spotifysettingspage.cpp:61
+#: internet/spotifysettingspage.cpp:62
 msgid "kbps"
 msgstr "kbps"
 
+#: smartplaylists/searchterm.cpp:222
 msgid "less than"
-msgstr "次より小さい"
+msgstr "が次より小さい"
 
+#: smartplaylists/searchterm.cpp:295
 msgid "longest first"
 msgstr "長い順"
 
-msgid "move songs"
-msgstr "曲の移動"
+#: playlist/playlistundocommands.cpp:99
+#, c-format
+msgid "move %n songs"
+msgstr "%n 曲の移動"
 
+#: smartplaylists/searchterm.cpp:294
 msgid "newest first"
 msgstr "新しい順"
 
+#: smartplaylists/searchterm.cpp:224
 msgid "not equals"
-msgstr ""
+msgstr "が次と異なる"
 
+#: smartplaylists/searchterm.cpp:210
 msgid "not in the last"
 msgstr ""
 
+#: smartplaylists/searchterm.cpp:208
 msgid "not on"
-msgstr ""
+msgstr "が次の値でない"
 
+#: smartplaylists/searchterm.cpp:294
 msgid "oldest first"
 msgstr "古い順"
 
+#: smartplaylists/searchterm.cpp:207
 msgid "on"
-msgstr "on"
+msgstr "が次の値"
 
+#: core/commandlineoptions.cpp:144
 msgid "options"
 msgstr "オプション"
 
+#: widgets/didyoumean.cpp:56
 msgid "press enter"
-msgstr ""
+msgstr "enter を押してください"
 
+#: playlist/playlistundocommands.cpp:65 playlist/playlistundocommands.cpp:88
 #, c-format
 msgid "remove %n songs"
-msgstr "%n 曲削除"
+msgstr "%n 曲の削除"
 
+#: smartplaylists/searchterm.cpp:295
 msgid "shortest first"
 msgstr "短い順"
 
+#: playlist/playlistundocommands.cpp:138
+msgid "shuffle songs"
+msgstr "曲のシャッフル"
+
+#: smartplaylists/searchterm.cpp:297
 msgid "smallest first"
 msgstr "小さい順"
 
-msgid "starts with"
-msgstr "次で始まる"
+#: playlist/playlistundocommands.cpp:131
+msgid "sort songs"
+msgstr "曲の並び替え"
 
+#: smartplaylists/searchterm.cpp:219
+msgid "starts with"
+msgstr "が次で始まる"
+
+#: playlist/playlistdelegates.cpp:180
 msgid "stop"
 msgstr "停止"
 
+#: widgets/osd.cpp:116
 #, qt-format
 msgid "track %1"
 msgstr "トラック %1"
-
-#~ msgid "Disable"
-#~ msgstr "無効にする"
-
-#~ msgid "Enable"
-#~ msgstr "有効にする"
-
-#~ msgid "Get new scripts"
-#~ msgstr "新しいスクリプトの取得"
-
-#~ msgid "Global Shortcuts"
-#~ msgstr "グローバル ショートカット"
-
-#~ msgid "My scripts"
-#~ msgstr "マイ スクリプト"
-
-#~ msgid "Script Manager"
-#~ msgstr "スクリプト マネージャー"
-
-#~ msgid "Settings..."
-#~ msgstr "設定..."
-
-#~ msgid "%1 other listeners"
-#~ msgstr "%1 人が聴取中"
-
-#~ msgid "%1 total plays"
-#~ msgstr "計 %1 回再生"
-
-#~ msgid "Text color"
-#~ msgstr "テキストの色"
-
-#~ msgid ""
-#~ "In dynamic mode new tracks will be chosen and added to the playlist every "
-#~ "time a song finishes.  Enabling dynamic mode will ignore any size limit "
-#~ "you set on the playlist."
-#~ msgstr ""
-#~ "ダイナミック モードでは新しいトラックは曲が完了するたびに選択およびプレイ"
-#~ "リストに追加されます。ダイナミック モードを有効にするとプレイリストに設定"
-#~ "したサイズ制限はすべて無視されます。"
-
-#~ msgid "Add as new playlist..."
-#~ msgstr "新しいプレイリストとして追加..."
-
-#~ msgid "Artist A-Z"
-#~ msgstr "アーティスト A-Z"
-
-#~ msgid "Buffer Duration (ms)"
-#~ msgstr "バッファーの長さ (ms)"
-
-#~ msgid "Delete files..."
-#~ msgstr "ファイルの削除..."
-
-#~ msgid "Double-clicking a song clears the playlist first"
-#~ msgstr "曲のダブルクリックで最初にプレイリストをクリアする"
-
-#~ msgid "Dynamic playlists"
-#~ msgstr "ダイナミック プレイリスト"
-
-#~ msgid "Editing %n tracks"
-#~ msgstr "%n 個のトラックを編集しています"
-
-#~ msgid "Enter a name for the new playlist"
-#~ msgstr "新しいプレイリストの名前を入力します"
-
-#~ msgid "Help"
-#~ msgstr "ヘルプ"
-
-#~ msgid "Hide %1"
-#~ msgstr "%1 を非表示にする"
-
-#~ msgid "Hide..."
-#~ msgstr "非表示にする..."
-
-#~ msgid ""
-#~ "Images (*.png *.jpg *.jpeg *.bmp *.gif *.xpm *.pbm *.pgm *.ppm *.xbm *."
-#~ "tiff)"
-#~ msgstr ""
-#~ "イメージ (*.png *.jpg *.jpeg *.bmp *.gif *.xpm *.pbm *.pgm *.ppm *.xbm *."
-#~ "tiff)"
-
-#~ msgid "Last.fm Loved Tracks - %1"
-#~ msgstr "Last.fm Love を付けたトラック - %1"
-
-#~ msgid "Last.fm Recommended Radio - %1"
-#~ msgstr "Last.fm おすすめラジオ - %1"
-
-#~ msgid "Last.fm similar artists"
-#~ msgstr "Last.fm のテイストの似たアーティスト"
-
-#~ msgid "Length (longest first)"
-#~ msgstr "長さ (長いのが先)"
-
-#~ msgid "Length (shortest first)"
-#~ msgstr "長さ (短いのが先)"
-
-#~ msgid ""
-#~ "Let Last.fm suggest songs from your library that are similar to one you "
-#~ "specify."
-#~ msgstr "ライブラリの指定する曲にテイストの似た曲を Last.fm から検索します。"
-
-#~ msgid "My Loved Tracks"
-#~ msgstr "Love を付けたトラック"
-
-#~ msgid "New"
-#~ msgstr "新規"
-
-#~ msgid "New folder..."
-#~ msgstr "新しいフォルダー..."
-
-#~ msgid "Playlists"
-#~ msgstr "プレイリスト"
-
-#~ msgid "Radio service couldn't be loaded :-("
-#~ msgstr "ラジオ サービスが読み込めませんでした :-("
-
-#~ msgid "Select engine"
-#~ msgstr "エンジンの選択"
-
-#~ msgid "Stretch columns to fit window"
-#~ msgstr "列をウィンドウに合わせる"
-
-#~ msgid "Unknown audio engine \"%1\". Choices are:"
-#~ msgstr "不明なオーディオ エンジン \"%1\" です。選択肢:"
-
-#~ msgid "Update Library"
-#~ msgstr "ライブラリの更新"
-
-#~ msgid "Year (newest first)"
-#~ msgstr "年 (新しいのが先)"
-
-#~ msgid "Year (oldest first)"
-#~ msgstr "年 (古いのが先)"
-
-#~ msgid "[click to edit]"
-#~ msgstr "[クリックで編集する]"
-
-#~ msgid ""
-#~ "A song will be included in the playlist if it matches all of these "
-#~ "conditions."
-#~ msgstr "曲がこれらの状態のすべてに一致する場合はプレイリストに含まれます。"
-
-#~ msgid "Enqueue to playlist"
-#~ msgstr "プレイリストにキューを追加"
-
-#~ msgid "Script console"
-#~ msgstr "スクリプト コンソール"

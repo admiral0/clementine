@@ -15,15 +15,25 @@
    along with Clementine.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.h"
 #include "spotifyblobdownloader.h"
 #include "spotifyservice.h"
 #include "core/logging.h"
 #include "core/network.h"
+#include "core/utilities.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QMessageBox>
 #include <QNetworkReply>
 #include <QProgressDialog>
+
+#ifdef HAVE_QCA
+  #include <QtCrypto>
+#endif // HAVE_QCA
+
+const char* SpotifyBlobDownloader::kSignatureSuffix = ".sha1";
+
 
 SpotifyBlobDownloader::SpotifyBlobDownloader(
       const QString& version, const QString& path, QObject* parent)
@@ -56,7 +66,11 @@ void SpotifyBlobDownloader::Start() {
   qDeleteAll(replies_);
   replies_.clear();
 
-  const QStringList filenames = QStringList() << "blob" << "libspotify.so.8";
+  const QStringList filenames = QStringList()
+      << "blob"
+      << "blob" + QString(kSignatureSuffix)
+      << "libspotify.so.12.1.45"
+      << "libspotify.so.12.1.45" + QString(kSignatureSuffix);
 
   foreach (const QString& filename, filenames) {
     const QUrl url(SpotifyService::kBlobDownloadUrl + version_ + "/" + filename);
@@ -87,22 +101,86 @@ void SpotifyBlobDownloader::ReplyFinished() {
     }
   }
 
-  // Make the destination directory and write the files into it
-  QDir().mkpath(path_);
+  // Read files into memory first.
+  QMap<QString, QByteArray> file_data;
+  QStringList signature_filenames;
 
   foreach (QNetworkReply* reply, replies_) {
     const QString filename = reply->url().path().section('/', -1, -1);
-    const QString path = path_ + "/" + filename;
 
-    qLog(Info) << "Saving file" << path;
-    QFile file(path);
+    if (filename.endsWith(kSignatureSuffix)) {
+      signature_filenames << filename;
+    }
+
+    file_data[filename] = reply->readAll();
+  }
+
+#ifdef HAVE_QCA
+  // Load the public key
+  QCA::ConvertResult conversion_result;
+  QCA::PublicKey key = QCA::PublicKey::fromPEMFile(":/clementine-spotify-public.pem",
+                                                   &conversion_result);
+  if (QCA::ConvertGood != conversion_result) {
+    ShowError("Failed to load Spotify public key");
+    return;
+  }
+
+  // Verify signatures
+  foreach (const QString& signature_filename, signature_filenames) {
+    QString actual_filename = signature_filename;
+    actual_filename.remove(kSignatureSuffix);
+
+    qLog(Debug) << "Verifying" << actual_filename << "against" << signature_filename;
+
+    if (!key.verifyMessage(file_data[actual_filename],
+                           file_data[signature_filename],
+                           QCA::EMSA3_SHA1)) {
+      ShowError("Invalid signature: " + actual_filename);
+      return;
+    }
+  }
+#endif // HAVE_QCA
+
+  // Make the destination directory and write the files into it
+  QDir().mkpath(path_);
+
+  foreach (const QString& filename, file_data.keys()) {
+    const QString dest_path = path_ + "/" + filename;
+
+    if (filename.endsWith(kSignatureSuffix))
+      continue;
+
+    qLog(Info) << "Writing" << dest_path;
+
+    QFile file(dest_path);
     if (!file.open(QIODevice::WriteOnly)) {
-      ShowError("Failed to open file for writing: " + path);
+      ShowError("Failed to open " + dest_path + " for writing");
       return;
     }
 
+    file.write(file_data[filename]);
+    file.close();
     file.setPermissions(QFile::Permissions(0x7755));
-    file.write(reply->readAll());
+
+#ifdef Q_OS_UNIX
+    const int so_pos = filename.lastIndexOf(".so.");
+    if (so_pos != -1) {
+      QString link_path = path_ + "/" + filename.left(so_pos + 3);
+      QStringList version_parts = filename.mid(so_pos + 4).split('.');
+
+      while (!version_parts.isEmpty()) {
+        qLog(Debug) << "Linking" << dest_path << "to" << link_path;
+        int ret = symlink(dest_path.toLocal8Bit().constData(),
+                          link_path.toLocal8Bit().constData());
+
+        if (ret != 0) {
+          qLog(Warning) << "Creating symlink failed with return code" << ret;
+        }
+
+        link_path += "." + version_parts.takeFirst();
+      }
+    }
+#endif // Q_OS_UNIX
   }
 
   EmitFinished();

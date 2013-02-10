@@ -18,16 +18,20 @@
 #include "internetmodel.h"
 #include "somafmservice.h"
 #include "somafmurlhandler.h"
+#include "core/application.h"
 #include "core/logging.h"
 #include "core/taskmanager.h"
+#include "playlistparsers/playlistparser.h"
 
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QSettings>
 #include <QTemporaryFile>
 
-SomaFMUrlHandler::SomaFMUrlHandler(SomaFMService* service, QObject* parent)
+SomaFMUrlHandler::SomaFMUrlHandler(Application* app, SomaFMService* service,
+                                   QObject* parent)
   : UrlHandler(parent),
+    app_(app),
     service_(service),
     task_id_(0)
 {
@@ -42,14 +46,14 @@ UrlHandler::LoadResult SomaFMUrlHandler::StartLoading(const QUrl& url) {
   connect(reply, SIGNAL(finished()), SLOT(LoadPlaylistFinished()));
 
   if (!task_id_)
-    task_id_ = service_->model()->task_manager()->StartTask(tr("Loading stream"));
+    task_id_ = app_->task_manager()->StartTask(tr("Loading stream"));
 
   return LoadResult(url, LoadResult::WillLoadAsynchronously);
 }
 
 void SomaFMUrlHandler::LoadPlaylistFinished() {
   QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
-  service_->model()->task_manager()->SetTaskFinished(task_id_);
+  app_->task_manager()->SetTaskFinished(task_id_);
   task_id_ = 0;
 
   QUrl original_url(reply->url());
@@ -62,15 +66,19 @@ void SomaFMUrlHandler::LoadPlaylistFinished() {
     return;
   }
 
-  // TODO: Replace with some more robust .pls parsing :(
-  QTemporaryFile temp_file;
-  temp_file.open();
-  temp_file.write(reply->readAll());
-  temp_file.flush();
+  // Parse the playlist
+  PlaylistParser parser(NULL);
+  QList<Song> songs = parser.LoadFromDevice(reply);
 
-  QSettings s(temp_file.fileName(), QSettings::IniFormat);
-  s.beginGroup("playlist");
+  qLog(Info) << "Loading station finished, got" << songs.count() << "songs";
+
+  // Failed to get playlist?
+  if (songs.count() == 0) {
+    qLog(Error) << "Error loading soma.fm playlist";
+    emit AsyncLoadComplete(LoadResult(original_url, LoadResult::NoMoreTracks));
+    return;
+  }
 
   emit AsyncLoadComplete(LoadResult(original_url, LoadResult::TrackAvailable,
-                                    s.value("File1").toString()));
+                                    songs[0].url()));
 }

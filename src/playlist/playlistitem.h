@@ -27,13 +27,14 @@
 
 #include "core/song.h"
 
+class QAction;
 class SqlRow;
 
 class PlaylistItem : public boost::enable_shared_from_this<PlaylistItem> {
  public:
   PlaylistItem(const QString& type)
     : type_(type) {}
-  virtual ~PlaylistItem() {}
+  virtual ~PlaylistItem();
 
   static PlaylistItem* NewFromType(const QString& type);
   static PlaylistItem* NewFromSongsTable(const QString& table, const Song& song);
@@ -46,12 +47,17 @@ class PlaylistItem : public boost::enable_shared_from_this<PlaylistItem> {
 
     // Enables the last.fm "ban" action.
     LastFMControls = 0x02,
+
+    // Disables the seek slider.
+    SeekDisabled = 0x04,
   };
   Q_DECLARE_FLAGS(Options, Option);
 
   virtual QString type() const { return type_; }
 
   virtual Options options() const { return Default; }
+
+  virtual QList<QAction*> actions() { return QList<QAction*>(); }
 
   virtual bool InitFromQuery(const SqlRow& query) = 0;
   void BindToQuery(QSqlQuery* query) const;

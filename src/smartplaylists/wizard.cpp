@@ -55,8 +55,9 @@ public:
   Ui_SmartPlaylistWizardFinishPage* ui_;
 };
 
-Wizard::Wizard(LibraryBackend* library, QWidget* parent)
+Wizard::Wizard(Application* app, LibraryBackend* library, QWidget* parent)
   : QWizard(parent),
+    app_(app),
     library_(library),
     type_page_(new TypePage(this)),
     finish_page_(new FinishPage(this)),
@@ -65,7 +66,12 @@ Wizard::Wizard(LibraryBackend* library, QWidget* parent)
 {
   setWindowIcon(QIcon(":/icon.png"));
   setWindowTitle(tr("Smart playlist"));
-  resize(687, 628);
+  resize(788, 628);
+
+#ifdef Q_OS_MAC
+  // MacStyle leaves an ugly empty space on the left side of the dialog.
+  setWizardStyle(QWizard::ClassicStyle);
+#endif // Q_OS_MAC
 
   // Type page
   type_page_->setTitle(tr("Playlist type"));
@@ -83,7 +89,7 @@ Wizard::Wizard(LibraryBackend* library, QWidget* parent)
   connect(type_mapper_, SIGNAL(mapped(int)), SLOT(TypeChanged(int)));
 
   new QVBoxLayout(type_page_);
-  AddPlugin(new QueryWizardPlugin(library_, this));
+  AddPlugin(new QueryWizardPlugin(app_, library_, this));
 
   // Skip the type page - remove this when we have more than one type
   setStartId(2);

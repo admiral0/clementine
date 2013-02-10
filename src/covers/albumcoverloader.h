@@ -18,13 +18,14 @@
 #ifndef ALBUMCOVERLOADER_H
 #define ALBUMCOVERLOADER_H
 
-#include "core/backgroundthread.h"
+#include "albumcoverloaderoptions.h"
 #include "core/song.h"
 
-#include <QObject>
 #include <QImage>
 #include <QMutex>
+#include <QObject>
 #include <QQueue>
+#include <QUrl>
 
 class NetworkAccessManager;
 class QNetworkReply;
@@ -39,23 +40,20 @@ class AlbumCoverLoader : public QObject {
 
   static QString ImageCacheDir();
 
-  void SetDesiredHeight(int height) { height_ = height; }
-  void SetScaleOutputImage(bool scale) { scale_ = scale; }
-  void SetPadOutputImage(bool padding) { padding_ = padding; }
-  void SetDefaultOutputImage(const QImage& image);
-
-
-  quint64 LoadImageAsync(const Song& song);
+  quint64 LoadImageAsync(const AlbumCoverLoaderOptions& options, const Song& song);
   virtual quint64 LoadImageAsync(
+      const AlbumCoverLoaderOptions& options,
       const QString& art_automatic,
       const QString& art_manual,
       const QString& song_filename = QString(),
       const QImage& embedded_image = QImage());
 
-  void Clear();
+  void CancelTask(quint64 id);
+  void CancelTasks(const QSet<quint64>& ids);
 
   static QPixmap TryLoadPixmap(const QString& automatic, const QString& manual,
                                const QString& filename = QString());
+  static QImage ScaleAndPad(const AlbumCoverLoaderOptions& options, const QImage& image);
 
  signals:
   void ImageLoaded(quint64 id, const QImage& image);
@@ -63,8 +61,8 @@ class AlbumCoverLoader : public QObject {
 
  protected slots:
   void ProcessTasks();
-  void RemoteFetchFinished();
-  void SpotifyImageLoaded(const QUrl& url, const QImage& image);
+  void RemoteFetchFinished(QNetworkReply* reply);
+  void SpotifyImageLoaded(const QString& url, const QImage& image);
 
  protected:
   enum State {
@@ -74,6 +72,9 @@ class AlbumCoverLoader : public QObject {
 
   struct Task {
     Task() : redirects(0) {}
+
+    AlbumCoverLoaderOptions options;
+
     quint64 id;
     QString art_automatic;
     QString art_manual;
@@ -95,19 +96,13 @@ class AlbumCoverLoader : public QObject {
   void ProcessTask(Task* task);
   void NextState(Task* task);
   TryLoadResult TryLoadImage(const Task& task);
-  QImage ScaleAndPad(const QImage& image) const;
 
   bool stop_requested_;
-
-  int height_;
-  bool scale_;
-  bool padding_;
-  QImage default_;
 
   QMutex mutex_;
   QQueue<Task> tasks_;
   QMap<QNetworkReply*, Task> remote_tasks_;
-  QMap<QUrl, Task> remote_spotify_tasks_;
+  QMap<QString, Task> remote_spotify_tasks_;
   quint64 next_id_;
 
   NetworkAccessManager* network_;

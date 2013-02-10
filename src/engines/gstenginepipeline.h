@@ -22,6 +22,7 @@
 #include <QFuture>
 #include <QMutex>
 #include <QObject>
+#include <QThreadPool>
 #include <QTimeLine>
 #include <QUrl>
 
@@ -34,6 +35,7 @@ class GstElementDeleter;
 class GstEngine;
 class BufferConsumer;
 
+struct GstQueue;
 struct GstURIDecodeBin;
 
 class GstEnginePipeline : public QObject {
@@ -50,6 +52,7 @@ class GstEnginePipeline : public QObject {
   void set_output_device(const QString& sink, const QString& device);
   void set_replaygain(bool enabled, int mode, float preamp, bool compression);
   void set_buffer_duration_nanosec(qint64 duration_nanosec);
+  void set_mono_playback(bool enabled);
 
   // Creates the pipeline, returns false on error
   bool InitFromUrl(const QUrl& url, qint64 end_nanosec);
@@ -89,6 +92,10 @@ class GstEnginePipeline : public QObject {
   GstState state() const;
   qint64 segment_start() const { return segment_start_; }
 
+  // Don't allow the user to change the playback state (playing/paused) while
+  // the pipeline is buffering.
+  bool is_buffering() const { return buffering_; }
+
   QUrl redirect_url() const { return redirect_url_; }
 
   QString source_device() const { return source_device_; }
@@ -104,6 +111,10 @@ class GstEnginePipeline : public QObject {
   void Error(int pipeline_id, const QString& message, int domain, int error_code);
   void FaderFinished();
 
+  void BufferingStarted();
+  void BufferingProgress(int percent);
+  void BufferingFinished();
+
  protected:
   void timerEvent(QTimerEvent *);
 
@@ -117,11 +128,14 @@ class GstEnginePipeline : public QObject {
   static bool EventHandoffCallback(GstPad*, GstEvent*, gpointer);
   static void SourceDrainedCallback(GstURIDecodeBin*, gpointer);
   static void SourceSetupCallback(GstURIDecodeBin*, GParamSpec *pspec, gpointer);
+  static void TaskEnterCallback(GstTask*, GThread*, gpointer);
 
   void TagMessageReceived(GstMessage*);
   void ErrorMessageReceived(GstMessage*);
   void ElementMessageReceived(GstMessage*);
   void StateChangedMessageReceived(GstMessage*);
+  void BufferingMessageReceived(GstMessage*);
+  void StreamStatusMessageReceived(GstMessage*);
 
   QString ParseTag(GstTagList* list, const char* tag) const;
 
@@ -134,6 +148,10 @@ class GstEnginePipeline : public QObject {
   bool ReplaceDecodeBin(const QUrl& url);
 
   void TransitionToNext();
+
+  // If the decodebin is special (ie. not really a uridecodebin) then it'll have
+  // a src pad immediately and we can link it after everything's created.
+  void MaybeLinkDecodeToAudio();
 
  private slots:
   void FaderTimelineFinished();
@@ -178,7 +196,12 @@ class GstEnginePipeline : public QObject {
   int rg_mode_;
   float rg_preamp_;
   bool rg_compression_;
+
+  // Buffering
   quint64 buffer_duration_nanosec_;
+  bool buffering_;
+
+  bool mono_playback_;
 
   // The URL that is currently playing, and the URL that is to be preloaded
   // when the current track is close to finishing.
@@ -243,6 +266,8 @@ class GstEnginePipeline : public QObject {
   GstElement* audiosink_;
 
   uint bus_cb_id_;
+
+  QThreadPool set_state_threadpool_;
 };
 
 #endif // GSTENGINEPIPELINE_H

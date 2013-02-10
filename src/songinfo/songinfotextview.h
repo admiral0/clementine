@@ -29,6 +29,9 @@ public:
   static const qreal kDefaultFontSize;
   static const char* kSettingsGroup;
 
+  static qreal FontSize();
+  static QFont Font();
+
   QSize sizeHint() const;
 
 public slots:
@@ -42,9 +45,11 @@ protected:
   void resizeEvent(QResizeEvent* e);
   void wheelEvent(QWheelEvent* e);
   void contextMenuEvent(QContextMenuEvent* e);
+  QVariant loadResource(int type, const QUrl& name);
 
 private:
   int last_width_;
+  bool recursion_filter_;
 };
 
 #endif // SONGINFOTEXTVIEW_H

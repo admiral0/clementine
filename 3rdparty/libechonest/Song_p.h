@@ -28,9 +28,9 @@
 class SongData : public QSharedData
 {
 public:
-    SongData() : hotttnesss( -1 ), artistHotttnesss( -1 ), artistFamiliarity( -1 ) {}
+    SongData() : hotttnesss( -1 ), artistHotttnesss( -1 ), artistFamiliarity( -1 ) { artistLocation.latitude = -1; artistLocation.longitude = -1; }
    
-    SongData(const SongData& other)
+    SongData(const SongData& other) : QSharedData( other )
     {
         id = other.id;
         title = other.title;
@@ -51,6 +51,7 @@ public:
     QString title;
     QString artistName;
     QByteArray artistId;
+    QString release;
     
     // The rest are optional that require manual fetching to populate
     Echonest::AudioSummary audioSummary;
@@ -58,7 +59,7 @@ public:
     qreal hotttnesss;
     qreal artistHotttnesss;
     qreal artistFamiliarity;
-    QString artistLocation;
+    Echonest::ArtistLocation artistLocation;
     
     
 };

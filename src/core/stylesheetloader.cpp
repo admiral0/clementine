@@ -18,7 +18,6 @@
 #include "stylesheetloader.h"
 #include "core/logging.h"
 
-#include <QtDebug>
 #include <QFile>
 #include <QEvent>
 
@@ -95,8 +94,6 @@ void StyleSheetLoader::ReplaceColor(QString* css, const QString& name,
 
 bool StyleSheetLoader::eventFilter(QObject* obj, QEvent* event) {
   if (event->type() != QEvent::PaletteChange)
-    return false;
-  if (!event->spontaneous()) // Ignore events from our setStyleSheet
     return false;
 
   QWidget* widget = qobject_cast<QWidget*>(obj);

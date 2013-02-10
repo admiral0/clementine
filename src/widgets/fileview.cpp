@@ -29,9 +29,10 @@
 #include <QMessageBox>
 #include <QScrollBar>
 
-const char* FileView::kFileFilter = "*.mp3 *.ogg *.flac *.mpc *.m4a *.aac *.wma \
-                                    *.mp4 *.spx *.wav *.m3u *.m3u8 *.pls *.xspf \
-                                    *.asx *.asxini *.cue";
+const char* FileView::kFileFilter = "*.mp3 *.ogg *.flac *.mpc *.m4a *.aac *.wma "
+                                    "*.mp4 *.spx *.wav *.m3u *.m3u8 *.pls *.xspf "
+                                    "*.asx *.asxini *.cue *.ape *.wv *.mka *.opus "
+                                    "*.oga *.mka";
 
 FileView::FileView(QWidget* parent)
     : QWidget(parent),
@@ -65,6 +66,7 @@ FileView::FileView(QWidget* parent)
   connect(ui_->list, SIGNAL(MoveToLibrary(QList<QUrl>)), SIGNAL(MoveToLibrary(QList<QUrl>)));
   connect(ui_->list, SIGNAL(CopyToDevice(QList<QUrl>)), SIGNAL(CopyToDevice(QList<QUrl>)));
   connect(ui_->list, SIGNAL(Delete(QStringList)), SLOT(Delete(QStringList)));
+  connect(ui_->list, SIGNAL(EditTags(QList<QUrl>)), SIGNAL(EditTags(QList<QUrl>)));
 
   QString filter(FileView::kFileFilter);
   filter_list_ << filter.split(" ");
